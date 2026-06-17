@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from './api';
 import {
   defaultAnnouncements,
@@ -37,69 +37,84 @@ import {
   Zap
 } from 'lucide-react';
 
-const fallbackPublicData = {
+const fallbackSettings = {
+  content: defaultContent,
   services: defaultServices,
   packages: defaultPackages,
   gallery: defaultGallery,
-  announcements: defaultAnnouncements,
   trainers: defaultTrainers,
-  posts: defaultPosts
+  announcements: defaultAnnouncements
 };
 
 const navItems = [
-  { id: 'showcase', label: 'Ana Sayfa', icon: Home },
+  { id: 'home', label: 'Ana Sayfa', icon: Home },
   { id: 'services', label: 'Hizmetler', icon: Dumbbell },
   { id: 'booking', label: 'Rezervasyon', icon: CalendarDays },
   { id: 'packages', label: 'Paketler', icon: Package },
   { id: 'profile', label: 'Profil', icon: UserRound }
 ];
 
-const adminItems = [
-  'Dashboard',
-  'Kullanıcılar',
-  'Paketler',
-  'Hizmetler',
-  'Rezervasyonlar',
-  'Eğitmenler',
-  'Galeri',
-  'Duyurular',
-  'Blog',
-  'Mesajlar',
-  'WhatsApp Ayarları',
-  'PEAKSPOR Asistan',
-  'Tema Ayarları',
-  'SEO Ayarları'
+const adminMenu = [
+  { id: 'content', label: 'Ana Sayfa / Duyuru' },
+  { id: 'services', label: 'Hizmetler' },
+  { id: 'packages', label: 'Paketler' },
+  { id: 'gallery', label: 'Galeri' },
+  { id: 'trainers', label: 'Eğitmenler' },
+  { id: 'seo', label: 'Tema / SEO' }
 ];
 
-function normalizeContent(payload) {
-  if (!payload || typeof payload !== 'object') return defaultContent;
-  if (payload.hero || payload.brand || payload.assistant) return payload;
-  if (payload.content && typeof payload.content === 'object') return payload.content;
-  return defaultContent;
+function normalizeSettings(payload) {
+  const source = payload && typeof payload === 'object' ? payload : {};
+  return {
+    content: source.content && typeof source.content === 'object' ? source.content : defaultContent,
+    services: Array.isArray(source.services) && source.services.length ? source.services : defaultServices,
+    packages: Array.isArray(source.packages) && source.packages.length ? source.packages : defaultPackages,
+    gallery: Array.isArray(source.gallery) && source.gallery.length ? source.gallery : defaultGallery,
+    trainers: Array.isArray(source.trainers) && source.trainers.length ? source.trainers : defaultTrainers,
+    announcements:
+      Array.isArray(source.announcements) && source.announcements.length
+        ? source.announcements
+        : defaultAnnouncements
+  };
+}
+
+function jsonPretty(value) {
+  return JSON.stringify(value, null, 2);
+}
+
+function safeParseJson(text, fallbackValue) {
+  try {
+    const parsed = JSON.parse(text);
+    return { ok: true, value: parsed };
+  } catch {
+    return { ok: false, value: fallbackValue };
+  }
 }
 
 function useAppData() {
   const [state, setState] = useState({
-    content: defaultContent,
-    publicData: fallbackPublicData,
+    settings: fallbackSettings,
     user: null,
+    dashboard: null,
     loading: true,
-    error: null,
     dark: true,
     mobileMenu: false,
     assistantOpen: false,
-    adminOpen: false
+    adminOpen: false,
+    error: null
   });
 
   useEffect(() => {
     let mounted = true;
-    Promise.allSettled([api.content(), api.publicData(), api.me()]).then(([content, publicData, me]) => {
+    Promise.allSettled([api.content(), api.me()]).then(([contentResult, meResult]) => {
       if (!mounted) return;
       setState(prev => ({
         ...prev,
-        content: content.status === 'fulfilled' ? normalizeContent(content.value) : defaultContent,
-        publicData: publicData.status === 'fulfilled' ? publicData.value || fallbackPublicData : fallbackPublicData,
-        user: me.status === 'fulfilled' ? me.value?.user || null : null,
+        settings:
+          contentResult.status === 'fulfilled'
+            ? normalizeSettings(contentResult.value)
+            : fallbackSettings,
+        user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
         loading: false
       }));
     });
@@ -112,13 +127,46 @@ function useAppData() {
   return [state, setState];
 }
 
-function scrollToSection(id) {
-  const node = document.getElementById(id);
-  if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 function formatPrice(value) {
   return new Intl.NumberFormat('tr-TR').format(value);
+}
+
+function scrollToSection(id) {
+  const element = document.getElementById(id);
+  if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function Ticker({ items }) {
+  const list = items && items.length ? items : defaultAnnouncements;
+  return (
+    <div className="ticker-bar">
+      <span className="ticker-label">Duyurular</span>
+      <div className="ticker-viewport">
+        <div className="ticker-track">
+          {[...list, ...list].map((item, index) => (
+            <span key={`${item}-${index}`} className="ticker-item">
+              <span className="ticker-dot" />
+              {typeof item === 'string' ? item : item.message}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatBadge({ icon: Icon, label, value }) {
+  return (
+    <div className="stat-badge">
+      <div className="stat-badge-icon">
+        <Icon size={16} />
+      </div>
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
+    </div>
+  );
 }
 
 function SectionHeader({ title, subtitle, action }) {
@@ -134,225 +182,229 @@ function SectionHeader({ title, subtitle, action }) {
   );
 }
 
-function MiniStat({ icon: Icon, label, value }) {
-  return (
-    <div className="mini-stat">
-      <div className="mini-stat-icon">
-        <Icon size={16} />
-      </div>
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-    </div>
-  );
-}
-
-function ShowcasePhone({ title, subtitle, children, accent = 'green', className = '' }) {
+function PhoneShell({ accent = 'green', className = '', children }) {
   return (
     <div className={`phone-shell ${accent} ${className}`}>
       <div className="phone-notch" />
-      <div className="phone-screen">
-        <div className="phone-status">
-          <span>0:41</span>
-          <div className="phone-signal">
-            <span />
-            <span />
-            <span />
-          </div>
-        </div>
-        <div className="phone-top">
-          <div className="phone-brand">
-            <span className="brand-mark">▲</span>
-            <strong>PEAKSPOR</strong>
-          </div>
-          <div className="phone-chip">
-            <Sparkles size={12} />
-            Premium
-          </div>
-        </div>
-        <div className="phone-hero">
-          <span className="phone-eyebrow">{subtitle}</span>
-          <h3>{title}</h3>
-        </div>
-        {children}
-      </div>
+      <div className="phone-screen">{children}</div>
     </div>
   );
 }
 
 function PhoneHome({ content }) {
-  const hero = content?.hero || defaultContent.hero;
+  const hero = content.hero || defaultContent.hero;
+  const stats = content.stats || defaultContent.stats;
   return (
-    <ShowcasePhone title="HOŞ GELDİNİZ" subtitle="Mobil deneyim">
-      <div className="phone-card home-card">
-        <div className="home-copy">
-          <p>{hero.subtitle}</p>
-          <div className="phone-actions">
-            <button className="phone-action primary">Üye Ol</button>
-            <button className="phone-action">Salonu Keşfet</button>
-          </div>
-        </div>
-        <div className="home-athlete">
-          <img
-            src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80"
-            alt="Athlete"
-          />
+    <PhoneShell accent="green" className="phone-rise">
+      <div className="phone-topbar">
+        <span className="phone-time">0:41</span>
+        <div className="phone-status">
+          <span />
+          <span />
+          <span />
         </div>
       </div>
-      <div className="phone-stack-grid">
-        <MiniStat icon={Users} label="Üye" value="5.231" />
-        <MiniStat icon={Target} label="Koç" value="18" />
+      <div className="phone-brand-row">
+        <span className="brand-mark">▲</span>
+        <strong>PEAKSPOR</strong>
+        <span className="phone-pill">Premium</span>
       </div>
-      <div className="phone-bubble">
+      <div className="phone-hero">
+        <span className="phone-eyebrow">HOŞ GELDİNİZ</span>
+        <h3>{hero.title}</h3>
+        <p>{hero.subtitle}</p>
+      </div>
+      <div className="phone-home-media">
+        <img
+          src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80"
+          alt="Fitness athlete"
+        />
+      </div>
+      <div className="phone-actions">
+        <button className="phone-btn primary" type="button">
+          {hero.primaryCta}
+        </button>
+        <button className="phone-btn" type="button">
+          {hero.secondaryCta}
+        </button>
+      </div>
+      <div className="phone-stats">
+        {stats.slice(0, 4).map(item => (
+          <StatBadge key={item.label} icon={Users} label={item.label} value={item.value} />
+        ))}
+      </div>
+      <div className="phone-bottom-nav">
+        <span className="active">Ana Sayfa</span>
+        <span>Hizmet</span>
+        <span>Plan</span>
+        <span>Profil</span>
+      </div>
+      <button className="assistant-chip floating" type="button">
         <MessageSquareMore size={14} />
         PEAKSPOR Asistan
-      </div>
-    </ShowcasePhone>
+      </button>
+    </PhoneShell>
   );
 }
 
 function PhoneServices({ services }) {
-  const cards = services.slice(0, 4);
   return (
-    <ShowcasePhone title="HİZMETLERİMİZ" subtitle="Fitness / Body Building" accent="blue" className="phone-raise">
-      <div className="phone-grid phone-services">
-        {cards.map(service => (
-          <article className="phone-service-card" key={service.title}>
+    <PhoneShell accent="blue" className="phone-drop">
+      <div className="phone-topbar">
+        <span className="phone-back">←</span>
+        <strong>HİZMETLERİMİZ</strong>
+        <span className="phone-pill small">4</span>
+      </div>
+      <div className="phone-grid">
+        {services.slice(0, 4).map(service => (
+          <article className="phone-card" key={service.title}>
             <img src={service.image} alt={service.title} />
-            <div className="service-gradient" />
-            <div className="phone-service-content">
+            <div className="phone-card-overlay" />
+            <div className="phone-card-text">
               <strong>{service.title}</strong>
               <span>{service.category}</span>
             </div>
           </article>
         ))}
       </div>
-      <div className="phone-footer-strip">
-        <Activity size={14} />
-        Antrenman Planı
+      <div className="phone-bottom-nav">
+        <span>Ana Sayfa</span>
+        <span className="active">Hizmet</span>
+        <span>Plan</span>
+        <span>Profil</span>
       </div>
-    </ShowcasePhone>
+    </PhoneShell>
   );
 }
 
 function PhonePackages({ packages }) {
   return (
-    <ShowcasePhone title="PAKETLER" subtitle="Aylık planlar" accent="purple" className="phone-lift">
-      <div className="phone-packages">
+    <PhoneShell accent="purple" className="phone-lift">
+      <div className="phone-topbar">
+        <span className="phone-back">←</span>
+        <strong>PAKETLERİMİZ</strong>
+        <span className="phone-pill small">3</span>
+      </div>
+      <div className="phone-package-stack">
         {packages.slice(0, 3).map(pkg => (
-          <article className="phone-package-card" key={pkg.title}>
-            <div>
-              <strong>{pkg.title}</strong>
-              <span>{pkg.subtitle}</span>
+          <article className="phone-package-card" key={pkg.title} style={{ '--accent': pkg.accent }}>
+            <div className="phone-package-head">
+              <div>
+                <strong>{pkg.title}</strong>
+                <span>{pkg.subtitle}</span>
+              </div>
+              <div className="phone-package-price">
+                ₺{formatPrice(pkg.price)}
+                <small>{pkg.period}</small>
+              </div>
             </div>
-            <div className="phone-price">
-              ₺{formatPrice(pkg.price)}
-              <small>{pkg.period}</small>
-            </div>
-            <div className="phone-chip-row">
-              {pkg.features.slice(0, 2).map(feature => (
-                <span key={feature} className="phone-tag">
+            <ul>
+              {pkg.features.slice(0, 5).map(feature => (
+                <li key={feature}>
                   <CheckCircle2 size={12} />
                   {feature}
-                </span>
+                </li>
               ))}
-            </div>
+            </ul>
+            <div className="package-cta">{pkg.cta}</div>
           </article>
         ))}
       </div>
-      <div className="phone-footer-strip neon">
-        <Zap size={14} />
-        VIP Üyelikler
+      <div className="phone-bottom-nav">
+        <span>Ana Sayfa</span>
+        <span>Hizmet</span>
+        <span className="active">Plan</span>
+        <span>Profil</span>
       </div>
-    </ShowcasePhone>
+    </PhoneShell>
   );
 }
 
-function HeroShowcase({ content, onOpenAssistant, onOpenAdmin, dark, setDark }) {
-  const hero = content?.hero || defaultContent.hero;
+function HeroSection({ content, onOpenAssistant, onOpenAdmin, dark, setDark, onJump }) {
+  const hero = content.hero || defaultContent.hero;
   const highlights = [
-    { icon: ShieldCheck, title: 'Güvenli yapı', text: 'JWT, Prisma ve PostgreSQL ile çalışır.' },
-    { icon: LayoutDashboard, title: 'Admin panel', text: 'Dashboard, içerik ve rezervasyon akışı.' },
-    { icon: MessageSquareMore, title: 'Asistan desteği', text: 'WhatsApp ve hızlı aksiyon butonları.' }
+    { icon: ShieldCheck, label: 'Güvenli yapı', value: 'JWT + PostgreSQL' },
+    { icon: LayoutDashboard, label: 'Admin panel', value: 'Tüm içerik yönetimi' },
+    { icon: MessageSquareMore, label: 'Destek', value: 'WhatsApp + asistan' }
   ];
 
   return (
-    <section className="showcase-section" id="showcase">
-      <div className="top-brand-row">
+    <section className="hero-section" id="home">
+      <div className="hero-topline">
         <div className="brand-lockup">
           <span className="brand-mark">▲</span>
           <div>
-            <strong>PEAKSPOR</strong>
-            <span>Premium Fitness Platform</span>
+            <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
+            <span>{content.brand?.slogan || 'Premium Fitness Platform'}</span>
           </div>
         </div>
-        <button className="mode-pill" onClick={() => setDark(!dark)}>
-          <div className="mode-pill-switch">
+
+        <button className="mode-pill" type="button" onClick={() => setDark(!dark)}>
+          <div className="mode-switch">
             <span className={dark ? 'active' : ''}>
-              <Moon size={11} />
+              <Moon size={12} />
             </span>
             <span className={!dark ? 'active' : ''}>
-              <SunMedium size={11} />
+              <SunMedium size={12} />
             </span>
           </div>
           <span>Gece / Gündüz Modu</span>
         </button>
       </div>
 
-      <div className="showcase-grid">
-        <div className="phone-canvas">
+      <div className="hero-layout">
+        <div className="phone-stage">
           <PhoneHome content={content} />
-          <PhoneServices services={defaultServices} />
-          <PhonePackages packages={defaultPackages} />
+          <PhoneServices services={content.services || defaultServices} />
+          <PhonePackages packages={content.packages || defaultPackages} />
         </div>
 
         <div className="hero-panel">
           <div className="hero-badge">
             <Sparkles size={14} />
-            Premium deneyim
+            Premium Fitness Deneyimi
           </div>
           <h1>{hero.title}</h1>
           <p>{hero.subtitle}</p>
 
           <div className="hero-actions">
-            <button className="cta primary" onClick={() => scrollToSection('booking')}>
+            <button className="cta primary" type="button" onClick={() => onJump('booking')}>
               Hemen Başla <ArrowRight size={16} />
             </button>
-            <button className="cta ghost" onClick={() => scrollToSection('services')}>
+            <button className="cta ghost" type="button" onClick={() => onJump('services')}>
               Salonu Keşfet
             </button>
           </div>
 
-          <div className="hero-highlights">
+          <div className="highlight-grid">
             {highlights.map(item => (
-              <div key={item.title} className="highlight-card">
-                <div className="highlight-icon green">
+              <div className="highlight-card" key={item.label}>
+                <div className="highlight-icon">
                   <item.icon size={16} />
                 </div>
-                <strong>{item.title}</strong>
-                <span>{item.text}</span>
+                <strong>{item.label}</strong>
+                <span>{item.value}</span>
               </div>
             ))}
           </div>
 
-          <div className="hero-pills">
-            {['Fitness', 'Body Building', 'Pilates', 'Yoga', 'Crossfit'].map(item => (
-              <span key={item} className="hero-pill">
-                {item}
+          <div className="hero-tags">
+            {['Fitness', 'Body Building', 'Pilates', 'Yoga', 'Crossfit'].map(tag => (
+              <span className="tag-pill" key={tag}>
+                {tag}
               </span>
             ))}
           </div>
 
-          <button className="assistant-launch" onClick={onOpenAssistant}>
-            <span className="assistant-launch-mark">▲</span>
+          <button className="assistant-launch" type="button" onClick={onOpenAssistant}>
+            <span className="assistant-mark">▲</span>
             <div>
-              <strong>PEAKSPOR Asistan</strong>
-              <span>Merhaba! Size nasıl yardımcı olabiliriz?</span>
+              <strong>{content.assistant?.welcome || defaultContent.assistant.welcome}</strong>
+              <span>{content.assistant?.message || defaultContent.assistant.message}</span>
             </div>
           </button>
 
-          <button className="admin-open" onClick={onOpenAdmin}>
+          <button className="admin-launch" type="button" onClick={onOpenAdmin}>
             <LayoutDashboard size={16} />
             Admin Panelini Aç
           </button>
@@ -362,41 +414,19 @@ function HeroShowcase({ content, onOpenAssistant, onOpenAdmin, dark, setDark }) 
   );
 }
 
-function FeatureRail() {
-  const items = [
-    { icon: Dumbbell, label: 'Fitness' },
-    { icon: Bike, label: 'Kardiyo' },
-    { icon: Layers3, label: 'Kampanyalar' },
-    { icon: CalendarDays, label: 'Rezervasyon' },
-    { icon: MessageSquareMore, label: 'WhatsApp' },
-    { icon: Zap, label: 'Gece / Gündüz' }
-  ];
-
-  return (
-    <section className="feature-rail" id="highlights">
-      {items.map(item => (
-        <button key={item.label} className="feature-chip">
-          <item.icon size={16} />
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </section>
-  );
-}
-
 function ServicesSection({ services }) {
   return (
-    <section id="services" className="content-section">
+    <section className="content-section" id="services">
       <SectionHeader
         title="Hizmetler"
-        subtitle="Birebir ve grup antrenmanları, premium salon alanları ve uzman eğitmenler."
+        subtitle="Salonun tüm premium alanlarını ve antrenman seçeneklerini buradan yönetebilirsiniz."
       />
-      <div className="services-grid">
+      <div className="service-grid">
         {services.map(service => (
           <article className="service-card" key={service.title}>
             <div className="service-image">
               <img src={service.image} alt={service.title} />
-              <div className="service-glow" style={{ background: service.accent }} />
+              <div className="service-accent" style={{ background: service.accent }} />
             </div>
             <div className="service-body">
               <span className="service-tag">{service.category}</span>
@@ -412,18 +442,15 @@ function ServicesSection({ services }) {
 
 function PackagesSection({ packages }) {
   return (
-    <section id="packages" className="content-section">
+    <section className="content-section" id="packages">
       <SectionHeader
         title="Paketler"
-        subtitle="Başlangıçtan premium seviyeye kadar esnek üyelik seçenekleri."
+        subtitle="Başlangıçtan VIP seviyesine kadar tüm üyelikler burada."
       />
       <div className="package-grid">
         {packages.map(pkg => (
           <article className="package-card" key={pkg.title}>
-            <div
-              className="package-accent"
-              style={{ borderColor: pkg.accent, boxShadow: `0 0 40px ${pkg.accent}55` }}
-            />
+            <div className="package-glow" style={{ boxShadow: `0 0 40px ${pkg.accent}55` }} />
             <div className="package-head">
               <div>
                 <span className="service-tag">Üyelik</span>
@@ -443,7 +470,31 @@ function PackagesSection({ packages }) {
                 </li>
               ))}
             </ul>
-            <button className="cta primary block">Seç</button>
+            <button className="cta primary block" type="button">
+              {pkg.cta}
+            </button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function GallerySection({ gallery }) {
+  return (
+    <section className="content-section">
+      <SectionHeader
+        title="Galeri"
+        subtitle="Salon atmosferi, ekipmanlar ve etkinlik kareleri."
+      />
+      <div className="gallery-grid">
+        {gallery.map(item => (
+          <article className="gallery-card" key={item.title}>
+            <img src={item.image} alt={item.title} />
+            <div className="gallery-overlay">
+              <span>{item.category}</span>
+              <h3>{item.title}</h3>
+            </div>
           </article>
         ))}
       </div>
@@ -456,7 +507,7 @@ function TrainersSection({ trainers }) {
     <section className="content-section">
       <SectionHeader
         title="Eğitmenler"
-        subtitle="Uzman antrenör ekibiyle hedefe daha hızlı ulaşın."
+        subtitle="Uzman koçlarınız ve özel programlarınız bu alanda gösterilir."
       />
       <div className="trainer-grid">
         {trainers.map(trainer => (
@@ -474,25 +525,118 @@ function TrainersSection({ trainers }) {
   );
 }
 
-function GallerySection({ gallery }) {
+function DashboardPanel({ dashboard }) {
+  const stats = [
+    { label: 'Toplam Üye', value: dashboard?.stats?.totalUsers ?? 5231, icon: Users, tone: 'green' },
+    { label: 'Aktif Üye', value: dashboard?.stats?.activeMembers ?? 4892, icon: Target, tone: 'blue' },
+    { label: 'Toplam Gelir', value: `₺${formatPrice(dashboard?.stats?.revenue ?? 125300)}`, icon: BarChart3, tone: 'purple' },
+    { label: 'Rezervasyon', value: dashboard?.stats?.reservations ?? 128, icon: CalendarDays, tone: 'orange' }
+  ];
+
+  const recentRows =
+    dashboard?.recentUsers?.length
+      ? dashboard.recentUsers.slice(0, 5).map(user => ({
+          title: user.name,
+          subtitle: user.email
+        }))
+      : defaultPosts.slice(0, 5).map(post => ({
+          title: post.title,
+          subtitle: post.excerpt
+        }));
+
   return (
-    <section className="content-section">
-      <SectionHeader
-        title="Galeri"
-        subtitle="Salon atmosferi, dersler, ekipmanlar ve premium alanlardan kareler."
-      />
-      <div className="gallery-grid">
-        {gallery.map(item => (
-          <article className="gallery-card" key={item.title}>
-            <img src={item.image} alt={item.title} />
-            <div className="gallery-overlay">
-              <span>{item.category}</span>
-              <h3>{item.title}</h3>
+    <div className="dashboard-shell">
+      <aside className="admin-sidebar">
+        <div className="admin-brand">
+          <span className="brand-mark">▲</span>
+          <div>
+            <strong>PEAKSPOR</strong>
+            <span>Admin Panel</span>
+          </div>
+        </div>
+        {adminMenu.map(item => (
+          <button key={item.id} className={`sidebar-item ${item.id === 'content' ? 'active' : ''}`} type="button">
+            {item.label}
+          </button>
+        ))}
+      </aside>
+
+      <main className="dashboard-main">
+        <div className="dashboard-topbar">
+          <div>
+            <span className="section-kicker">Dashboard</span>
+            <h3>Admin Panel Genel Bakış</h3>
+          </div>
+          <div className="dashboard-actions">
+            <button className="icon-button" type="button">
+              <Search size={18} />
+            </button>
+            <button className="icon-button" type="button">
+              <Bell size={18} />
+            </button>
+            <button className="icon-button" type="button">
+              <Settings size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="dashboard-stats">
+          {stats.map(stat => (
+            <article className={`dashboard-stat ${stat.tone}`} key={stat.label}>
+              <div className="dashboard-stat-icon">
+                <stat.icon size={16} />
+              </div>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+            </article>
+          ))}
+        </div>
+
+        <div className="dashboard-panels">
+          <article className="panel chart-panel">
+            <div className="panel-head">
+              <h3>Gelir Grafiği</h3>
+              <span>Son 30 gün</span>
+            </div>
+            <div className="chart-area">
+              <div className="chart-grid" />
+              <div className="chart-line chart-line-one" />
+              <div className="chart-line chart-line-two" />
+              <div className="chart-line chart-line-three" />
             </div>
           </article>
-        ))}
-      </div>
-    </section>
+
+          <article className="panel list-panel">
+            <div className="panel-head">
+              <h3>Son İşlemler</h3>
+              <span>Canlı akış</span>
+            </div>
+            <div className="list-stack">
+              {recentRows.map((row, index) => (
+                <div className="list-row" key={`${row.title}-${index}`}>
+                  <div>
+                    <strong>{row.title}</strong>
+                    <span>{row.subtitle}</span>
+                  </div>
+                  <ChevronRight size={16} />
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
+      </main>
+
+      <aside className="right-panel">
+        <span className="section-kicker">Admin Panel Özellikleri</span>
+        <h3>Hızlı yönetim</h3>
+        <ul>
+          <li>Sayfa içeriklerini, duyuru akışını ve kahraman alanını düzenleyin.</li>
+          <li>Hizmetler, paketler, galeri ve eğitmenleri JSON ile güncelleyin.</li>
+          <li>Rezervasyonlar, mesajlar ve üyeleri tek panelden yönetin.</li>
+          <li>Tema ve SEO ayarları içeriğin bir parçası olarak saklanır.</li>
+        </ul>
+      </aside>
+    </div>
   );
 }
 
@@ -501,7 +645,7 @@ function BookingSection() {
   const [status, setStatus] = useState('');
   const [saving, setSaving] = useState(false);
 
-  async function submitForm(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
     setStatus('');
@@ -517,12 +661,12 @@ function BookingSection() {
   }
 
   return (
-    <section id="booking" className="content-section">
+    <section className="content-section" id="booking">
       <SectionHeader
         title="Rezervasyon"
-        subtitle="Ders ve salon ziyareti için hızlı rezervasyon oluşturun."
+        subtitle="Salon ziyareti, ders veya özel görüşme için hızlı kayıt alın."
       />
-      <form className="form-card" onSubmit={submitForm}>
+      <form className="form-card" onSubmit={handleSubmit}>
         <div className="form-grid">
           <input
             className="input"
@@ -556,7 +700,7 @@ function BookingSection() {
           onChange={event => setForm(prev => ({ ...prev, note: event.target.value }))}
         />
         <div className="form-actions">
-          <button className="cta primary" disabled={saving}>
+          <button className="cta primary" type="submit" disabled={saving}>
             {saving ? 'Gönderiliyor...' : 'Rezervasyon Gönder'}
           </button>
           {status && <span className="status-badge">{status}</span>}
@@ -571,7 +715,7 @@ function ContactSection() {
   const [status, setStatus] = useState('');
   const [saving, setSaving] = useState(false);
 
-  async function submitMessage(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
     setStatus('');
@@ -587,15 +731,18 @@ function ContactSection() {
   }
 
   return (
-    <section className="content-section" id="profile">
-      <SectionHeader title="Profil ve Destek" subtitle="Üyelik, yardım ve iletişim işlemleri tek yerde." />
+    <section className="content-section">
+      <SectionHeader
+        title="İletişim"
+        subtitle="Üyelik, destek ve teklif taleplerinizi buradan bırakın."
+      />
       <div className="profile-grid">
         <article className="profile-card">
           <div className="profile-avatar">PK</div>
-          <h3>PEAKSPOR Üyesi</h3>
-          <p>Giriş yaparak rezervasyonları, profil bilgilerini ve admin ekranını kullanabilirsiniz.</p>
+          <h3>PEAKSPOR</h3>
+          <p>Premium deneyim, güçlü ekip ve mobil öncelikli tasarım tek yerde.</p>
           <div className="profile-actions">
-            <button className="cta primary" type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <button className="cta primary" type="button" onClick={() => scrollToSection('home')}>
               Ana Sayfa
             </button>
             <button className="cta ghost" type="button" onClick={() => scrollToSection('booking')}>
@@ -604,8 +751,7 @@ function ContactSection() {
           </div>
         </article>
 
-        <form className="form-card" onSubmit={submitMessage}>
-          <h3>Mesaj Gönder</h3>
+        <form className="form-card" onSubmit={handleSubmit}>
           <div className="form-grid">
             <input
               className="input"
@@ -627,7 +773,7 @@ function ContactSection() {
             onChange={event => setForm(prev => ({ ...prev, content: event.target.value }))}
           />
           <div className="form-actions">
-            <button className="cta primary" disabled={saving}>
+            <button className="cta primary" type="submit" disabled={saving}>
               {saving ? 'Gönderiliyor...' : 'Mesaj Gönder'}
             </button>
             {status && <span className="status-badge">{status}</span>}
@@ -638,178 +784,143 @@ function ContactSection() {
   );
 }
 
-function DashboardPanel({ dashboard }) {
-  const stats = [
-    { label: 'Toplam Üye', value: dashboard?.stats?.totalUsers ?? 0, icon: Users, tone: 'green' },
-    { label: 'Aktif Üye', value: dashboard?.stats?.activeMembers ?? 0, icon: Target, tone: 'blue' },
-    { label: 'Toplam Gelir', value: `₺${formatPrice(dashboard?.stats?.revenue ?? 0)}`, icon: BarChart3, tone: 'purple' },
-    { label: 'Rezervasyon', value: dashboard?.stats?.reservations ?? 0, icon: CalendarDays, tone: 'orange' }
-  ];
-
+function JsonEditor({ label, value, onChange, onSave, hint, saving }) {
   return (
-    <div className="dashboard-preview">
-      <div className="dashboard-shell">
-        <aside className="dashboard-sidebar">
-          <div className="sidebar-brand">
-            <span className="brand-mark">▲</span>
-            <div>
-              <strong>PEAKSPOR</strong>
-              <span>Admin Panel</span>
-            </div>
-          </div>
-          {adminItems.map(item => (
-            <button key={item} className={`sidebar-item ${item === 'Dashboard' ? 'active' : ''}`}>
-              {item}
-            </button>
-          ))}
-        </aside>
-
-        <div className="dashboard-main">
-          <div className="dashboard-topbar">
-            <div>
-              <span className="section-kicker">Dashboard</span>
-              <h3>Admin Panel Genel Bakış</h3>
-            </div>
-            <div className="dashboard-top-actions">
-              <button className="icon-button" type="button">
-                <Search size={18} />
-              </button>
-              <button className="icon-button" type="button">
-                <Bell size={18} />
-              </button>
-              <button className="icon-button" type="button">
-                <Settings size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="dashboard-stats">
-            {stats.map(stat => (
-              <article key={stat.label} className={`dashboard-stat ${stat.tone}`}>
-                <div className="dashboard-stat-icon">
-                  <stat.icon size={16} />
-                </div>
-                <span>{stat.label}</span>
-                <strong>{stat.value}</strong>
-              </article>
-            ))}
-          </div>
-
-          <div className="dashboard-panels">
-            <article className="panel chart-panel">
-              <div className="panel-head">
-                <h3>Gelir Grafiği</h3>
-                <span>Son 30 gün</span>
-              </div>
-              <div className="chart-area">
-                <div className="chart-grid" />
-                <div className="chart-line chart-line-one" />
-                <div className="chart-line chart-line-two" />
-                <div className="chart-line chart-line-three" />
-              </div>
-            </article>
-
-            <article className="panel list-panel">
-              <div className="panel-head">
-                <h3>Son Üyeler</h3>
-                <span>Canlı akış</span>
-              </div>
-              <div className="list-stack">
-                {(dashboard?.recentUsers || []).slice(0, 5).map(user => (
-                  <div className="list-row" key={user.id}>
-                    <div>
-                      <strong>{user.name}</strong>
-                      <span>{user.email}</span>
-                    </div>
-                    <ChevronRight size={16} />
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
+    <div className="editor-card">
+      <div className="editor-head">
+        <div>
+          <strong>{label}</strong>
+          {hint && <p>{hint}</p>}
         </div>
-
-        <aside className="dashboard-right">
-          <span className="section-kicker">Özellikler</span>
-          <h3>Admin için hızlı erişim</h3>
-          <ul className="feature-list">
-            {[
-              'Tüm içerikler tek panelden yönetilir.',
-              'Rezervasyon ve mesajlar canlı görüntülenir.',
-              'Üye ve paket verileri PostgreSQL’de saklanır.',
-              'WhatsApp destek akışı hızlı açılır.',
-              'Tema ve SEO ayarları korunur.'
-            ].map(item => (
-              <li key={item}>
-                <CheckCircle2 size={14} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </aside>
+        <button className="cta primary small" type="button" onClick={onSave} disabled={saving}>
+          Kaydet
+        </button>
       </div>
+      <textarea className="input editor-input" value={value} onChange={event => onChange(event.target.value)} />
     </div>
   );
 }
 
-function AdminModal({ open, onClose, user, onLogin }) {
+function ContentEditor({ settings, onSave, saving }) {
+  const [draft, setDraft] = useState(jsonPretty(settings.content));
+
+  useEffect(() => {
+    setDraft(jsonPretty(settings.content));
+  }, [settings.content]);
+
+  async function save() {
+    const parsed = safeParseJson(draft, settings.content);
+    if (!parsed.ok) return false;
+    await onSave('content', parsed.value);
+    return true;
+  }
+
+  return (
+    <JsonEditor
+      label="Ana Sayfa / Duyuru / Tema JSON"
+      hint="Hero, asistan, SEO, tema, istatistikler ve kayan duyuru tek JSON içinde saklanır."
+      value={draft}
+      onChange={setDraft}
+      onSave={save}
+      saving={saving}
+    />
+  );
+}
+
+function SimpleJsonEditor({ label, hint, data, onSave, saving }) {
+  const [draft, setDraft] = useState(jsonPretty(data));
+
+  useEffect(() => {
+    setDraft(jsonPretty(data));
+  }, [data]);
+
+  async function save() {
+    const parsed = safeParseJson(draft, data);
+    if (!parsed.ok) return false;
+    await onSave(parsed.value);
+    return true;
+  }
+
+  return (
+    <JsonEditor
+      label={label}
+      hint={hint}
+      value={draft}
+      onChange={setDraft}
+      onSave={save}
+      saving={saving}
+    />
+  );
+}
+
+function AdminModal({ open, onClose, user, onLogin, settings, onSaveSetting, dashboard }) {
   const [form, setForm] = useState({
     email: defaultContent.admin?.email || 'admin@peakspor.com',
     password: defaultContent.admin?.password || 'Admin1234!'
   });
-  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState('content');
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
-  const [dashboard, setDashboard] = useState(null);
 
   useEffect(() => {
-    if (!open || user?.role !== 'ADMIN') return;
-    api.dashboard().then(setDashboard).catch(() => setDashboard(null));
-  }, [open, user]);
+    if (open) {
+      setStatus('');
+      setTab('content');
+    }
+  }, [open]);
 
-  async function submit(event) {
+  async function login(event) {
     event.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setStatus('');
     try {
       const response = await api.login(form);
       onLogin(response.user);
       setStatus('Giriş başarılı.');
       const nextDashboard = await api.dashboard();
-      setDashboard(nextDashboard);
+      if (typeof onSaveSetting === 'function') {
+        onSaveSetting('__dashboard__', nextDashboard);
+      }
     } catch (error) {
       setStatus(error.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
+    }
+  }
+
+  async function saveSetting(key, value) {
+    setSaving(true);
+    setStatus('');
+    try {
+      await api.saveSetting(key, value);
+      onSaveSetting(key, value);
+      setStatus('Kaydedildi.');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setSaving(false);
     }
   }
 
   if (!open) return null;
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card admin-modal" onClick={event => event.stopPropagation()}>
-        <div className="modal-header">
-          <div className="assistant-head">
-            <span className="bubble-mark">▲</span>
-            <div>
-              <span className="section-kicker">Admin</span>
-              <h3>PEAKSPOR Yönetim Ekranı</h3>
+  if (user?.role !== 'ADMIN') {
+    return (
+      <div className="modal-backdrop" onClick={onClose}>
+        <div className="admin-modal login-modal" onClick={event => event.stopPropagation()}>
+          <div className="modal-top">
+            <div className="assistant-head">
+              <span className="bubble-mark">▲</span>
+              <div>
+                <span className="section-kicker">Admin Girişi</span>
+                <h3>PEAKSPOR Yönetim Paneli</h3>
+              </div>
             </div>
+            <button className="icon-button" type="button" onClick={onClose}>
+              <ChevronRight size={18} />
+            </button>
           </div>
-          <button className="icon-button" type="button" onClick={onClose}>
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        {user?.role === 'ADMIN' && dashboard ? (
-          <DashboardPanel dashboard={dashboard} />
-        ) : (
-          <form className="login-panel" onSubmit={submit}>
-            <div className="login-copy">
-              <span className="section-kicker">Giriş</span>
-              <h3>Admin hesabı ile oturum açın</h3>
-              <p>Railway üzerinde seed edilen yönetici hesabı ile paneli açabilirsiniz.</p>
-            </div>
+          <form className="login-form" onSubmit={login}>
             <input
               className="input"
               placeholder="E-posta"
@@ -824,80 +935,170 @@ function AdminModal({ open, onClose, user, onLogin }) {
               onChange={event => setForm(prev => ({ ...prev, password: event.target.value }))}
             />
             <div className="form-actions">
-              <button className="cta primary" disabled={loading}>
-                {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+              <button className="cta primary" type="submit" disabled={saving}>
+                {saving ? 'Giriş yapılıyor...' : 'Giriş Yap'}
               </button>
               {status && <span className="status-badge">{status}</span>}
             </div>
           </form>
-        )}
+          <div className="login-tip">
+            <strong>Varsayılan hesap</strong>
+            <span>admin@peakspor.com / Admin1234!</span>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function AssistantBubble({ onOpen }) {
-  return (
-    <button className="floating-bubble assistant" onClick={onOpen} aria-label="PEAKSPOR Asistan">
-      <span className="bubble-mark">▲</span>
-    </button>
-  );
-}
-
-function WhatsappBubble() {
-  const message = encodeURIComponent('Merhaba, PEAKSPOR hakkında bilgi almak istiyorum.');
-  return (
-    <a
-      className="floating-bubble whatsapp"
-      href={`https://wa.me/905555555555?text=${message}`}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="WhatsApp"
-    >
-      <MessageSquareMore size={20} />
-    </a>
-  );
-}
-
-function AssistantModal({ open, onClose, content }) {
-  if (!open) return null;
-  const assistant = content?.assistant || defaultContent.assistant;
+    );
+  }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card assistant-modal" onClick={event => event.stopPropagation()}>
-        <div className="modal-header">
+      <div className="admin-modal admin-wide" onClick={event => event.stopPropagation()}>
+        <div className="modal-top">
           <div className="assistant-head">
             <span className="bubble-mark">▲</span>
             <div>
-              <span className="section-kicker">Asistan</span>
-              <h3>{assistant.welcome}</h3>
+              <span className="section-kicker">Admin</span>
+              <h3>İçerik Yönetimi</h3>
             </div>
           </div>
           <button className="icon-button" type="button" onClick={onClose}>
             <ChevronRight size={18} />
           </button>
         </div>
-        <p className="assistant-copy">{assistant.message}</p>
-        <div className="assistant-grid">
-          {assistant.buttons.map(button => (
-            <button key={button} className="assistant-chip" type="button">
-              {button}
-            </button>
-          ))}
+
+        <div className="admin-shell">
+          <aside className="admin-sidebar">
+            {adminMenu.map(item => (
+              <button
+                key={item.id}
+                className={`sidebar-item ${tab === item.id ? 'active' : ''}`}
+                type="button"
+                onClick={() => setTab(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </aside>
+
+          <main className="admin-content">
+            <div className="admin-content-head">
+              <div>
+                <span className="section-kicker">Canlı Önizleme</span>
+                <h4>{tab === 'content' ? 'Ana Sayfa ve Duyuru' : tab}</h4>
+              </div>
+              <div className="admin-badge">Rol: ADMIN</div>
+            </div>
+
+            {tab === 'content' && (
+              <ContentEditor settings={settings} onSave={saveSetting} saving={saving} />
+            )}
+            {tab === 'services' && (
+              <SimpleJsonEditor
+                label="Hizmetler JSON"
+                hint="Her hizmet için title, category, description, image ve accent alanlarını düzenleyin."
+                data={settings.services}
+                onSave={value => saveSetting('services', value)}
+                saving={saving}
+              />
+            )}
+            {tab === 'packages' && (
+              <SimpleJsonEditor
+                label="Paketler JSON"
+                hint="Üyelik kartları, fiyatlar, dönemler ve özellik listeleri burada."
+                data={settings.packages}
+                onSave={value => saveSetting('packages', value)}
+                saving={saving}
+              />
+            )}
+            {tab === 'gallery' && (
+              <SimpleJsonEditor
+                label="Galeri JSON"
+                hint="Galeri kartlarını dilediğiniz gibi güncelleyebilirsiniz."
+                data={settings.gallery}
+                onSave={value => saveSetting('gallery', value)}
+                saving={saving}
+              />
+            )}
+            {tab === 'trainers' && (
+              <SimpleJsonEditor
+                label="Eğitmenler JSON"
+                hint="Koç kartları, rol ve uzmanlık bilgileri burada."
+                data={settings.trainers}
+                onSave={value => saveSetting('trainers', value)}
+                saving={saving}
+              />
+            )}
+            {tab === 'seo' && (
+              <JsonEditor
+                label="SEO / Tema"
+                hint="SEO ve tema ayarlarını content JSON içinden düzenleyin."
+                value={jsonPretty(settings.content)}
+                onChange={() => {}}
+                onSave={() => saveSetting('content', settings.content)}
+                saving={saving}
+              />
+            )}
+
+            {status && <div className="editor-status">{status}</div>}
+
+            <DashboardPanel dashboard={dashboard} />
+          </main>
         </div>
       </div>
     </div>
   );
 }
 
+function FloatingActions({ onAssistant, onWhatsapp }) {
+  return (
+    <>
+      <button className="floating-bubble assistant" type="button" onClick={onAssistant} aria-label="Asistan">
+        <span className="bubble-mark">▲</span>
+      </button>
+      <a
+        className="floating-bubble whatsapp"
+        href={`https://wa.me/905555555555?text=${encodeURIComponent('Merhaba, PEAKSPOR hakkında bilgi almak istiyorum.')}`}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="WhatsApp"
+        onClick={onWhatsapp}
+      >
+        <MessageSquareMore size={18} />
+      </a>
+    </>
+  );
+}
+
+function BottomNav({ onJump, onOpenAdmin }) {
+  return (
+    <nav className="bottom-nav">
+      {navItems.map(item => (
+        <button
+          key={item.id}
+          className="bottom-nav-item"
+          type="button"
+          onClick={() => {
+            if (item.id === 'profile') {
+              onOpenAdmin();
+              return;
+            }
+            onJump(item.id);
+          }}
+        >
+          <item.icon size={18} />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 function MobileMenu({ open, onClose, onJump, onOpenAdmin }) {
   if (!open) return null;
-
   return (
     <div className="mobile-menu-backdrop" onClick={onClose}>
       <div className="mobile-menu" onClick={event => event.stopPropagation()}>
-        <div className="mobile-menu-head">
+        <div className="mobile-menu-top">
           <div>
             <strong>PEAKSPOR</strong>
             <span>Menü</span>
@@ -910,6 +1111,7 @@ function MobileMenu({ open, onClose, onJump, onOpenAdmin }) {
           <button
             key={item.id}
             className="mobile-menu-item"
+            type="button"
             onClick={() => {
               if (item.id === 'profile') {
                 onOpenAdmin();
@@ -928,143 +1130,169 @@ function MobileMenu({ open, onClose, onJump, onOpenAdmin }) {
   );
 }
 
-function BottomNav({ onJump, onOpenAdmin }) {
-  return (
-    <nav className="bottom-nav">
-      {navItems.map(item => (
-        <button
-          key={item.id}
-          className="bottom-nav-item"
-          onClick={() => {
-            if (item.id === 'profile') {
-              onOpenAdmin();
-              return;
-            }
-            onJump(item.id);
-          }}
-        >
-          <item.icon size={18} />
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </nav>
-  );
-}
-
 function AppShell({ state, setState }) {
-  const services = state.publicData?.services || defaultServices;
-  const packages = state.publicData?.packages || defaultPackages;
-  const gallery = state.publicData?.gallery || defaultGallery;
-  const trainers = state.publicData?.trainers || defaultTrainers;
+  const settings = state.settings;
+  const announcements = settings.content?.ticker || settings.announcements || defaultAnnouncements;
 
-  const dashboardPreview = useMemo(
-    () => ({
-      stats: {
-        totalUsers: 5231,
-        activeMembers: 4892,
-        revenue: 125300,
-        reservations: 128
-      },
-      recentUsers: (state.publicData?.posts || defaultPosts).slice(0, 5).map((post, index) => ({
-        id: `${post.slug}-${index}`,
-        name: post.title,
-        email: post.excerpt
-      }))
-    }),
-    [state.publicData]
-  );
+  function updateSetting(key, value) {
+    if (key === '__dashboard__') {
+      setState(prev => ({ ...prev, dashboard: value }));
+      return;
+    }
+    setState(prev => ({ ...prev, settings: { ...prev.settings, [key]: value } }));
+  }
+
+  useEffect(() => {
+    if (state.adminOpen && state.user?.role === 'ADMIN' && !state.dashboard) {
+      api.dashboard().then(dashboard => updateSetting('__dashboard__', dashboard)).catch(() => {});
+    }
+  }, [state.adminOpen, state.user]);
+
+  const content = settings.content || defaultContent;
+  const services = settings.services || defaultServices;
+  const packages = settings.packages || defaultPackages;
+  const gallery = settings.gallery || defaultGallery;
+  const trainers = settings.trainers || defaultTrainers;
 
   return (
     <div className={`app-shell ${state.dark ? 'dark' : 'light'}`}>
-      <header className="app-header">
-        <button className="icon-button" onClick={() => setState(prev => ({ ...prev, mobileMenu: !prev.mobileMenu }))}>
+      <header className="top-header">
+        <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, mobileMenu: !prev.mobileMenu }))}>
           <Menu size={20} />
         </button>
 
         <div className="header-brand">
           <span className="brand-mark">▲</span>
           <div>
-            <strong>{state.content?.brand?.name || 'PEAKSPOR'}</strong>
-            <span>{state.content?.brand?.slogan || 'Premium Fitness Platform'}</span>
+            <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
+            <span>{content.brand?.slogan || 'Premium Fitness Platform'}</span>
           </div>
         </div>
 
         <div className="header-actions">
-          <button className="mode-pill compact" onClick={() => setState(prev => ({ ...prev, dark: !prev.dark }))}>
+          <button className="mode-pill compact" type="button" onClick={() => setState(prev => ({ ...prev, dark: !prev.dark }))}>
             {state.dark ? <Moon size={14} /> : <SunMedium size={14} />}
             <span>{state.dark ? 'Koyu' : 'Açık'}</span>
           </button>
-          <button className="icon-button" onClick={() => setState(prev => ({ ...prev, assistantOpen: true }))}>
+          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, assistantOpen: true }))}>
             <Bell size={18} />
           </button>
-          <button className="icon-button" onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}>
+          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}>
             <LayoutDashboard size={18} />
           </button>
         </div>
       </header>
 
-      <main className="app-main">
-        <HeroShowcase
-          content={state.content}
+      <main className="page">
+        <Ticker items={announcements} />
+
+        <HeroSection
+          content={{ ...content, services, packages }}
           dark={state.dark}
           setDark={value => setState(prev => ({ ...prev, dark: value }))}
           onOpenAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))}
           onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+          onJump={section => scrollToSection(section)}
         />
 
-        <FeatureRail />
+        <div className="feature-strip">
+          {[
+            { icon: Dumbbell, label: 'Fitness' },
+            { icon: Bike, label: 'Kardiyo' },
+            { icon: Layers3, label: 'Kampanyalar' },
+            { icon: CalendarDays, label: 'Rezervasyon' },
+            { icon: MessageSquareMore, label: 'WhatsApp' },
+            { icon: Zap, label: 'Gece / Gündüz' }
+          ].map(item => (
+            <button className="feature-chip" type="button" key={item.label} onClick={() => scrollToSection('services')}>
+              <item.icon size={16} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
 
-        <section className="content-section" id="dashboard">
+        <ServicesSection services={services} />
+        <PackagesSection packages={packages} />
+        <section className="content-section">
           <SectionHeader
-            title="Canlı Dashboard Önizleme"
-            subtitle="Sol menü, istatistik kartları, grafikler ve içerik bloklarıyla premium yönetim ekranı."
+            title="Admin Panel Önizleme"
+            subtitle="Sol menü, stat kartları, grafik ve son işlemler ile tam yönetim alanı."
             action={
-              <button className="cta ghost" onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}>
+              <button className="cta ghost" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}>
                 Admini Aç <ChevronRight size={16} />
               </button>
             }
           />
-          <DashboardPanel dashboard={dashboardPreview} />
+          <DashboardPanel dashboard={state.dashboard} />
         </section>
-
-        <ServicesSection services={services} />
-        <PackagesSection packages={packages} />
         <TrainersSection trainers={trainers} />
         <GallerySection gallery={gallery} />
         <BookingSection />
         <ContactSection />
       </main>
 
-      <BottomNav
-        onJump={section => scrollToSection(section)}
-        onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+      <FloatingActions
+        onAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))}
+        onWhatsapp={() => {}}
       />
-      <AssistantBubble onOpen={() => setState(prev => ({ ...prev, assistantOpen: true }))} />
-      <WhatsappBubble />
-      <AssistantModal
-        open={state.assistantOpen}
-        onClose={() => setState(prev => ({ ...prev, assistantOpen: false }))}
-        content={state.content}
-      />
-      <AdminModal
-        open={state.adminOpen}
-        onClose={() => setState(prev => ({ ...prev, adminOpen: false }))}
-        user={state.user}
-        onLogin={user => setState(prev => ({ ...prev, user }))}
-      />
+      <BottomNav onJump={section => scrollToSection(section)} onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
       <MobileMenu
         open={state.mobileMenu}
         onClose={() => setState(prev => ({ ...prev, mobileMenu: false }))}
         onJump={section => scrollToSection(section)}
         onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
       />
-
+      <AssistantModal
+        open={state.assistantOpen}
+        onClose={() => setState(prev => ({ ...prev, assistantOpen: false }))}
+        content={content}
+      />
+      <AdminModal
+        open={state.adminOpen}
+        onClose={() => setState(prev => ({ ...prev, adminOpen: false }))}
+        user={state.user}
+        onLogin={user => setState(prev => ({ ...prev, user }))}
+        settings={settings}
+        onSaveSetting={(key, value) => updateSetting(key, value)}
+        dashboard={state.dashboard}
+      />
       {state.error && <div className="status-toast">{state.error}</div>}
     </div>
   );
 }
 
-export default function App() {
+function AssistantModal({ open, onClose, content }) {
+  if (!open) return null;
+  const assistant = content.assistant || defaultContent.assistant;
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="assistant-modal" onClick={event => event.stopPropagation()}>
+        <div className="modal-top">
+          <div className="assistant-head">
+            <span className="bubble-mark">▲</span>
+            <div>
+              <span className="section-kicker">Asistan</span>
+              <h3>{assistant.welcome}</h3>
+            </div>
+          </div>
+          <button className="icon-button" type="button" onClick={onClose}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <p className="assistant-copy">{assistant.message}</p>
+        <div className="assistant-grid">
+          {(assistant.buttons || []).map(button => (
+            <button key={button} className="assistant-chip" type="button">
+              {button}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
   const [state, setState] = useAppData();
 
   useEffect(() => {
@@ -1082,3 +1310,5 @@ export default function App() {
 
   return <AppShell state={state} setState={setState} />;
 }
+
+export default App;
