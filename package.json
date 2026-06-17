@@ -8,12 +8,12 @@
     "dev:server": "nodemon server/index.js",
     "dev:client": "vite",
     "build": "vite build",
-    "start": "node server/index.js",
+    "start": "npm run db:push && node server/index.js",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push --skip-generate"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.525.0",
     "multer": "^2.0.2",
+    "prisma": "^6.11.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3"
@@ -35,7 +36,6 @@
     "@vitejs/plugin-react": "^4.5.0",
     "concurrently": "^9.2.0",
     "nodemon": "^3.1.10",
-    "prisma": "^6.11.1",
     "vite": "^7.0.4"
   }
 }
