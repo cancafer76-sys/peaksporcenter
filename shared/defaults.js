@@ -1,176 +1,172 @@
-export const defaultContent = {
+﻿export const defaultContent = {
   brand: {
     name: 'PEAKSPOR',
-    shortName: 'PEAK',
-    slogan: 'Premium fitness platform',
-    logoMark: '▲'
+    shortName: 'PK',
+    slogan: 'Premium Fitness Platform',
+    logoMark: 'â–²'
   },
   hero: {
-    title: 'HEDEFİNE ULAŞ\nZİRVEYİ YAŞA',
+    title: 'HOÅ GELDÄ°NÄ°Z\nZÄ°RVEYÄ° YAÅA',
     subtitle:
-      'Profesyonel ekipmanlar, uzman eğitmenler ve modern tesislerle hedeflerine ulaş.',
-    primaryCta: 'ÜYE OL',
-    secondaryCta: 'SALONU KEŞFET',
+      'Premium salon deneyimi, uzman eÄŸitmenler, rezervasyon akÄ±ÅŸÄ± ve yÃ¶netim paneli tek bir gÃ¼Ã§lÃ¼ platformda.',
+    primaryCta: 'ÃœYE OL',
+    secondaryCta: 'SALONU KEÅFET',
     image:
       'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1400&q=80'
   },
   assistant: {
-    welcome: '👋 Hoş Geldiniz',
-    message:
-      'PEAKSPOR ailesine hoş geldiniz. Size nasıl yardımcı olabiliriz?',
-    buttons: [
-      'Üyelik Bilgileri',
-      'Paket Fiyatları',
-      'Ders Programları',
-      'Kampanyalar',
-      'Destek'
-    ]
+    welcome: 'PEAKSPOR Asistan',
+    message: 'Merhaba! Size nasÄ±l yardÄ±mcÄ± olabiliriz?',
+    buttons: ['Antrenman ProgramÄ±', 'Paketler', 'Dersler', 'Rezervasyon', 'WhatsApp Destek']
   },
   whatsapp: {
     number: '+905555555555',
-    text: 'Merhaba, PEAKSPOR hakkında bilgi almak istiyorum.',
+    text: 'Merhaba, PEAKSPOR hakkÄ±nda bilgi almak istiyorum.',
     label: 'WhatsApp'
   },
   seo: {
     title: 'PEAKSPOR | Premium Fitness Platform',
     description:
-      'PEAKSPOR için premium fitness platformu, admin paneli ve rezervasyon sistemi.',
-    keywords:
-      'fitness, gym, premium gym, spor salonu, rezervasyon, PEAKSPOR'
+      'PEAKSPOR iÃ§in premium fitness platformu, rezervasyon sistemi ve admin paneli.',
+    keywords: 'fitness, gym, premium gym, spor salonu, rezervasyon, PEAKSPOR'
   },
   theme: {
-    primary: '#7CFF4F',
-    secondary: '#22c55e',
-    background: '#050505',
-    surface: '#0d1117',
-    panel: '#111827',
+    primary: '#A4FF3F',
+    secondary: '#5DB0FF',
+    background: '#050608',
+    surface: '#0f141b',
+    panel: '#141a23',
     text: '#FFFFFF',
-    muted: '#9CA3AF'
+    muted: '#93A0B2'
   },
   ticker: [
     'Yeni grup dersleri her pazartesi',
-    'VIP üyeliklerde özel başlangıç paketi',
-    'Kişisel antrenör randevuları açık',
-    'Admin panel üzerinden tüm içerikler düzenlenebilir'
+    'VIP Ã¼yeliklerde Ã¶zel baÅŸlangÄ±Ã§ paketi',
+    'KiÅŸisel antrenÃ¶r randevularÄ± aÃ§Ä±k',
+    'TÃ¼m iÃ§erikler admin panelinden yÃ¶netilebilir'
   ],
   stats: [
-    { label: 'Aktif Üye', value: '5.231', icon: 'users' },
-    { label: 'Uzman Eğitmen', value: '18', icon: 'coach' },
+    { label: 'Aktif Ãœye', value: '5.231', icon: 'users' },
+    { label: 'Uzman EÄŸitmen', value: '18', icon: 'coach' },
     { label: 'Grup Dersi', value: '42', icon: 'class' },
-    { label: 'Yıllık Deneyim', value: '14', icon: 'years' }
-  ]
+    { label: 'YÄ±llÄ±k Deneyim', value: '14', icon: 'years' }
+  ],
+  admin: {
+    email: 'admin@peakspor.com',
+    password: 'Admin1234!'
+  }
 };
 
 export const defaultServices = [
   {
     title: 'Fitness',
     category: 'Salon',
-    description: 'Kardiyo, ağırlık ve fonksiyonel alanlarla tam kapsamlı çalışma.',
+    description: 'Kardiyo, aÄŸÄ±rlÄ±k ve fonksiyonel alanlarla tam kapsamlÄ± Ã§alÄ±ÅŸma.',
     image:
       'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80',
-    accent: '#7CFF4F'
+    accent: '#A4FF3F'
   },
   {
     title: 'Body Building',
-    category: 'Güç',
-    description: 'Kas gelişimi ve performans hedefleri için profesyonel programlar.',
+    category: 'GÃ¼Ã§',
+    description: 'Kas geliÅŸimi ve performans hedefleri iÃ§in profesyonel programlar.',
     image:
       'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
-    accent: '#22c55e'
+    accent: '#5DB0FF'
   },
   {
     title: 'Crossfit',
     category: 'Performans',
-    description: 'Yüksek yoğunluklu işlevsel antrenman deneyimi.',
+    description: 'YÃ¼ksek yoÄŸunluklu iÅŸlevsel antrenman deneyimi.',
     image:
       'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80',
-    accent: '#a3ff12'
+    accent: '#A88CFF'
   },
   {
     title: 'Pilates',
     category: 'Denge',
-    description: 'Core, esneklik ve vücut kontrolünü güçlendiren özel dersler.',
+    description: 'Core, esneklik ve vÃ¼cut kontrolÃ¼nÃ¼ gÃ¼Ã§lendiren Ã¶zel dersler.',
     image:
       'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=900&q=80',
-    accent: '#a78bfa'
+    accent: '#FFB45B'
   },
   {
     title: 'Yoga',
     category: 'Rahatlama',
-    description: 'Nefes, esneklik ve zihinsel denge için modern yoga seansları.',
+    description: 'Nefes, esneklik ve zihinsel denge iÃ§in modern yoga seanslarÄ±.',
     image:
       'https://images.unsplash.com/photo-1545389336-cf090694435e?auto=format&fit=crop&w=900&q=80',
-    accent: '#60a5fa'
+    accent: '#60A5FA'
   },
   {
     title: 'Kick Box',
-    category: 'Savaşçı',
-    description: 'Kondisyon, dayanıklılık ve teknik odaklı kick box dersleri.',
+    category: 'SavaÅŸÃ§Ä±',
+    description: 'Kondisyon, dayanÄ±klÄ±lÄ±k ve teknik odaklÄ± kick box dersleri.',
     image:
       'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=900&q=80',
-    accent: '#fb7185'
+    accent: '#FB7185'
   },
   {
     title: 'Personal Trainer',
     category: 'VIP',
-    description: 'Size özel planlama, takip ve birebir koçluk desteği.',
+    description: 'Size Ã¶zel planlama, takip ve birebir koÃ§luk desteÄŸi.',
     image:
       'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80',
-    accent: '#f59e0b'
+    accent: '#F59E0B'
   },
   {
     title: 'Functional Training',
     category: 'Dinamik',
-    description: 'Günlük performansı artıran modern fonksiyonel antrenmanlar.',
+    description: 'GÃ¼nlÃ¼k performansÄ± artÄ±ran modern fonksiyonel antrenmanlar.',
     image:
       'https://images.unsplash.com/photo-1526401281623-359b3f6c5b6d?auto=format&fit=crop&w=900&q=80',
-    accent: '#34d399'
+    accent: '#34D399'
   }
 ];
 
 export const defaultPackages = [
   {
-    title: 'Başlangıç',
-    subtitle: 'Yeni başlayanlar için',
+    title: 'BaÅŸlangÄ±Ã§',
+    subtitle: 'Yeni baÅŸlayanlar iÃ§in',
     price: 699,
     period: '/ay',
-    accent: '#7CFF4F',
+    accent: '#A4FF3F',
     features: [
-      'Sınırsız salon kullanımı',
-      '1 değerlendirme seansı',
-      'Standart ekipman erişimi',
+      'SÄ±nÄ±rsÄ±z salon kullanÄ±mÄ±',
+      '1 deÄŸerlendirme seansÄ±',
+      'Standart ekipman eriÅŸimi',
       'Mobil takip paneli',
-      'Haftalık program'
+      'HaftalÄ±k program'
     ],
-    cta: 'Başla'
+    cta: 'BaÅŸla'
   },
   {
     title: 'Orta Seviye',
-    subtitle: 'Daha yoğun ilerleme',
+    subtitle: 'Daha yoÄŸun ilerleme',
     price: 999,
     period: '/ay',
-    accent: '#22c55e',
+    accent: '#5DB0FF',
     features: [
-      'Tüm salon erişimi',
+      'TÃ¼m salon eriÅŸimi',
       '2 grup dersi',
       'Beslenme rehberi',
-      'Öncelikli rezervasyon',
-      'Kişisel hedef analizi'
+      'Ã–ncelikli rezervasyon',
+      'KiÅŸisel hedef analizi'
     ],
-    cta: 'Seç'
+    cta: 'SeÃ§'
   },
   {
     title: 'Premium',
     subtitle: 'VIP deneyim',
     price: 1499,
     period: '/ay',
-    accent: '#a78bfa',
+    accent: '#A88CFF',
     features: [
-      'Sınırsız giriş',
-      'Birebir PT desteği',
-      'Özel soyunma alanı',
+      'SÄ±nÄ±rsÄ±z giriÅŸ',
+      'Birebir PT desteÄŸi',
+      'Ã–zel soyunma alanÄ±',
       'VIP etkinlik davetleri',
-      'İşletme danışmanlığı'
+      'Ä°ÅŸletme danÄ±ÅŸmanlÄ±ÄŸÄ±'
     ],
     cta: 'Premium Ol'
   }
@@ -216,10 +212,10 @@ export const defaultGallery = [
 ];
 
 export const defaultAnnouncements = [
-  'Yeni üyeliklerde ilk ay özel fiyat avantajı.',
-  'Personal trainer dersleri için ön rezervasyon açıldı.',
-  'Akşam dersleri yoğun talep nedeniyle sınırlı kontenjan.',
-  'PEAKSPOR uygulamasındaki içerikler admin panelden güncellenebilir.'
+  'Yeni Ã¼yeliklerde ilk ay Ã¶zel fiyat avantajÄ±.',
+  'Personal trainer dersleri iÃ§in Ã¶n rezervasyon aÃ§Ä±ldÄ±.',
+  'AkÅŸam dersleri yoÄŸun talep nedeniyle sÄ±nÄ±rlÄ± kontenjan.',
+  'PEAKSPOR uygulamasÄ±ndaki iÃ§erikler admin panelden gÃ¼ncellenebilir.'
 ];
 
 export const defaultTrainers = [
@@ -245,7 +241,7 @@ export const defaultTrainers = [
       'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=700&q=80'
   },
   {
-    name: 'Can Yıldız',
+    name: 'Can YÄ±ldÄ±z',
     role: 'Personal Trainer',
     specialty: 'VIP Program',
     image:
@@ -255,27 +251,27 @@ export const defaultTrainers = [
 
 export const defaultPosts = [
   {
-    title: 'Antrenman rutininizi nasıl hızlandırırsınız?',
+    title: 'Antrenman rutininizi nasÄ±l hÄ±zlandÄ±rÄ±rsÄ±nÄ±z?',
     slug: 'antrenman-rutininizi-nasil-hizlandirirsiniz',
-    excerpt: 'Kısa ama etkili bir plan ile performans ve süreklilik elde edin.',
+    excerpt: 'KÄ±sa ama etkili bir plan ile performans ve sÃ¼reklilik elde edin.',
     coverImage:
       'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80',
-    body: 'PEAKSPOR ekibi, hedef odaklı ilerlemek isteyenler için haftalık plan, toparlanma ve beslenmeyi birlikte ele alır.'
+    body: 'PEAKSPOR ekibi, hedef odaklÄ± ilerlemek isteyenler iÃ§in haftalÄ±k plan, toparlanma ve beslenmeyi birlikte ele alÄ±r.'
   },
   {
-    title: 'Premium salon deneyimi neden fark yaratır?',
+    title: 'Premium salon deneyimi neden fark yaratÄ±r?',
     slug: 'premium-salon-deneyimi-neden-fark-yaratir',
-    excerpt: 'Işık, ekipman, alan ve uzmanlık bir araya geldiğinde sonuç değişir.',
+    excerpt: 'IÅŸÄ±k, ekipman, alan ve uzmanlÄ±k bir araya geldiÄŸinde sonuÃ§ deÄŸiÅŸir.',
     coverImage:
       'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
-    body: 'Mekân kalitesi, motivasyonu ve devamlılığı doğrudan etkiler. PEAKSPOR premium hissi bu yüzden merkezde tutar.'
+    body: 'MekÃ¢n kalitesi, motivasyonu ve devamlÄ±lÄ±ÄŸÄ± doÄŸrudan etkiler. PEAKSPOR premium hissi bu yÃ¼zden merkezde tutar.'
   },
   {
-    title: 'Kişisel koçluk ile hedefe ulaşmak',
+    title: 'KiÅŸisel koÃ§luk ile hedefe ulaÅŸmak',
     slug: 'kisisel-kocluk-ile-hedefe-ulasmak',
-    excerpt: 'Birebir takip sayesinde ölçülebilir gelişim elde edilir.',
+    excerpt: 'Birebir takip sayesinde Ã¶lÃ§Ã¼lebilir geliÅŸim elde edilir.',
     coverImage:
       'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=900&q=80',
-    body: 'Antrenörün programı, vücut ölçüleri ve program disiplinini tek panelde takip etmek mümkün.'
+    body: 'AntrenÃ¶rÃ¼n programÄ±, vÃ¼cut Ã¶lÃ§Ã¼leri ve program disiplinini tek panelde takip etmek mÃ¼mkÃ¼ndÃ¼r.'
   }
 ];
