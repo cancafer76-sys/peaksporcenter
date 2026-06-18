@@ -1047,6 +1047,42 @@ img { display: block; width: 100%; }
   font-size: 16px;
 }
 
+.route-content-mobile {
+  display: grid;
+  justify-content: center;
+}
+
+.route-card-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.route-card-grid-mobile {
+  width: min(100%, 980px);
+  margin: 0 auto;
+}
+
+.route-card {
+  min-height: 180px;
+}
+
+.route-card .service-card-body,
+.route-card .gallery-card-body {
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+}
+
+.route-card .service-card-body strong,
+.route-card .gallery-card-body strong {
+  font-size: 12px;
+}
+
+.route-card .service-card-body span,
+.route-card .gallery-card-body span {
+  font-size: 9px;
+}
+
 .gallery-carousel-track .gallery-card-mini {
   flex: 0 0 92px;
   min-width: 92px;
@@ -1474,6 +1510,14 @@ img { display: block; width: 100%; }
   }
   .gallery-grid-mobile {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .route-card-grid-mobile {
+    width: min(100%, 520px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .route-card {
+    min-height: 150px;
+    border-radius: 16px;
   }
   .gallery-card {
     min-height: 160px;

@@ -242,9 +242,16 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
           <SectionHeader
             title={title}
             subtitle={subtitle}
-            action={<button className="text-button" type="button" onClick={() => navigateToPath(backTo)}>Ana Sayfa <ChevronRight size={16} /></button>}
+            action={
+              <button className="text-button" type="button" onClick={() => navigateToPath(backTo)}>
+                <ChevronRight size={16} />
+                Geri Dön
+              </button>
+            }
           />
-          {content}
+          <div className={mobile ? 'route-content-mobile' : ''}>
+            {content}
+          </div>
         </section>
       </main>
 
@@ -441,6 +448,7 @@ function ServicesPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const services = state.settings.services || defaultServices;
   const selectedService = state.selectedService || services[0];
+  const mobile = state.viewportWidth < 980;
   return (
     <RouteChrome
       state={state}
@@ -449,12 +457,12 @@ function ServicesPage({ state, setState }) {
       subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
       content={
         <>
-          <div className="service-grid-page">
+        <div className="route-card-grid route-card-grid-mobile">
             {services.map(service => (
               <button
                 key={service.title}
                 type="button"
-                className={`service-card ${selectedService?.title === service.title ? 'selected' : ''}`}
+                className={`service-card route-card ${selectedService?.title === service.title ? 'selected' : ''}`}
                 onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
               >
                 <img src={service.image} alt={service.title} />
@@ -497,11 +505,11 @@ function PackagesPage({ state, setState }) {
       subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
       content={
         <>
-          <div className="package-grid">
+          <div className="route-card-grid route-card-grid-mobile">
             {packages.map((item, index) => (
               <article
                 key={item.title}
-                className={`package-card theme-${index} ${selectedPackage?.title === item.title ? 'selected' : ''}`}
+                className={`package-card route-card theme-${index} ${selectedPackage?.title === item.title ? 'selected' : ''}`}
                 onClick={() => setState(prev => ({ ...prev, selectedPackage: item }))}
               >
                 <div className="package-shape" />
@@ -556,9 +564,9 @@ function GalleryPage({ state, setState }) {
       title="GALERİ"
       subtitle="Tesis, antrenman ve premium atmosfer kareleri."
       content={
-        <div className="gallery-grid">
+        <div className="route-card-grid route-card-grid-mobile">
           {gallery.map(item => (
-            <article key={item.title} className="gallery-card">
+            <article key={item.title} className="gallery-card route-card">
               <img src={item.image} alt={item.title} />
               <div className="card-overlay" />
               <div className="gallery-card-body">
