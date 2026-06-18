@@ -203,8 +203,9 @@ function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin }) {
         </span>
       </button>
       {onOpenAdmin ? (
-        <button className="icon-button" type="button" onClick={onOpenAdmin} aria-label="Admin panel">
-          <LayoutDashboard size={18} />
+        <button className="admin-entry-button" type="button" onClick={onOpenAdmin} aria-label="Yetkili giriş">
+          <LayoutDashboard size={16} />
+          <span>Yetkili Giriş</span>
         </button>
       ) : null}
     </div>
@@ -1190,6 +1191,13 @@ function GalleryAutoScroller() {
 function AdminModal({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const drafts = state.adminDrafts;
+  const [loginMode, setLoginMode] = useState('email');
+  const [loginForm, setLoginForm] = useState({ email: '', username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [loginPending, setLoginPending] = useState(false);
+  const adminEmail = 'admin@peakspor.com';
+  const adminUsername = 'admin';
+  const adminPassword = 'peakspor123';
 
   const updateDraft = (section, key, value) => {
     setState(prev => ({
@@ -1240,17 +1248,94 @@ function AdminModal({ state, setState }) {
     }
   };
 
+  const handleLogin = event => {
+    event.preventDefault();
+    setLoginPending(true);
+    setLoginError('');
+
+    const emailMatch = loginForm.email.trim().toLowerCase() === adminEmail;
+    const usernameMatch = loginForm.username.trim().toLowerCase() === adminUsername;
+    const passwordMatch = loginForm.password === adminPassword;
+    const canLogin = passwordMatch && (emailMatch || usernameMatch);
+
+    window.setTimeout(() => {
+      setLoginPending(false);
+      if (!canLogin) {
+        setLoginError('E-posta, kullanıcı adı veya şifre hatalı.');
+        return;
+      }
+
+      setState(prev => ({ ...prev, adminOpen: true }));
+    }, 350);
+  };
+
   return (
     <div className="modal-backdrop">
       <div className="admin-panel">
         <div className="admin-header">
           <div>
-            <span>Admin Panel</span>
+            <span>Yetkili Giriş</span>
             <h3>PEAKSPOR Kontrol Merkezi</h3>
           </div>
           <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: false }))}>
             <X size={18} />
           </button>
+        </div>
+
+        <div className="admin-login-card">
+          <div className="admin-login-card-header">
+            <button
+              type="button"
+              className={loginMode === 'email' ? 'active' : ''}
+              onClick={() => setLoginMode('email')}
+            >
+              E-Posta
+            </button>
+            <button
+              type="button"
+              className={loginMode === 'username' ? 'active' : ''}
+              onClick={() => setLoginMode('username')}
+            >
+              Kullanıcı Adı
+            </button>
+          </div>
+          <form className="admin-login-form" onSubmit={handleLogin}>
+            {loginMode === 'email' ? (
+              <label>
+                E-posta
+                <input
+                  type="email"
+                  value={loginForm.email}
+                  onChange={e => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="admin@peakspor.com"
+                />
+              </label>
+            ) : (
+              <label>
+                Kullanıcı adı
+                <input
+                  type="text"
+                  value={loginForm.username}
+                  onChange={e => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="admin"
+                />
+              </label>
+            )}
+            <label>
+              Şifre
+              <input
+                type="password"
+                value={loginForm.password}
+                onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="••••••••"
+              />
+            </label>
+            {loginError ? <div className="admin-login-error">{loginError}</div> : null}
+            <button className="save-button" type="submit" disabled={loginPending}>
+              <LayoutDashboard size={16} />
+              {loginPending ? 'Giriş yapılıyor...' : 'Yetkili Giriş'}
+            </button>
+          </form>
         </div>
 
         <div className="admin-summary">

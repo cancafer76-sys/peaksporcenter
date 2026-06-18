@@ -144,6 +144,24 @@ img { display: block; width: 100%; }
   gap: 10px;
 }
 
+.admin-entry-button {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 255, 79, 0.22);
+  background: rgba(124, 255, 79, 0.08);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-entry-button span {
+  line-height: 1;
+}
+
 .header-left-group {
   display: inline-flex;
   align-items: center;
@@ -1312,6 +1330,61 @@ img { display: block; width: 100%; }
   padding: 20px;
 }
 
+.admin-login-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(5, 5, 5, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-login-card-header {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.admin-login-card-header button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.admin-login-card-header button.active {
+  background: rgba(124, 255, 79, 0.12);
+  color: var(--green);
+  border-color: rgba(124, 255, 79, 0.2);
+}
+
+.admin-login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-login-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-login-form input {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.admin-login-error {
+  color: #fca5a5;
+  font-size: 13px;
+}
+
 .admin-header {
   display: flex;
   align-items: center;
@@ -1617,5 +1690,20 @@ img { display: block; width: 100%; }
   .desktop-shell .whatsapp-fab-desktop { display: inline-flex; }
   .admin-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-panel {
+    width: min(100%, 100%);
+    padding: 16px;
+  }
+  .admin-entry-button {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+  .admin-login-card {
+    padding: 14px;
+  }
+  .admin-login-card-header {
+    flex-wrap: wrap;
   }
 }
