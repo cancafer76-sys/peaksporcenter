@@ -660,19 +660,6 @@ function DesktopShell({ state, setState }) {
           </div>
         </section>
 
-        <section className="stats-grid">
-          {stats.map((item, index) => {
-            const Icon = statIcons[index] || Users;
-            return (
-              <article key={item.label} className="stat-card">
-                <Icon size={20} />
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            );
-          })}
-        </section>
-
         <section className="section-block" id="services">
           <SectionHeader
             title="HİZMETLERİMİZ"
@@ -788,6 +775,19 @@ function DesktopShell({ state, setState }) {
           </div>
         </section>
 
+        <section className="stats-grid">
+          {stats.map((item, index) => {
+            const Icon = statIcons[index] || Users;
+            return (
+              <article key={item.label} className="stat-card">
+                <Icon size={20} />
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            );
+          })}
+        </section>
+
         <section className="feature-bar">
           {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (
             <span key={item}>
@@ -894,19 +894,6 @@ function MobileShell({ state, setState }) {
           </div>
         </section>
 
-        <section className="stats-grid stats-grid-mobile">
-          {stats.map((item, index) => {
-            const Icon = statIcons[index] || Users;
-            return (
-              <article key={item.label} className="stat-card">
-                <Icon size={18} />
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            );
-          })}
-        </section>
-
         <section className="section-block" id="services">
           <SectionHeader
             title="HİZMETLER"
@@ -1006,6 +993,19 @@ function MobileShell({ state, setState }) {
             </div>
           </div>
           <GalleryAutoScroller />
+        </section>
+
+        <section className="stats-grid stats-grid-mobile">
+          {stats.map((item, index) => {
+            const Icon = statIcons[index] || Users;
+            return (
+              <article key={item.label} className="stat-card">
+                <Icon size={18} />
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            );
+          })}
         </section>
 
         <section className="feature-bar feature-bar-mobile">
