@@ -159,10 +159,6 @@ img { display: block; width: 100%; }
   font-weight: 700;
 }
 
-.admin-entry-button span {
-  line-height: 1;
-}
-
 .header-left-group {
   display: inline-flex;
   align-items: center;
@@ -1384,6 +1380,10 @@ img { display: block; width: 100%; }
 .admin-login-error {
   color: #fca5a5;
   font-size: 13px;
+}
+
+.admin-panel .admin-header > div:first-child span {
+  display: none;
 }
 
 .admin-header {

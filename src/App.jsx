@@ -11,7 +11,6 @@ import {
 } from '../shared/defaults.js';
 import {
   BadgeInfo,
-  Bell,
   ChevronRight,
   Dumbbell,
   Home,
@@ -191,9 +190,6 @@ function Brand({ compact = false }) {
 function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin }) {
   return (
     <div className="header-actions">
-      <button className="icon-button" type="button" aria-label="Bildirimler">
-        <Bell size={18} />
-      </button>
       <button className="theme-switch" type="button" onClick={onToggleTheme} aria-label="Tema değiştir">
         <span className={darkMode ? 'active' : ''}>
           <Moon size={14} />
@@ -1274,7 +1270,6 @@ function AdminModal({ state, setState }) {
       <div className="admin-panel">
         <div className="admin-header">
           <div>
-            <span>Yetkili Giriş</span>
             <h3>PEAKSPOR Kontrol Merkezi</h3>
           </div>
           <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: false }))}>
