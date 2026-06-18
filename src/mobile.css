@@ -236,9 +236,10 @@ img { display: block; width: 100%; }
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(10, 12, 16, 0.96);
   padding: 12px 14px;
   overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
 }
 
 .ticker-label {
@@ -254,11 +255,13 @@ img { display: block; width: 100%; }
 .ticker-track {
   overflow: hidden;
   white-space: nowrap;
+  position: relative;
 }
 
 .ticker-track span {
   display: inline-block;
   animation: ticker 30s linear infinite;
+  color: var(--text);
 }
 
 @keyframes ticker {
@@ -1364,6 +1367,9 @@ img { display: block; width: 100%; }
   }
   .hero-carousel-mobile .hero-carousel-copy p {
     font-size: 11px;
+  }
+  .ticker {
+    background: rgba(10, 12, 16, 0.98);
   }
   .hero-overlay-mobile {
     position: absolute;
