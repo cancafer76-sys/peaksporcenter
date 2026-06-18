@@ -543,6 +543,7 @@ function MobileShell({ state, setState }) {
   const heroSlides = bannerSlides.length
     ? bannerSlides
     : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const serviceLoop = services.length > 1 ? [...services, ...services] : services;
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -602,48 +603,28 @@ function MobileShell({ state, setState }) {
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
           <div className="service-carousel">
-            <button
-              type="button"
-              className="service-carousel-arrow service-carousel-arrow-left"
-              onClick={() => {
-                const rail = document.querySelector('.service-auto-scroll');
-                if (rail) rail.scrollBy({ left: -rail.clientWidth * 0.75, behavior: 'smooth' });
-              }}
-              aria-label="Önceki hizmetler"
-            >
-              ‹
-            </button>
-            <div className="service-grid-mobile mobile-horizontal-rail service-auto-scroll">
-            {services.map(service => (
-              <button
-                key={service.title}
-                type="button"
-                className={`service-card service-card-mobile ${selectedService?.title === service.title ? 'selected' : ''}`}
-                onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
-              >
-                <img src={service.image} alt={service.title} />
-                <div className="card-overlay" />
-                <div className="service-card-body">
-                  <Dumbbell size={15} />
-                  <div>
-                    <strong>{service.title}</strong>
-                    <span>{service.category}</span>
-                  </div>
-                </div>
-              </button>
-            ))}
+            <div className="service-carousel-viewport">
+              <div className="service-carousel-track service-carousel-loop">
+                {serviceLoop.map((service, index) => (
+                  <button
+                    key={`${service.title}-${index}`}
+                    type="button"
+                    className={`service-card service-card-mobile ${selectedService?.title === service.title ? 'selected' : ''}`}
+                    onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
+                  >
+                    <img src={service.image} alt={service.title} />
+                    <div className="card-overlay" />
+                    <div className="service-card-body">
+                      <Dumbbell size={15} />
+                      <div>
+                        <strong>{service.title}</strong>
+                        <span>{service.category}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-            <button
-              type="button"
-              className="service-carousel-arrow service-carousel-arrow-right"
-              onClick={() => {
-                const rail = document.querySelector('.service-auto-scroll');
-                if (rail) rail.scrollBy({ left: rail.clientWidth * 0.75, behavior: 'smooth' });
-              }}
-              aria-label="Sonraki hizmetler"
-            >
-              ›
-            </button>
           </div>
           <ServiceAutoScroller />
         </section>
@@ -763,24 +744,25 @@ function MobileShell({ state, setState }) {
 
 function ServiceAutoScroller() {
   useEffect(() => {
-    const rail = document.querySelector('.service-auto-scroll');
+    const rail = document.querySelector('.service-carousel-loop');
     if (!rail) return undefined;
-    let intervalId;
-    let direction = -1;
+    let frameId;
+    let startTime = 0;
+    const speed = 0.5;
+    const loopWidth = rail.scrollWidth / 2;
 
-    const tick = () => {
-      const maxScroll = rail.scrollWidth - rail.clientWidth;
-      if (maxScroll <= 0) {
-        return;
+    const tick = timestamp => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      if (loopWidth > rail.clientWidth) {
+        const offset = (elapsed * speed) % loopWidth;
+        rail.scrollLeft = offset;
       }
-
-      rail.scrollLeft += direction;
-      if (rail.scrollLeft <= 0) direction = 1;
-      if (rail.scrollLeft >= maxScroll) direction = -1;
+      frameId = window.requestAnimationFrame(tick);
     };
 
-    intervalId = window.setInterval(tick, 18);
-    return () => window.clearInterval(intervalId);
+    frameId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   return null;

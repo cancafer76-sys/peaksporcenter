@@ -649,6 +649,21 @@ img { display: block; width: 100%; }
   position: relative;
 }
 
+.service-carousel-viewport {
+  overflow: hidden;
+}
+
+.service-carousel-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  will-change: scroll-position;
+}
+
+.service-carousel-loop {
+  min-width: max-content;
+}
+
 .service-carousel-arrow {
   position: absolute;
   top: 50%;
@@ -1245,6 +1260,15 @@ img { display: block; width: 100%; }
   .service-carousel-arrow-right { right: -4px; }
   .hero-badge-mobile {
     margin-bottom: 2px;
+  }
+  .service-carousel-viewport {
+    overflow: hidden;
+  }
+  .service-carousel-track {
+    gap: 12px;
+  }
+  .service-carousel-loop {
+    min-width: max-content;
   }
   .service-card,
   .package-card {
