@@ -33,6 +33,7 @@ import {
   Video,
   X
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './mobile.css';
 
 const fallbackSettings = {
@@ -46,17 +47,17 @@ const fallbackSettings = {
 
 const desktopNav = [
   { id: 'home', label: 'Ana Sayfa' },
-  { id: 'services', label: 'Hizmetler' },
-  { id: 'packages', label: 'Paketler' },
-  { id: 'gallery', label: 'Galeri' },
+  { id: 'services', label: 'Hizmetler', route: '/services' },
+  { id: 'packages', label: 'Paketler', route: '/packages' },
+  { id: 'gallery', label: 'Galeri', route: '/gallery' },
   { id: 'contact', label: 'İletişim' }
 ];
 
 const mobileNav = [
   { id: 'home', label: 'Ana Sayfa', icon: Home },
-  { id: 'services', label: 'Hizmetler', icon: Dumbbell },
-  { id: 'packages', label: 'Paketler', icon: Package },
-  { id: 'gallery', label: 'Galeri', icon: Image },
+  { id: 'services', label: 'Hizmetler', icon: Dumbbell, route: '/services' },
+  { id: 'packages', label: 'Paketler', icon: Package, route: '/packages' },
+  { id: 'gallery', label: 'Galeri', icon: Image, route: '/gallery' },
   { id: 'contact', label: 'İletişim', icon: LayoutDashboard }
 ];
 
@@ -140,6 +141,39 @@ function useAppData() {
 function scrollToSection(id) {
   const element = document.getElementById(id);
   if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function useSectionNavigation() {
+  const navigate = useNavigate();
+
+  return (target, options = {}) => {
+    if (!target) return;
+    if (target.startsWith('/')) {
+      navigate(target);
+      if (options.scrollTo) {
+        window.requestAnimationFrame(() => scrollToSection(options.scrollTo));
+      }
+      return;
+    }
+    scrollToSection(target);
+  };
+}
+
+function navigateToPath(pathname) {
+  window.history.pushState({}, '', pathname);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+function usePathname() {
+  const [pathname, setPathname] = useState(() => (typeof window !== 'undefined' ? window.location.pathname : '/'));
+
+  useEffect(() => {
+    const handlePopState = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  return pathname;
 }
 
 function formatPrice(value) {
@@ -313,6 +347,206 @@ function SectionHeader({ title, subtitle, action }) {
   );
 }
 
+function ServicesPage({ state, setState }) {
+  const content = state.settings.content || defaultContent;
+  const services = state.settings.services || defaultServices;
+  const selectedService = state.selectedService || services[0];
+  const navigateSection = useSectionNavigation();
+
+  return (
+    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
+      <header className="desktop-header">
+        <div className="shell-width desktop-header-inner">
+          <div className="header-left-group">
+            <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))} aria-label="Menü">
+              <Menu size={18} />
+            </button>
+            <Brand />
+          </div>
+          <div className="page-heading-inline">
+            <span>Hizmetler Sayfası</span>
+          </div>
+          <HeaderActions
+            darkMode={state.darkMode}
+            onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+            onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+          />
+        </div>
+      </header>
+
+      <main className="shell-width desktop-page">
+        <section className="section-block">
+          <SectionHeader
+            title="HİZMETLER"
+            subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
+            action={<button className="text-button" type="button" onClick={() => navigateSection('packages')}>Paketlere Git <ChevronRight size={16} /></button>}
+          />
+          <div className="service-grid-page">
+            {services.map(service => (
+              <button
+                key={service.title}
+                type="button"
+                className={`service-card ${selectedService?.title === service.title ? 'selected' : ''}`}
+                onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
+              >
+                <img src={service.image} alt={service.title} />
+                <div className="card-overlay" />
+                <div className="service-card-body">
+                  <Dumbbell size={16} />
+                  <div>
+                    <strong>{service.title}</strong>
+                    <span>{service.category}</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          {selectedService ? (
+            <article className="detail-card">
+              <div>
+                <span>Seçili Hizmet</span>
+                <h3>{selectedService.title}</h3>
+                <p>{selectedService.description}</p>
+              </div>
+            </article>
+          ) : null}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function PackagesPage({ state, setState }) {
+  const packages = state.settings.packages || defaultPackages;
+  const selectedPackage = state.selectedPackage || packages[0];
+  const navigateSection = useSectionNavigation();
+
+  return (
+    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
+      <header className="desktop-header">
+        <div className="shell-width desktop-header-inner">
+          <div className="header-left-group">
+            <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))} aria-label="Menü">
+              <Menu size={18} />
+            </button>
+            <Brand />
+          </div>
+          <div className="page-heading-inline">
+            <span>Paketler Sayfası</span>
+          </div>
+          <HeaderActions
+            darkMode={state.darkMode}
+            onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+            onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+          />
+        </div>
+      </header>
+
+      <main className="shell-width desktop-page">
+        <section className="section-block">
+          <SectionHeader
+            title="PAKETLER"
+            subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
+            action={<button className="text-button" type="button" onClick={() => navigateSection('gallery')}>Galeriye Git <ChevronRight size={16} /></button>}
+          />
+          <div className="package-grid">
+            {packages.map((item, index) => (
+              <article
+                key={item.title}
+                className={`package-card theme-${index} ${selectedPackage?.title === item.title ? 'selected' : ''}`}
+                onClick={() => setState(prev => ({ ...prev, selectedPackage: item }))}
+              >
+                <div className="package-shape" />
+                <div className="package-top">
+                  <div>
+                    <span>{item.subtitle}</span>
+                    <h3>{item.title}</h3>
+                  </div>
+                  <div className="package-price">
+                    ₺{formatPrice(item.price)}
+                    <small>{item.period}</small>
+                  </div>
+                </div>
+                <ul>
+                  {item.features.slice(0, 4).map(feature => (
+                    <li key={feature}>
+                      <span className="check">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+          {selectedPackage ? (
+            <article className="detail-card detail-card-compact">
+              <div>
+                <span>Seçili Paket</span>
+                <h3>{selectedPackage.title}</h3>
+                <p>{selectedPackage.subtitle}</p>
+              </div>
+              <div className="detail-price">
+                ₺{formatPrice(selectedPackage.price)}
+                <small>/ay</small>
+              </div>
+            </article>
+          ) : null}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function GalleryPage({ state, setState }) {
+  const gallery = state.settings.gallery || defaultGallery;
+  const navigateSection = useSectionNavigation();
+
+  return (
+    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
+      <header className="desktop-header">
+        <div className="shell-width desktop-header-inner">
+          <div className="header-left-group">
+            <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))} aria-label="Menü">
+              <Menu size={18} />
+            </button>
+            <Brand />
+          </div>
+          <div className="page-heading-inline">
+            <span>Galeri Sayfası</span>
+          </div>
+          <HeaderActions
+            darkMode={state.darkMode}
+            onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+            onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+          />
+        </div>
+      </header>
+
+      <main className="shell-width desktop-page">
+        <section className="section-block">
+          <SectionHeader
+            title="GALERİ"
+            subtitle="Tesis, antrenman ve premium atmosfer kareleri."
+            action={<button className="text-button" type="button" onClick={() => navigateSection('services')}>Hizmetlere Git <ChevronRight size={16} /></button>}
+          />
+          <div className="gallery-grid">
+            {gallery.map(item => (
+              <article key={item.title} className="gallery-card">
+                <img src={item.image} alt={item.title} />
+                <div className="card-overlay" />
+                <div className="gallery-card-body">
+                  <span>{item.category}</span>
+                  <strong>{item.title}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
 function DesktopShell({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
@@ -343,7 +577,12 @@ function DesktopShell({ state, setState }) {
           </div>
           <nav className="desktop-nav" aria-label="Ana menü">
             {desktopNav.map(item => (
-              <button key={item.id} type="button" className="desktop-nav-link" onClick={() => scrollToSection(item.id)}>
+              <button
+                key={item.id}
+                type="button"
+                className="desktop-nav-link"
+                onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
+              >
                 {item.label}
               </button>
             ))}
@@ -636,7 +875,7 @@ function MobileShell({ state, setState }) {
         <section className="section-block" id="services">
           <SectionHeader
             title="HİZMETLER"
-            action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
           <div className="service-carousel">
             <div className="service-carousel-viewport">
@@ -668,7 +907,7 @@ function MobileShell({ state, setState }) {
         <section className="section-block" id="packages">
           <SectionHeader
             title="PAKETLER"
-            action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
           <div className="package-rail-mobile mobile-horizontal-rail package-auto-scroll">
             {packages.map((item, index) => (
@@ -709,7 +948,7 @@ function MobileShell({ state, setState }) {
           <SectionHeader
             title="GALERİ"
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
-            action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
           <div className="service-carousel">
             <div className="service-carousel-viewport gallery-carousel-viewport">
@@ -749,15 +988,15 @@ function MobileShell({ state, setState }) {
           <Home size={18} />
           <span>Ana Sayfa</span>
         </button>
-        <button type="button" className="bottom-nav-item" onClick={() => scrollToSection('services')}>
+        <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/services')}>
           <Dumbbell size={18} />
           <span>Hizmetler</span>
         </button>
-        <button type="button" className="bottom-nav-item menu-center" onClick={() => scrollToSection('gallery')}>
+        <button type="button" className="bottom-nav-item menu-center" onClick={() => navigateToPath('/gallery')}>
           <Image size={18} />
           <span>Galeri</span>
         </button>
-        <button type="button" className="bottom-nav-item" onClick={() => scrollToSection('packages')}>
+        <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/packages')}>
           <Package size={18} />
           <span>Paketler</span>
         </button>
@@ -794,7 +1033,11 @@ function MobileShell({ state, setState }) {
           <Brand compact />
           <div className="drawer-links">
             {mobileNav.map(item => (
-              <button key={item.id} type="button" onClick={() => scrollToSection(item.id)}>
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
+              >
                 {item.label}
               </button>
             ))}
@@ -1114,9 +1357,18 @@ function AdminModal({ state, setState }) {
   );
 }
 
+function useSectionPath(pathname) {
+  const isServices = pathname === '/services';
+  const isPackages = pathname === '/packages';
+  const isGallery = pathname === '/gallery';
+  return { isServices, isPackages, isGallery };
+}
+
 export default function App() {
   const [state, setState] = useAppData();
   const isMobile = useMemo(() => state.viewportWidth < 980, [state.viewportWidth]);
+  const pathname = usePathname();
+  const sectionPath = useSectionPath(pathname);
 
   if (state.loading) {
     return (
@@ -1125,6 +1377,18 @@ export default function App() {
         <div className="loading-bar" />
       </div>
     );
+  }
+
+  if (sectionPath.isServices) {
+    return <ServicesPage state={state} setState={setState} />;
+  }
+
+  if (sectionPath.isPackages) {
+    return <PackagesPage state={state} setState={setState} />;
+  }
+
+  if (sectionPath.isGallery) {
+    return <GalleryPage state={state} setState={setState} />;
   }
 
   return isMobile ? <MobileShell state={state} setState={setState} /> : <DesktopShell state={state} setState={setState} />;
