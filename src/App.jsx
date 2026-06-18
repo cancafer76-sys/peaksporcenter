@@ -551,7 +551,7 @@ function MobileShell({ state, setState }) {
             title="PAKETLER"
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="package-rail-mobile mobile-horizontal-rail">
+          <div className="package-rail-mobile mobile-horizontal-rail package-auto-scroll">
             {packages.map((item, index) => (
               <article
                 key={item.title}
@@ -583,6 +583,7 @@ function MobileShell({ state, setState }) {
               </article>
             ))}
           </div>
+          <PackageAutoScroller />
         </section>
 
         <section className="feature-bar feature-bar-mobile">
@@ -675,6 +676,30 @@ function ServiceAutoScroller() {
       rail.scrollLeft += direction;
       if (rail.scrollLeft <= 0) direction = 0.45;
       if (rail.scrollLeft >= maxScroll) direction = -0.45;
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  return null;
+}
+
+function PackageAutoScroller() {
+  useEffect(() => {
+    const rail = document.querySelector('.package-auto-scroll');
+    if (!rail) return undefined;
+    let frameId;
+    let direction = -0.4;
+
+    const tick = () => {
+      const maxScroll = rail.scrollWidth - rail.clientWidth;
+      if (maxScroll > 0) {
+        rail.scrollLeft += direction;
+        if (rail.scrollLeft <= 0) direction = 0.4;
+        if (rail.scrollLeft >= maxScroll) direction = -0.4;
+      }
       frameId = requestAnimationFrame(tick);
     };
 

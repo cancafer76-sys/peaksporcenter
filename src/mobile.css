@@ -444,7 +444,11 @@ img { display: block; width: 100%; }
 }
 
 .mobile-horizontal-rail .package-card-mobile {
+  flex: 0 0 42%;
+  min-width: 42%;
   min-height: 118px;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
 }
 
 .mobile-horizontal-rail .service-card-body {
@@ -459,6 +463,25 @@ img { display: block; width: 100%; }
 
 .mobile-horizontal-rail .service-card-body span {
   font-size: 9px;
+}
+
+.mobile-horizontal-rail .package-top {
+  flex-direction: column;
+}
+
+.mobile-horizontal-rail .package-card-mobile ul {
+  margin: 12px 0 12px;
+  gap: 6px;
+}
+
+.mobile-horizontal-rail .package-card-mobile li {
+  font-size: 10px;
+}
+
+.mobile-horizontal-rail .package-cta {
+  min-height: 38px;
+  border-radius: 12px;
+  font-size: 11px;
 }
 
 .service-card {
