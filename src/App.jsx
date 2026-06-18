@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Dumbbell,
-  Eye,
   Flame,
   Home,
   LayoutDashboard,
@@ -33,7 +32,8 @@ import {
   Users,
   Zap,
   Moon,
-  SunMedium
+  SunMedium,
+  Activity
 } from 'lucide-react';
 
 const fallbackSettings = {
@@ -54,6 +54,14 @@ const desktopNav = [
   { id: 'gallery', label: 'Galeri' },
   { id: 'blog', label: 'Blog' },
   { id: 'contact', label: 'İletişim' }
+];
+
+const mobileNav = [
+  { id: 'home', label: 'Ana Sayfa', icon: Home },
+  { id: 'services', label: 'Hizmetler', icon: Dumbbell },
+  { id: 'booking', label: 'Rezervasyon', icon: CalendarDays },
+  { id: 'packages', label: 'Paketler', icon: Package },
+  { id: 'profile', label: 'Profil', icon: UserRound }
 ];
 
 const adminMenu = [
@@ -158,75 +166,6 @@ function Ticker({ items }) {
   );
 }
 
-function HeroCard({ content, onOpenAssistant, onOpenAdmin, onJump }) {
-  const hero = content.hero || defaultContent.hero;
-  const heroImage = hero.image;
-
-  return (
-    <section className="hero-shell" id="home">
-      <div className="hero-content">
-        <div className="hero-text">
-          <div className="brand-lockup desktop-brand">
-            <span className="brand-mark">▲</span>
-            <div>
-              <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
-            </div>
-          </div>
-          <h1>{hero.title}</h1>
-          <p>{hero.subtitle}</p>
-          <div className="hero-actions">
-            <button className="cta primary" type="button" onClick={() => onJump('booking')}>
-              Üye Ol
-            </button>
-            <button className="cta ghost" type="button" onClick={() => onJump('services')}>
-              Salonu Keşfet
-            </button>
-          </div>
-        </div>
-
-        <div className="hero-image">
-          <img src={heroImage} alt="Peakspor hero" />
-        </div>
-      </div>
-
-      <div className="hero-nav">
-        {desktopNav.map(item => (
-          <button key={item.id} type="button" className="hero-nav-item" onClick={() => onJump(item.id)}>
-            {item.label}
-          </button>
-        ))}
-        <div className="hero-controls">
-          <button className="icon-button" type="button" aria-label="Bildirimler">
-            <Bell size={18} />
-          </button>
-          <button className="icon-button" type="button" aria-label="Açık/Koyu">
-            <Moon size={18} />
-          </button>
-        </div>
-      </div>
-
-      <div className="hero-stats">
-        {[
-          { icon: Users, label: '5.000+', sub: 'AKTİF ÜYE' },
-          { icon: Target, label: '25', sub: 'UZMAN EĞİTMEN' },
-          { icon: Activity, label: '100+', sub: 'GRUP DERSİ' },
-          { icon: ShieldCheck, label: '10+', sub: 'YILLIK DENEYİM' }
-        ].map(item => (
-          <div className="stat-box" key={item.sub}>
-            <item.icon size={20} />
-            <strong>{item.label}</strong>
-            <span>{item.sub}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="ticker-wrap">
-        <Ticker items={content.announcements || defaultAnnouncements} />
-      </div>
-    </section>
-  );
-}
-
 function SectionTitle({ title, action }) {
   return (
     <div className="section-title-row">
@@ -236,10 +175,204 @@ function SectionTitle({ title, action }) {
   );
 }
 
+function DesktopHero({ content, onJump }) {
+  const hero = content.hero || defaultContent.hero;
+  return (
+    <section className="desktop-hero" id="home">
+      <div className="top-header-hero">
+        <div className="desktop-brand">
+          <span className="brand-mark">▲</span>
+          <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
+        </div>
+        <nav className="desktop-menu">
+          {desktopNav.map(item => (
+            <button key={item.id} type="button" className={`desktop-menu-item ${item.id === 'home' ? 'active' : ''}`} onClick={() => onJump(item.id)}>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="header-actions">
+          <button className="icon-button" type="button" aria-label="Bildirimler">
+            <Bell size={18} />
+          </button>
+          <button className="icon-button" type="button" aria-label="Açık/Koyu">
+            <Moon size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div className="desktop-hero-body">
+        <div className="desktop-hero-copy">
+          <div className="hero-badge">
+            <Sparkles size={14} />
+            Premium Fitness Deneyimi
+          </div>
+          <h1>{hero.title}</h1>
+          <p>{hero.subtitle}</p>
+          <div className="hero-actions">
+            <button className="cta primary" type="button" onClick={() => onJump('booking')}>
+              ÜYE OL
+            </button>
+            <button className="cta ghost" type="button" onClick={() => onJump('services')}>
+              SALONU KEŞFET
+            </button>
+          </div>
+          <div className="hero-stats">
+            {[
+              { icon: Users, label: '5.000+', sub: 'AKTİF ÜYE' },
+              { icon: Target, label: '25', sub: 'UZMAN EĞİTMEN' },
+              { icon: Activity, label: '100+', sub: 'GRUP DERSİ' },
+              { icon: ShieldCheck, label: '10+', sub: 'YILLIK DENEYİM' }
+            ].map(item => (
+              <div className="stat-box" key={item.sub}>
+                <item.icon size={20} />
+                <strong>{item.label}</strong>
+                <span>{item.sub}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="desktop-hero-image">
+          <img src={hero.image} alt="Peakspor hero" />
+        </div>
+      </div>
+
+      <Ticker items={content.announcements || defaultAnnouncements} />
+    </section>
+  );
+}
+
+function MobileHero({ content, onJump }) {
+  const hero = content.hero || defaultContent.hero;
+  const services = content.services || defaultServices;
+  const packages = content.packages || defaultPackages;
+
+  return (
+    <section className="mobile-shell" id="home">
+      <div className="mobile-topbar">
+        <button className="icon-button" type="button" onClick={() => {}} aria-label="Menü">
+          <Menu size={20} />
+        </button>
+        <div className="mobile-brand">
+          <span className="brand-mark">▲</span>
+          <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
+        </div>
+        <div className="header-actions">
+          <button className="icon-button" type="button" aria-label="Bildirimler">
+            <Bell size={18} />
+          </button>
+          <button className="icon-button" type="button" aria-label="Açık/Koyu">
+            <Moon size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div className="mobile-hero-body">
+        <div className="mobile-copy">
+          <h1>{hero.title}</h1>
+          <p>{hero.subtitle}</p>
+          <div className="hero-actions">
+            <button className="cta primary" type="button" onClick={() => onJump('booking')}>
+              ÜYE OL
+            </button>
+            <button className="cta ghost" type="button" onClick={() => onJump('services')}>
+              SALONU KEŞFET
+            </button>
+          </div>
+          <div className="hero-dots">
+            <span className="active" />
+            <span />
+            <span />
+          </div>
+        </div>
+        <div className="mobile-image">
+          <img src={hero.image} alt="Peakspor mobile hero" />
+        </div>
+      </div>
+
+      <div className="hero-stats mobile-stats">
+        {[
+          { icon: Users, label: '5.000+', sub: 'AKTİF ÜYE' },
+          { icon: Target, label: '25', sub: 'UZMAN EĞİTMEN' },
+          { icon: Activity, label: '100+', sub: 'GRUP DERSİ' },
+          { icon: ShieldCheck, label: '10+', sub: 'YILLIK DENEYİM' }
+        ].map(item => (
+          <div className="stat-box" key={item.sub}>
+            <item.icon size={18} />
+            <strong>{item.label}</strong>
+            <span>{item.sub}</span>
+          </div>
+        ))}
+      </div>
+
+      <Ticker items={content.announcements || defaultAnnouncements} />
+
+      <section className="section-block">
+        <SectionTitle title="Hizmetlerimiz" action={<button className="mini-link">Tümü</button>} />
+        <div className="service-row mobile-service-row">
+          {services.slice(0, 8).map(service => (
+            <article className="service-tile mobile-service-tile" key={service.title}>
+              <img src={service.image} alt={service.title} />
+              <div className="service-overlay" />
+              <div className="service-label">
+                <span>{service.title}</span>
+                <small>{service.category}</small>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-block">
+        <SectionTitle title="Paketlerimiz" action={<button className="mini-link">Tümü</button>} />
+        <div className="mobile-package-list">
+          {packages.slice(0, 3).map(pkg => (
+            <article className="package-card mobile-package-card" key={pkg.title}>
+              <div className="package-ribbon" style={{ '--accent': pkg.accent }} />
+              <div className="package-head">
+                <h3>{pkg.title}</h3>
+                <div className="package-price">
+                  ₺{formatPrice(pkg.price)} <small>{pkg.period}</small>
+                </div>
+              </div>
+              <ul>
+                {pkg.features.slice(0, 5).map(feature => (
+                  <li key={feature}>
+                    <CheckCircle2 size={14} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <div className="mobile-whatsapp-row">
+        <button className="mobile-assistant-bubble" type="button">
+          <span className="brand-mark">▲</span>
+        </button>
+        <button className="whatsapp-fab mobile-wa" type="button">
+          <MessageSquareMore size={18} />
+        </button>
+      </div>
+
+      <nav className="mobile-bottom-nav">
+        {mobileNav.map(item => (
+          <button key={item.id} type="button" className={`mobile-bottom-item ${item.id === 'home' ? 'active' : ''}`} onClick={() => onJump(item.id === 'profile' ? 'contact' : item.id)}>
+            <item.icon size={18} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </section>
+  );
+}
+
 function ServicesSection({ services }) {
   return (
     <section className="section-block" id="services">
-      <SectionTitle title="Hizmetlerimiz" action={<button className="mini-link">Tüm Hizmetler</button>} />
+      <SectionTitle title="Hizmetlerimiz" action={<button className="mini-link">Tümü</button>} />
       <div className="service-row">
         {services.slice(0, 8).map(service => (
           <article className="service-tile" key={service.title}>
@@ -259,7 +392,7 @@ function ServicesSection({ services }) {
 function PackagesSection({ packages }) {
   return (
     <section className="section-block" id="packages">
-      <SectionTitle title="Paketlerimiz" action={<button className="mini-link">Tüm Paketler</button>} />
+      <SectionTitle title="Paketlerimiz" action={<button className="mini-link">Tümü</button>} />
       <div className="package-grid">
         {packages.map(pkg => (
           <article className="package-card" key={pkg.title}>
@@ -288,12 +421,7 @@ function PackagesSection({ packages }) {
 function BottomFeatures() {
   return (
     <div className="bottom-features">
-      {[
-        'Esnek Üyelik',
-        '%100 Memnuniyet',
-        '7/24 Destek',
-        'Güvenli Ödeme'
-      ].map(item => (
+      {['Esnek Üyelik', '%100 Memnuniyet', '7/24 Destek', 'Güvenli Ödeme'].map(item => (
         <span key={item}>
           <ShieldCheck size={14} />
           {item}
@@ -307,13 +435,15 @@ function DashboardPanel({ dashboard }) {
   const stats = [
     { label: 'Toplam Üye', value: dashboard?.stats?.totalUsers ?? 5231, icon: Users, tone: 'green' },
     { label: 'Aktif Üye', value: dashboard?.stats?.activeMembers ?? 4892, icon: Target, tone: 'blue' },
-    { label: 'Toplam Gelir', value: `₺${formatPrice(dashboard?.stats?.revenue ?? 125300)}`, icon: BarChart3, tone: 'purple' },
+    { label: 'Toplam Gelir', value: `₺${formatPrice(dashboard?.stats?.revenue ?? 125300)}`, icon: LayoutDashboard, tone: 'purple' },
     { label: 'Rezervasyon', value: dashboard?.stats?.reservations ?? 128, icon: CalendarDays, tone: 'orange' }
   ];
 
-  const recentRows = (dashboard?.recentUsers?.length
-    ? dashboard.recentUsers.slice(0, 5).map(user => ({ title: user.name, subtitle: user.email }))
-    : defaultPosts.slice(0, 5).map(post => ({ title: post.title, subtitle: post.excerpt })));
+  const recentRows = (
+    dashboard?.recentUsers?.length
+      ? dashboard.recentUsers.slice(0, 5).map(user => ({ title: user.name, subtitle: user.email }))
+      : defaultPosts.slice(0, 5).map(post => ({ title: post.title, subtitle: post.excerpt }))
+  );
 
   return (
     <div className="dashboard-panel">
@@ -339,15 +469,9 @@ function DashboardPanel({ dashboard }) {
             <h3>Admin Panel Genel Bakış</h3>
           </div>
           <div className="dashboard-icons">
-            <button className="icon-button" type="button">
-              <Search size={18} />
-            </button>
-            <button className="icon-button" type="button">
-              <Bell size={18} />
-            </button>
-            <button className="icon-button" type="button">
-              <Settings size={18} />
-            </button>
+            <button className="icon-button" type="button"><Search size={18} /></button>
+            <button className="icon-button" type="button"><Bell size={18} /></button>
+            <button className="icon-button" type="button"><Settings size={18} /></button>
           </div>
         </div>
 
@@ -479,12 +603,8 @@ function ContactSection() {
           <h3>PEAKSPOR</h3>
           <p>Premium deneyim, güçlü ekip ve mobil öncelikli tasarım tek yerde.</p>
           <div className="contact-actions">
-            <button className="cta primary" type="button" onClick={() => scrollToSection('home')}>
-              Ana Sayfa
-            </button>
-            <button className="cta ghost" type="button" onClick={() => scrollToSection('booking')}>
-              Rezervasyon
-            </button>
+            <button className="cta primary" type="button" onClick={() => scrollToSection('home')}>Ana Sayfa</button>
+            <button className="cta ghost" type="button" onClick={() => scrollToSection('booking')}>Rezervasyon</button>
           </div>
         </article>
 
@@ -514,9 +634,7 @@ function JsonEditor({ label, value, onChange, onSave, hint, saving }) {
           <strong>{label}</strong>
           {hint && <p>{hint}</p>}
         </div>
-        <button className="cta primary small" type="button" onClick={onSave} disabled={saving}>
-          Kaydet
-        </button>
+        <button className="cta primary small" type="button" onClick={onSave} disabled={saving}>Kaydet</button>
       </div>
       <textarea className="input editor-input" value={value} onChange={e => onChange(e.target.value)} />
     </div>
@@ -671,7 +789,12 @@ function AdminModal({ open, onClose, user, onLogin, settings, onSaveSetting, das
               </div>
             </div>
             {adminMenu.map(item => (
-              <button key={item} className={`sidebar-item ${tab === 'content' && item === 'Ana Sayfa' ? 'active' : ''}`} type="button" onClick={() => setTab(item === 'Ana Sayfa' ? 'content' : item.toLowerCase())}>
+              <button
+                key={item}
+                className={`sidebar-item ${tab === 'content' && item === 'Ana Sayfa' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setTab(item === 'Ana Sayfa' ? 'content' : item.toLowerCase())}
+              >
                 {item}
               </button>
             ))}
@@ -745,8 +868,8 @@ function AdminModal({ open, onClose, user, onLogin, settings, onSaveSetting, das
 
 function FloatingActions({ onAssistant }) {
   return (
-    <button className="floating-bubble assistant" type="button" onClick={onAssistant} aria-label="Asistan">
-      <span className="bubble-mark">▲</span>
+    <button className="floating-bubble" type="button" onClick={onAssistant} aria-label="Asistan">
+      <span className="brand-mark">▲</span>
     </button>
   );
 }
@@ -768,7 +891,7 @@ function MobileMenu({ open, onClose, onJump, onOpenAdmin }) {
             <ChevronRight size={18} />
           </button>
         </div>
-        {desktopNav.map(item => (
+        {mobileNav.map(item => (
           <button
             key={item.id}
             className="mobile-menu-item"
@@ -811,57 +934,31 @@ function AppShell({ state, setState }) {
   const gallery = settings.gallery || defaultGallery;
   const trainers = settings.trainers || defaultTrainers;
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 980;
+
   return (
-    <div className="app-shell light">
-      <header className="top-header">
-        <div className="header-left">
-          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))} aria-label="Menü">
-            <Menu size={20} />
-          </button>
-
-          <div className="header-brand">
-            <span className="brand-mark">▲</span>
-            <div>
-              <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
-            </div>
-          </div>
-
-          <nav className="desktop-menu">
-            {desktopNav.map(item => (
-              <button key={item.id} type="button" className={`desktop-menu-item ${item.id === 'home' ? 'active' : ''}`} onClick={() => scrollToSection(item.id)}>
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="header-actions">
-          <button className="icon-button" type="button" aria-label="Bildirimler">
-            <Bell size={18} />
-          </button>
-          <button className="icon-button" type="button" aria-label="Açık/Koyu">
-            <Moon size={18} />
-          </button>
-        </div>
-      </header>
-
-      <main className="page">
-        <HeroCard
+    <div className={`app-shell ${isMobile ? 'mobile' : 'desktop'}`}>
+      {isMobile ? (
+        <MobileHero
           content={{ ...content, services, packages, announcements }}
-          onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-          onOpenAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))}
           onJump={section => scrollToSection(section)}
         />
-
-        <ServicesSection services={services} />
-        <PackagesSection packages={packages} />
-        <BottomFeatures />
-        <DashboardPanel dashboard={state.dashboard} />
-        <TrainersSection trainers={trainers} />
-        <GallerySection gallery={gallery} />
-        <BookingSection />
-        <ContactSection />
-      </main>
+      ) : (
+        <main className="page">
+          <DesktopHero
+            content={{ ...content, services, packages, announcements }}
+            onJump={section => scrollToSection(section)}
+          />
+          <ServicesSection services={services} />
+          <PackagesSection packages={packages} />
+          <BottomFeatures />
+          <DashboardPanel dashboard={state.dashboard} />
+          <TrainersSection trainers={trainers} />
+          <GallerySection gallery={gallery} />
+          <BookingSection />
+          <ContactSection />
+        </main>
+      )}
 
       <FloatingActions onAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))} />
       <button className="whatsapp-fab" type="button" onClick={() => {}}>
@@ -923,7 +1020,7 @@ function AssistantModal({ open, onClose, content }) {
   );
 }
 
-function HeroGridCard({ image, title, category }) {
+function HeroCard({ image, title, category }) {
   return (
     <article className="service-tile">
       <img src={image} alt={title} />
@@ -939,10 +1036,10 @@ function HeroGridCard({ image, title, category }) {
 function GallerySection({ gallery }) {
   return (
     <section className="section-block" id="gallery">
-      <SectionTitle title="Galeri" />
+      <SectionTitle title="Galeri" action={<button className="mini-link">Tümü</button>} />
       <div className="gallery-grid">
         {gallery.slice(0, 6).map(item => (
-          <HeroGridCard key={item.title} image={item.image} title={item.title} category={item.category} />
+          <HeroCard key={item.title} image={item.image} title={item.title} category={item.category} />
         ))}
       </div>
     </section>
