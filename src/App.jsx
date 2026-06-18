@@ -480,6 +480,36 @@ function MobileShell({ state, setState }) {
       </header>
 
       <main className="shell-width mobile-page">
+        <section className="mobile-quick-nav">
+          <button type="button" className="mobile-quick-nav-main" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
+            <Menu size={16} />
+            Menü
+          </button>
+          <div className="mobile-quick-nav-links">
+            {mobileNav.slice(0, 3).map(item => {
+              const Icon = item.icon;
+              return (
+                <button key={item.id} type="button" className="mobile-quick-nav-link" onClick={() => scrollToSection(item.id)}>
+                  <Icon size={14} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="mobile-menu-strip">
+          {mobileNav.map(item => {
+            const Icon = item.icon;
+            return (
+              <button key={item.id} type="button" className="mobile-menu-chip" onClick={() => scrollToSection(item.id)}>
+                <Icon size={14} />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+
         <Ticker items={state.settings.announcements} />
 
         <section className="mobile-hero" id="home">
