@@ -746,23 +746,19 @@ function ServiceAutoScroller() {
   useEffect(() => {
     const rail = document.querySelector('.service-carousel-viewport');
     if (!rail) return undefined;
-    let frameId;
-    let startTime = 0;
-    const speed = 0.35;
-    const loopWidth = rail.scrollWidth / 2;
-
-    const tick = timestamp => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      if (loopWidth > rail.clientWidth) {
-        const offset = (elapsed * speed) % loopWidth;
-        rail.scrollLeft = offset;
+    const firstCard = rail.querySelector('.service-card-mini');
+    if (!firstCard) return undefined;
+    const stepSize = firstCard.getBoundingClientRect().width + 12;
+    const halfWidth = rail.scrollWidth / 2;
+    const intervalId = window.setInterval(() => {
+      const nextLeft = rail.scrollLeft + stepSize;
+      if (nextLeft >= halfWidth - stepSize) {
+        rail.scrollTo({ left: 0, behavior: 'auto' });
+        return;
       }
-      frameId = window.requestAnimationFrame(tick);
-    };
-
-    frameId = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frameId);
+      rail.scrollTo({ left: nextLeft, behavior: 'smooth' });
+    }, 1800);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   return null;

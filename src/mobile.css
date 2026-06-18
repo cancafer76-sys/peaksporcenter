@@ -684,10 +684,10 @@ img { display: block; width: 100%; }
 .service-carousel-arrow-right { right: -6px; }
 
 .service-carousel .service-card-mini {
-  flex: 0 0 104px;
-  min-width: 104px;
-  width: 104px;
-  height: 104px;
+  flex: 0 0 92px;
+  min-width: 92px;
+  width: 92px;
+  height: 92px;
 }
 
 .service-carousel .service-card-mini .service-card-body {
@@ -698,11 +698,11 @@ img { display: block; width: 100%; }
 }
 
 .service-carousel .service-card-mini .service-card-body strong {
-  font-size: 9px;
+  font-size: 8px;
 }
 
 .service-carousel .service-card-mini .service-card-body span {
-  font-size: 8px;
+  font-size: 7px;
 }
 
 .mobile-horizontal-rail::-webkit-scrollbar {
