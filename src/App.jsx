@@ -167,18 +167,10 @@ function DesktopHero({ content, onCta }) {
         <p>
           Profesyonel ekipmanlar, uzman eğitmenler ve modern tesislerle hedeflerine ulaş.
         </p>
-        <div className="hero-actions hero-actions-desktop">
-          <button className="primary-button" type="button" onClick={() => onCta('booking')}>
-            ÜYE OL
-          </button>
-          <button className="secondary-button" type="button" onClick={() => onCta('services')}>
-            SALONU KEŞFET
-          </button>
-        </div>
       </div>
 
       <div className="desktop-hero-media">
-        <img src={hero.image} alt="Peakspor hero athlete" />
+        <div className="desktop-hero-empty" />
         <div className="desktop-hero-overlay" />
         <button className="hero-arrow hero-arrow-left" type="button" aria-label="Önceki">
           <ChevronRight size={18} />
@@ -251,10 +243,18 @@ function DesktopBanner({ slides }) {
         <div className="desktop-banner-overlay" />
       </div>
       <div className="desktop-banner-content">
-        <div>
+        <div className="desktop-banner-copy">
           <span className="hero-badge">Kampanya Bannerı</span>
           <h2>{activeSlide.title}</h2>
           <p>{activeSlide.subtitle}</p>
+          <div className="hero-actions hero-actions-desktop banner-actions">
+            <button className="primary-button" type="button" onClick={() => window?.scrollTo({ top: 0, behavior: 'smooth' })}>
+              ÜYE OL
+            </button>
+            <button className="secondary-button" type="button" onClick={() => window?.scrollTo({ top: 0, behavior: 'smooth' })}>
+              SALONU KEŞFET
+            </button>
+          </div>
         </div>
         <div className="desktop-banner-controls">
           <button type="button" onClick={() => setActiveIndex(prev => (prev - 1 + bannerSlides.length) % bannerSlides.length)}>◀</button>
@@ -391,6 +391,11 @@ function DesktopPage({ state, setState }) {
 
       <main className="desktop-page">
         <DesktopBanner slides={content.bannerSlides} />
+        <DesktopTicker
+          items={announcements}
+          paused={state.announcementPaused}
+          onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
+        />
         <DesktopHero content={content} onCta={scrollToSection} />
         <DesktopStats stats={stats} />
         <DesktopServices services={state.settings.services} onSelectService={(service) => setState(prev => ({ ...prev, selectedService: service }))} />
@@ -454,11 +459,8 @@ function MobileHeader({ onMenu, onAdmin, darkMode, onToggleTheme, content }) {
 }
 
 function HeroSection({ content, onCta }) {
-  const hero = content.hero || defaultContent.hero;
   return (
     <section className="mobile-hero" id="home">
-      <div className="hero-overlay" />
-      <img className="hero-image" src={hero.image} alt="Peakspor hero" />
       <div className="hero-content">
         <div className="hero-pill">
           <Sparkles size={13} />
@@ -471,14 +473,6 @@ function HeroSection({ content, onCta }) {
         <p>
           Profesyonel ekipmanlar, uzman eğitmenler ve modern tesislerle hedeflerine ulaş.
         </p>
-        <div className="hero-actions">
-          <button className="primary-button" type="button" onClick={() => onCta('booking')}>
-            ÜYE OL
-          </button>
-          <button className="secondary-button" type="button" onClick={() => onCta('services')}>
-            SALONU KEŞFET
-          </button>
-        </div>
       </div>
       <div className="slider-dots" aria-hidden="true">
         <span className="dot active" />
@@ -662,6 +656,11 @@ function MobileApp({ state, setState }) {
 
       <main className="mobile-main">
         <MobileBanner slides={content.bannerSlides} />
+        <AnnouncementBar
+          items={announcements}
+          paused={state.announcementPaused}
+          onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
+        />
         <HeroSection content={content} onCta={scrollToSection} />
         <StatCards stats={stats} />
         <ServicesGrid services={state.settings.services} />
@@ -687,7 +686,7 @@ function MobileBanner({ slides }) {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setActiveIndex(prev => (prev + 1) % bannerSlides.length);
-    }, 5000);
+    }, 9000);
     return () => window.clearInterval(timer);
   }, [bannerSlides.length]);
 
@@ -704,6 +703,14 @@ function MobileBanner({ slides }) {
           <span className="hero-pill">Banner</span>
           <strong>{activeSlide.title}</strong>
           <p>{activeSlide.subtitle}</p>
+          <div className="hero-actions mobile-banner-actions">
+            <button className="primary-button" type="button" onClick={() => scrollToSection('booking')}>
+              ÜYE OL
+            </button>
+            <button className="secondary-button" type="button" onClick={() => scrollToSection('services')}>
+              SALONU KEŞFET
+            </button>
+          </div>
         </div>
         <div className="mobile-banner-dots">
           {bannerSlides.map((slide, index) => (
