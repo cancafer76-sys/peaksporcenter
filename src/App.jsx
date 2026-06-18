@@ -711,18 +711,27 @@ function MobileShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="gallery-grid gallery-grid-mobile">
-            {gallery.map(item => (
-              <article key={item.title} className="gallery-card">
-                <img src={item.image} alt={item.title} />
-                <div className="card-overlay" />
-                <div className="gallery-card-body">
-                  <span>{item.category}</span>
-                  <strong>{item.title}</strong>
-                </div>
-              </article>
-            ))}
+          <div className="service-carousel">
+            <div className="service-carousel-viewport gallery-carousel-viewport">
+              <div className="service-carousel-track gallery-carousel-track gallery-carousel-loop">
+                {[...gallery, ...gallery].map((item, index) => (
+                  <button
+                    key={`${item.title}-${index}`}
+                    type="button"
+                    className="service-card service-card-mobile gallery-card-mini"
+                  >
+                    <img src={item.image} alt={item.title} />
+                    <div className="card-overlay" />
+                    <div className="gallery-card-body">
+                      <span>{item.category}</span>
+                      <strong>{item.title}</strong>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+          <GalleryAutoScroller />
         </section>
 
         <section className="feature-bar feature-bar-mobile">
@@ -869,6 +878,28 @@ function PackageAutoScroller() {
 
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  return null;
+}
+
+function GalleryAutoScroller() {
+  useEffect(() => {
+    const rail = document.querySelector('.gallery-carousel-viewport');
+    if (!rail) return undefined;
+    const firstCard = rail.querySelector('.gallery-card-mini');
+    if (!firstCard) return undefined;
+    const stepSize = firstCard.getBoundingClientRect().width + 12;
+    const halfWidth = rail.scrollWidth / 2;
+    const intervalId = window.setInterval(() => {
+      const nextLeft = rail.scrollLeft + stepSize;
+      if (nextLeft >= halfWidth - stepSize) {
+        rail.scrollTo({ left: 0, behavior: 'auto' });
+        return;
+      }
+      rail.scrollTo({ left: nextLeft, behavior: 'smooth' });
+    }, 1800);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   return null;

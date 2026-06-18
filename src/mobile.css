@@ -1017,6 +1017,28 @@ img { display: block; width: 100%; }
   font-size: 16px;
 }
 
+.gallery-carousel-track .gallery-card-mini {
+  flex: 0 0 92px;
+  min-width: 92px;
+  width: 92px;
+  height: 92px;
+}
+
+.gallery-carousel-track .gallery-card-mini .gallery-card-body {
+  left: 7px;
+  right: 7px;
+  bottom: 7px;
+  gap: 2px;
+}
+
+.gallery-carousel-track .gallery-card-mini .gallery-card-body strong {
+  font-size: 8px;
+}
+
+.gallery-carousel-track .gallery-card-mini .gallery-card-body span {
+  font-size: 7px;
+}
+
 .bottom-nav {
   position: fixed;
   left: 50%;
@@ -1365,6 +1387,30 @@ img { display: block; width: 100%; }
   }
   .service-carousel-loop {
     min-width: max-content;
+  }
+  .gallery-carousel-track {
+    gap: 12px;
+  }
+  .gallery-carousel-loop {
+    min-width: max-content;
+  }
+  .gallery-carousel-track .gallery-card-mini {
+    flex: 0 0 92px;
+    min-width: 92px;
+    width: 92px;
+    height: 92px;
+  }
+  .gallery-carousel-track .gallery-card-mini .gallery-card-body {
+    left: 7px;
+    right: 7px;
+    bottom: 7px;
+    gap: 2px;
+  }
+  .gallery-carousel-track .gallery-card-mini .gallery-card-body strong {
+    font-size: 8px;
+  }
+  .gallery-carousel-track .gallery-card-mini .gallery-card-body span {
+    font-size: 7px;
   }
   .service-card,
   .package-card {
