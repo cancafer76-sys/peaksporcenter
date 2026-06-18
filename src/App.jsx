@@ -337,15 +337,6 @@ function HeroButtons({ compact = false, onPrimary, onSecondary }) {
   );
 }
 
-function AdminEntryButton({ onOpenAdmin, compact = false }) {
-  return (
-    <button className={`admin-entry-button admin-entry-button-hero ${compact ? 'compact' : ''}`} type="button" onClick={onOpenAdmin}>
-      <LayoutDashboard size={16} />
-      <span>Yetkili Giriş</span>
-    </button>
-  );
-}
-
 function HeroCarousel({ slides, mobile = false }) {
   const heroSlides = slides.length
     ? slides
@@ -657,7 +648,16 @@ function DesktopShell({ state, setState }) {
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
             />
-            <AdminEntryButton onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
+            <div className="hero-admin-inline">
+              <button
+                className="admin-entry-button admin-entry-button-hero"
+                type="button"
+                onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
+              >
+                <LayoutDashboard size={16} />
+                <span>Yetkili Giriş</span>
+              </button>
+            </div>
           </div>
 
           <div className="desktop-hero-media">
@@ -902,7 +902,16 @@ function MobileShell({ state, setState }) {
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
             />
-            <AdminEntryButton compact onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
+            <div className="hero-admin-inline">
+              <button
+                className="admin-entry-button admin-entry-button-hero compact"
+                type="button"
+                onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
+              >
+                <LayoutDashboard size={16} />
+                <span>Yetkili Giriş</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -1347,6 +1356,162 @@ function AdminModal({ state, setState }) {
               </button>
             </form>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.adminOpen && unlocked) {
+    return (
+      <div className="modal-backdrop">
+        <div className="admin-panel">
+          <div className="admin-header">
+            <div>
+              <h3>PEAKSPOR Kontrol Merkezi</h3>
+            </div>
+            <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: false }))}>
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="admin-summary">
+            <article>
+              <BadgeInfo size={18} />
+              <strong>{state.user ? state.user.email : 'admin@peakspor.com'}</strong>
+              <span>Yönetici erişimi</span>
+            </article>
+            <article>
+              <Settings2 size={18} />
+              <strong>{state.settings.services.length} Hizmet</strong>
+              <span>Aktif içerik</span>
+            </article>
+            <article>
+              <FileText size={18} />
+              <strong>{state.settings.packages.length} Paket</strong>
+              <span>Yönetilebilir</span>
+            </article>
+            <article>
+              <Palette size={18} />
+              <strong>{state.settings.announcements.length} Duyuru</strong>
+              <span>Tek satır ticker</span>
+            </article>
+          </div>
+
+          <div className="admin-tabs">
+            {['content', 'services', 'packages', 'announcements'].map(tab => (
+              <button
+                key={tab}
+                type="button"
+                className={state.adminTab === tab ? 'active' : ''}
+                onClick={() => setState(prev => ({ ...prev, adminTab: tab }))}
+              >
+                {tab === 'content' ? 'İçerik' : tab === 'services' ? 'Hizmetler' : tab === 'packages' ? 'Paketler' : 'Duyurular'}
+              </button>
+            ))}
+          </div>
+
+          {state.adminTab === 'content' ? (
+            <div className="admin-form">
+              <label>
+                Marka Adı
+                <input
+                  value={drafts.content.brandName}
+                  onChange={e => updateDraft('content', 'brandName', e.target.value)}
+                />
+              </label>
+              <label>
+                Marka Sloganı
+                <input
+                  value={drafts.content.brandSlogan}
+                  onChange={e => updateDraft('content', 'brandSlogan', e.target.value)}
+                />
+              </label>
+              <label>
+                Hero Başlık
+                <textarea
+                  rows={3}
+                  value={drafts.content.heroTitle}
+                  onChange={e => updateDraft('content', 'heroTitle', e.target.value)}
+                />
+              </label>
+              <label>
+                Hero Açıklama
+                <textarea
+                  rows={3}
+                  value={drafts.content.heroSubtitle}
+                  onChange={e => updateDraft('content', 'heroSubtitle', e.target.value)}
+                />
+              </label>
+              <label>
+                Hero Görsel URL
+                <input
+                  value={drafts.content.heroImage}
+                  onChange={e => updateDraft('content', 'heroImage', e.target.value)}
+                />
+              </label>
+              <button className="save-button" type="button" onClick={() => saveSection('content')}>
+                <Save size={16} />
+                İçeriği Kaydet
+              </button>
+            </div>
+          ) : null}
+
+          {state.adminTab === 'services' ? (
+            <div className="admin-form">
+              <label>
+                Hizmetler JSON
+                <textarea
+                  rows={18}
+                  value={drafts.services}
+                  onChange={e =>
+                    setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, services: e.target.value } }))
+                  }
+                />
+              </label>
+              <button className="save-button" type="button" onClick={() => saveSection('services')}>
+                <Save size={16} />
+                Hizmetleri Kaydet
+              </button>
+            </div>
+          ) : null}
+
+          {state.adminTab === 'packages' ? (
+            <div className="admin-form">
+              <label>
+                Paketler JSON
+                <textarea
+                  rows={18}
+                  value={drafts.packages}
+                  onChange={e =>
+                    setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, packages: e.target.value } }))
+                  }
+                />
+              </label>
+              <button className="save-button" type="button" onClick={() => saveSection('packages')}>
+                <Save size={16} />
+                Paketleri Kaydet
+              </button>
+            </div>
+          ) : null}
+
+          {state.adminTab === 'announcements' ? (
+            <div className="admin-form">
+              <label>
+                Duyurular JSON
+                <textarea
+                  rows={18}
+                  value={drafts.announcements}
+                  onChange={e =>
+                    setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, announcements: e.target.value } }))
+                  }
+                />
+              </label>
+              <button className="save-button" type="button" onClick={() => saveSection('announcements')}>
+                <Save size={16} />
+                Duyuruları Kaydet
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     );

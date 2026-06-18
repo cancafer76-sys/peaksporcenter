@@ -433,8 +433,22 @@ img { display: block; width: 100%; }
   flex-wrap: wrap;
 }
 
+.hero-admin-inline {
+  display: block;
+  width: fit-content;
+}
+
 .desktop-hero-copy .admin-entry-button-hero {
   margin-top: 14px;
+}
+
+.mobile-hero-cta-row {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-hero-cta-row .hero-admin-inline {
+  width: 100%;
 }
 
 .mobile-hero-cta-row .admin-entry-button-hero {
