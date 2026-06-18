@@ -324,7 +324,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
   );
 }
 
-function HeroButtons({ compact = false, onPrimary, onSecondary }) {
+function HeroButtons({ compact = false, onPrimary, onSecondary, onAdmin }) {
   return (
     <div className={`hero-actions ${compact ? 'hero-actions-compact' : ''}`}>
       <button className="primary-button" type="button" onClick={onPrimary}>
@@ -333,6 +333,12 @@ function HeroButtons({ compact = false, onPrimary, onSecondary }) {
       <button className="secondary-button" type="button" onClick={onSecondary}>
         SALONU KEŞFET
       </button>
+      {onAdmin ? (
+        <button className="admin-entry-button admin-entry-button-hero hero-admin-button" type="button" onClick={onAdmin}>
+          <LayoutDashboard size={16} />
+          <span>Yetkili Giriş</span>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -647,17 +653,8 @@ function DesktopShell({ state, setState }) {
             <HeroButtons
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
+              onAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
             />
-            <div className="hero-admin-inline">
-              <button
-                className="admin-entry-button admin-entry-button-hero"
-                type="button"
-                onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
-              >
-                <LayoutDashboard size={16} />
-                <span>Yetkili Giriş</span>
-              </button>
-            </div>
           </div>
 
           <div className="desktop-hero-media">
@@ -901,17 +898,8 @@ function MobileShell({ state, setState }) {
               compact
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
+              onAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
             />
-            <div className="hero-admin-inline">
-              <button
-                className="admin-entry-button admin-entry-button-hero compact"
-                type="button"
-                onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
-              >
-                <LayoutDashboard size={16} />
-                <span>Yetkili Giriş</span>
-              </button>
-            </div>
           </div>
         </section>
 

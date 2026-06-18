@@ -267,18 +267,20 @@ img { display: block; width: 100%; }
   gap: 12px;
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 999px;
   background: #050505;
-  padding: 12px 14px;
+  padding: 8px 12px;
   overflow: hidden;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  max-width: min(100%, 1180px);
+  margin: 0 auto;
 }
 
 .ticker-label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--green);
   font-weight: 800;
   white-space: nowrap;
@@ -289,14 +291,15 @@ img { display: block; width: 100%; }
   white-space: nowrap;
   position: relative;
   background: #050505;
-  border-radius: 12px;
+  border-radius: 999px;
   padding-left: 8px;
 }
 
 .ticker-message {
   display: inline-block;
-  animation: ticker 24s linear infinite;
+  animation: ticker 32s linear infinite;
   color: var(--text);
+  font-size: 12px;
 }
 
 .ticker-track::before {
@@ -305,7 +308,7 @@ img { display: block; width: 100%; }
   left: 0;
   top: 0;
   bottom: 0;
-  width: 36px;
+  width: 20px;
   background: linear-gradient(90deg, #050505 0%, rgba(5, 5, 5, 0) 100%);
   pointer-events: none;
   z-index: 1;
@@ -317,7 +320,7 @@ img { display: block; width: 100%; }
   right: 0;
   top: 0;
   bottom: 0;
-  width: 36px;
+  width: 20px;
   background: linear-gradient(270deg, #050505 0%, rgba(5, 5, 5, 0) 100%);
   pointer-events: none;
   z-index: 1;
@@ -438,6 +441,20 @@ img { display: block; width: 100%; }
   width: fit-content;
 }
 
+.hero-admin-button {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.22), rgba(34, 197, 94, 0.12));
+  border: 1px solid rgba(124, 255, 79, 0.34);
+  box-shadow: 0 18px 40px rgba(124, 255, 79, 0.16);
+}
+
+.hero-admin-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 42px rgba(124, 255, 79, 0.22);
+}
+
 .desktop-hero-copy .admin-entry-button-hero {
   margin-top: 14px;
 }
@@ -454,6 +471,32 @@ img { display: block; width: 100%; }
 .mobile-hero-cta-row .admin-entry-button-hero {
   width: 100%;
   justify-content: center;
+}
+
+@media (max-width: 980px) {
+  .ticker {
+    max-width: calc(100vw - 16px);
+    padding: 7px 10px;
+    gap: 8px;
+    border-radius: 999px;
+  }
+
+  .ticker-label {
+    font-size: 10px;
+  }
+
+  .ticker-message {
+    font-size: 11px;
+  }
+
+  .hero-admin-inline {
+    width: 100%;
+  }
+
+  .hero-admin-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .hero-actions-compact .primary-button,
