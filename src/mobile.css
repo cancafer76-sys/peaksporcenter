@@ -40,9 +40,10 @@ img { display: block; width: 100%; }
 .shell-width {
   width: min(1600px, calc(100% - 48px));
   margin: 0 auto;
+  max-width: 100%;
 }
 
-.app-shell { min-height: 100dvh; background: #050505; }
+.app-shell { min-height: 100dvh; background: #050505; width: 100%; overflow-x: hidden; }
 .mobile-shell,
 .app-shell.light.mobile-shell {
   background: #050505 !important;
@@ -1153,7 +1154,7 @@ img { display: block; width: 100%; }
   gap: 6px;
   padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
   border-radius: 0;
-  background: rgba(13, 17, 23, 0.98);
+  background: #050505;
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -1244,7 +1245,7 @@ img { display: block; width: 100%; }
 }
 
 .whatsapp-bubble-desktop { bottom: 18px; }
-.whatsapp-bubble-mobile { bottom: calc(108px + env(safe-area-inset-bottom)); }
+.whatsapp-bubble-mobile { bottom: calc(138px + env(safe-area-inset-bottom)); }
 
 @keyframes bubble-pulse {
   0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.42); }
@@ -1510,13 +1511,20 @@ img { display: block; width: 100%; }
     min-height: 68px;
   }
   .mobile-page {
-    padding-bottom: calc(118px + env(safe-area-inset-bottom));
-    min-height: calc(100dvh - 68px);
+    width: 100%;
+    padding-bottom: calc(180px + env(safe-area-inset-bottom));
+    min-height: calc(100dvh + 140px);
     overflow-x: hidden;
+    overflow-y: visible;
   }
 
   .mobile-main {
-    padding-bottom: calc(118px + env(safe-area-inset-bottom));
+    width: 100%;
+    padding-bottom: calc(180px + env(safe-area-inset-bottom));
+    min-height: calc(100dvh + 140px);
+  }
+  .shell-width {
+    width: min(100%, calc(100vw - 24px));
   }
   .mobile-home-shortcuts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
