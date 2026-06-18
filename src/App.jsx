@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { api } from './api';
 import {
   defaultAnnouncements,
@@ -84,8 +84,7 @@ function jsonPretty(value) {
 
 function safeParseJson(text, fallbackValue) {
   try {
-    const parsed = JSON.parse(text);
-    return { ok: true, value: parsed };
+    return { ok: true, value: JSON.parse(text) };
   } catch {
     return { ok: false, value: fallbackValue };
   }
@@ -111,9 +110,7 @@ function useAppData() {
       setState(prev => ({
         ...prev,
         settings:
-          contentResult.status === 'fulfilled'
-            ? normalizeSettings(contentResult.value)
-            : fallbackSettings,
+          contentResult.status === 'fulfilled' ? normalizeSettings(contentResult.value) : fallbackSettings,
         user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
         loading: false
       }));
@@ -144,7 +141,7 @@ function Ticker({ items }) {
       <div className="ticker-viewport">
         <div className="ticker-track">
           {[...list, ...list].map((item, index) => (
-            <span key={`${item}-${index}`} className="ticker-item">
+            <span key={`${index}-${typeof item === 'string' ? item : item.message}`} className="ticker-item">
               <span className="ticker-dot" />
               {typeof item === 'string' ? item : item.message}
             </span>
@@ -239,10 +236,6 @@ function PhoneHome({ content }) {
         <span>Plan</span>
         <span>Profil</span>
       </div>
-      <button className="assistant-chip floating" type="button">
-        <MessageSquareMore size={14} />
-        PEAKSPOR Asistan
-      </button>
     </PhoneShell>
   );
 }
@@ -320,14 +313,8 @@ function PhonePackages({ packages }) {
   );
 }
 
-function HeroSection({ content, onOpenAssistant, onOpenAdmin, dark, setDark, onJump }) {
+function HeroSection({ content, onOpenAdmin, onJump }) {
   const hero = content.hero || defaultContent.hero;
-  const highlights = [
-    { icon: ShieldCheck, label: 'Güvenli yapı', value: 'JWT + PostgreSQL' },
-    { icon: LayoutDashboard, label: 'Admin panel', value: 'Tüm içerik yönetimi' },
-    { icon: MessageSquareMore, label: 'Destek', value: 'WhatsApp + asistan' }
-  ];
-
   return (
     <section className="hero-section" id="home">
       <div className="hero-topline">
@@ -338,17 +325,8 @@ function HeroSection({ content, onOpenAssistant, onOpenAdmin, dark, setDark, onJ
             <span>{content.brand?.slogan || 'Premium Fitness Platform'}</span>
           </div>
         </div>
-
-        <button className="mode-pill" type="button" onClick={() => setDark(!dark)}>
-          <div className="mode-switch">
-            <span className={dark ? 'active' : ''}>
-              <Moon size={12} />
-            </span>
-            <span className={!dark ? 'active' : ''}>
-              <SunMedium size={12} />
-            </span>
-          </div>
-          <span>Gece / Gündüz Modu</span>
+        <button className="icon-button dashboard-fab" type="button" onClick={onOpenAdmin} aria-label="Admin Panel">
+          <LayoutDashboard size={18} />
         </button>
       </div>
 
@@ -360,10 +338,21 @@ function HeroSection({ content, onOpenAssistant, onOpenAdmin, dark, setDark, onJ
         </div>
 
         <div className="hero-panel">
-          <div className="hero-badge">
-            <Sparkles size={14} />
-            Premium Fitness Deneyimi
+          <div className="hero-head">
+            <div className="hero-badge">
+              <Sparkles size={14} />
+              Premium Fitness Deneyimi
+            </div>
+            <div className="hero-controls">
+              <button className="icon-button" type="button" aria-label="Bildirimler">
+                <Bell size={18} />
+              </button>
+              <button className="icon-button" type="button" aria-label="Açık / Koyu">
+                <Moon size={18} />
+              </button>
+            </div>
           </div>
+
           <h1>{hero.title}</h1>
           <p>{hero.subtitle}</p>
 
@@ -377,7 +366,11 @@ function HeroSection({ content, onOpenAssistant, onOpenAdmin, dark, setDark, onJ
           </div>
 
           <div className="highlight-grid">
-            {highlights.map(item => (
+            {[
+              { icon: ShieldCheck, label: 'Güvenli yapı', value: 'JWT + PostgreSQL' },
+              { icon: LayoutDashboard, label: 'Admin panel', value: 'Tüm içerik yönetimi' },
+              { icon: MessageSquareMore, label: 'Destek', value: 'WhatsApp + asistan' }
+            ].map(item => (
               <div className="highlight-card" key={item.label}>
                 <div className="highlight-icon">
                   <item.icon size={16} />
@@ -396,17 +389,12 @@ function HeroSection({ content, onOpenAssistant, onOpenAdmin, dark, setDark, onJ
             ))}
           </div>
 
-          <button className="assistant-launch" type="button" onClick={onOpenAssistant}>
+          <button className="assistant-launch" type="button" onClick={() => onJump('profile')}>
             <span className="assistant-mark">▲</span>
             <div>
               <strong>{content.assistant?.welcome || defaultContent.assistant.welcome}</strong>
               <span>{content.assistant?.message || defaultContent.assistant.message}</span>
             </div>
-          </button>
-
-          <button className="admin-launch" type="button" onClick={onOpenAdmin}>
-            <LayoutDashboard size={16} />
-            Admin Panelini Aç
           </button>
         </div>
       </div>
@@ -443,10 +431,7 @@ function ServicesSection({ services }) {
 function PackagesSection({ packages }) {
   return (
     <section className="content-section" id="packages">
-      <SectionHeader
-        title="Paketler"
-        subtitle="Başlangıçtan VIP seviyesine kadar tüm üyelikler burada."
-      />
+      <SectionHeader title="Paketler" subtitle="Başlangıçtan VIP seviyesine kadar tüm üyelikler burada." />
       <div className="package-grid">
         {packages.map(pkg => (
           <article className="package-card" key={pkg.title}>
@@ -480,35 +465,10 @@ function PackagesSection({ packages }) {
   );
 }
 
-function GallerySection({ gallery }) {
-  return (
-    <section className="content-section">
-      <SectionHeader
-        title="Galeri"
-        subtitle="Salon atmosferi, ekipmanlar ve etkinlik kareleri."
-      />
-      <div className="gallery-grid">
-        {gallery.map(item => (
-          <article className="gallery-card" key={item.title}>
-            <img src={item.image} alt={item.title} />
-            <div className="gallery-overlay">
-              <span>{item.category}</span>
-              <h3>{item.title}</h3>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function TrainersSection({ trainers }) {
   return (
     <section className="content-section">
-      <SectionHeader
-        title="Eğitmenler"
-        subtitle="Uzman koçlarınız ve özel programlarınız bu alanda gösterilir."
-      />
+      <SectionHeader title="Eğitmenler" subtitle="Uzman koçlarınız ve özel programlarınız bu alanda gösterilir." />
       <div className="trainer-grid">
         {trainers.map(trainer => (
           <article className="trainer-card" key={trainer.name}>
@@ -517,6 +477,25 @@ function TrainersSection({ trainers }) {
               <span>{trainer.role}</span>
               <h3>{trainer.name}</h3>
               <p>{trainer.specialty}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function GallerySection({ gallery }) {
+  return (
+    <section className="content-section">
+      <SectionHeader title="Galeri" subtitle="Salon atmosferi, ekipmanlar ve etkinlik kareleri." />
+      <div className="gallery-grid">
+        {gallery.map(item => (
+          <article className="gallery-card" key={item.title}>
+            <img src={item.image} alt={item.title} />
+            <div className="gallery-overlay">
+              <span>{item.category}</span>
+              <h3>{item.title}</h3>
             </div>
           </article>
         ))}
@@ -662,10 +641,7 @@ function BookingSection() {
 
   return (
     <section className="content-section" id="booking">
-      <SectionHeader
-        title="Rezervasyon"
-        subtitle="Salon ziyareti, ders veya özel görüşme için hızlı kayıt alın."
-      />
+      <SectionHeader title="Rezervasyon" subtitle="Salon ziyareti, ders veya özel görüşme için hızlı kayıt alın." />
       <form className="form-card" onSubmit={handleSubmit}>
         <div className="form-grid">
           <input
@@ -731,11 +707,8 @@ function ContactSection() {
   }
 
   return (
-    <section className="content-section">
-      <SectionHeader
-        title="İletişim"
-        subtitle="Üyelik, destek ve teklif taleplerinizi buradan bırakın."
-      />
+    <section className="content-section" id="profile">
+      <SectionHeader title="İletişim" subtitle="Üyelik, destek ve teklif taleplerinizi buradan bırakın." />
       <div className="profile-grid">
         <article className="profile-card">
           <div className="profile-avatar">PK</div>
@@ -968,6 +941,13 @@ function AdminModal({ open, onClose, user, onLogin, settings, onSaveSetting, das
 
         <div className="admin-shell">
           <aside className="admin-sidebar">
+            <div className="admin-brand">
+              <span className="brand-mark">▲</span>
+              <div>
+                <strong>PEAKSPOR</strong>
+                <span>Admin Panel</span>
+              </div>
+            </div>
             {adminMenu.map(item => (
               <button
                 key={item.id}
@@ -1049,23 +1029,11 @@ function AdminModal({ open, onClose, user, onLogin, settings, onSaveSetting, das
   );
 }
 
-function FloatingActions({ onAssistant, onWhatsapp }) {
+function FloatingActions({ onAssistant }) {
   return (
-    <>
-      <button className="floating-bubble assistant" type="button" onClick={onAssistant} aria-label="Asistan">
-        <span className="bubble-mark">▲</span>
-      </button>
-      <a
-        className="floating-bubble whatsapp"
-        href={`https://wa.me/905555555555?text=${encodeURIComponent('Merhaba, PEAKSPOR hakkında bilgi almak istiyorum.')}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="WhatsApp"
-        onClick={onWhatsapp}
-      >
-        <MessageSquareMore size={18} />
-      </a>
-    </>
+    <button className="floating-bubble assistant" type="button" onClick={onAssistant} aria-label="Asistan">
+      <span className="bubble-mark">▲</span>
+    </button>
   );
 }
 
@@ -1157,28 +1125,26 @@ function AppShell({ state, setState }) {
   return (
     <div className={`app-shell ${state.dark ? 'dark' : 'light'}`}>
       <header className="top-header">
-        <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, mobileMenu: !prev.mobileMenu }))}>
-          <Menu size={20} />
-        </button>
+        <div className="header-left">
+          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, mobileMenu: true }))}>
+            <Menu size={20} />
+          </button>
 
-        <div className="header-brand">
-          <span className="brand-mark">▲</span>
-          <div>
-            <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
-            <span>{content.brand?.slogan || 'Premium Fitness Platform'}</span>
+          <div className="header-brand">
+            <span className="brand-mark">▲</span>
+            <div>
+              <strong>{content.brand?.name || 'PEAKSPOR'}</strong>
+              <span>{content.brand?.slogan || 'Premium Fitness Platform'}</span>
+            </div>
           </div>
         </div>
 
         <div className="header-actions">
-          <button className="mode-pill compact" type="button" onClick={() => setState(prev => ({ ...prev, dark: !prev.dark }))}>
-            {state.dark ? <Moon size={14} /> : <SunMedium size={14} />}
-            <span>{state.dark ? 'Koyu' : 'Açık'}</span>
-          </button>
-          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, assistantOpen: true }))}>
+          <button className="icon-button" type="button" aria-label="Bildirimler">
             <Bell size={18} />
           </button>
-          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}>
-            <LayoutDashboard size={18} />
+          <button className="icon-button" type="button" aria-label="Açık / Koyu">
+            <Moon size={18} />
           </button>
         </div>
       </header>
@@ -1188,9 +1154,6 @@ function AppShell({ state, setState }) {
 
         <HeroSection
           content={{ ...content, services, packages }}
-          dark={state.dark}
-          setDark={value => setState(prev => ({ ...prev, dark: value }))}
-          onOpenAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))}
           onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
           onJump={section => scrollToSection(section)}
         />
@@ -1231,11 +1194,11 @@ function AppShell({ state, setState }) {
         <ContactSection />
       </main>
 
-      <FloatingActions
-        onAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))}
-        onWhatsapp={() => {}}
+      <FloatingActions onAssistant={() => setState(prev => ({ ...prev, assistantOpen: true }))} />
+      <BottomNav
+        onJump={section => scrollToSection(section)}
+        onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
       />
-      <BottomNav onJump={section => scrollToSection(section)} onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
       <MobileMenu
         open={state.mobileMenu}
         onClose={() => setState(prev => ({ ...prev, mobileMenu: false }))}
