@@ -469,34 +469,17 @@ function MobileShell({ state, setState }) {
       </header>
 
       <main className="shell-width mobile-page">
-        <section className="mobile-quick-nav">
-          <button type="button" className="mobile-quick-nav-main" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
+        <div className="mobile-home-shortcuts">
+          <button type="button" className="mobile-home-shortcut" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
             <Menu size={16} />
             Menü
           </button>
-          <div className="mobile-quick-nav-links">
-            {mobileNav.slice(0, 3).map(item => {
-              const Icon = item.icon;
-              return (
-                <button key={item.id} type="button" className="mobile-quick-nav-link" onClick={() => scrollToSection(item.id)}>
-                  <Icon size={14} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <div className="mobile-menu-strip">
-          {mobileNav.map(item => {
-            const Icon = item.icon;
-            return (
-              <button key={item.id} type="button" className="mobile-menu-chip" onClick={() => scrollToSection(item.id)}>
-                <Icon size={14} />
-                {item.label}
-              </button>
-            );
-          })}
+          <button type="button" className="mobile-home-shortcut" onClick={() => scrollToSection('services')}>
+            Hizmetler
+          </button>
+          <button type="button" className="mobile-home-shortcut" onClick={() => scrollToSection('packages')}>
+            Paketler
+          </button>
         </div>
 
         <Ticker items={state.settings.announcements} />
@@ -635,6 +618,15 @@ function MobileShell({ state, setState }) {
       >
         <MessageCircle size={18} />
       </button>
+
+      {state.drawerOpen ? (
+        <button
+          type="button"
+          className="drawer-backdrop"
+          aria-label="Menüyü kapat"
+          onClick={() => setState(prev => ({ ...prev, drawerOpen: false }))}
+        />
+      ) : null}
 
       {state.drawerOpen ? (
         <div className="side-drawer mobile-drawer">
