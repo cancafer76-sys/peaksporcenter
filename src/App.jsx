@@ -234,6 +234,8 @@ function DesktopShell({ state, setState }) {
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
+  const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
+  const heroSlides = bannerSlides.length ? bannerSlides : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -287,9 +289,18 @@ function DesktopShell({ state, setState }) {
             />
           </div>
 
-          <div className="desktop-hero-media">
-            <img src={content.hero?.image || defaultContent.hero.image} alt="Peakspor hero" />
-            <div className="hero-overlay" />
+          <div className="desktop-hero-media hero-banner-rail">
+            {heroSlides.map((slide, index) => (
+              <article key={`${slide.title}-${index}`} className={`hero-banner-slide hero-banner-slide-${index + 1}`}>
+                <img src={slide.image} alt={slide.title} />
+                <div className="hero-overlay" />
+                <div className="hero-banner-copy">
+                  <span className="hero-banner-kicker">PEAKSPOR</span>
+                  <strong>{slide.title}</strong>
+                  <p>{slide.subtitle}</p>
+                </div>
+              </article>
+            ))}
             <div className="hero-floating-card">
               <strong>5.000+</strong>
               <span>Aktif Üye</span>
@@ -455,6 +466,8 @@ function MobileShell({ state, setState }) {
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
+  const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
+  const heroSlides = bannerSlides.length ? bannerSlides : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -485,18 +498,25 @@ function MobileShell({ state, setState }) {
         <Ticker items={state.settings.announcements} />
 
         <section className="mobile-hero" id="home">
-          <img className="mobile-hero-image" src={content.hero?.image || defaultContent.hero.image} alt="Peakspor hero" />
-          <div className="hero-overlay hero-overlay-mobile" />
-          <div className="mobile-hero-content">
-            <div className="hero-badge hero-badge-mobile">
-              <Sparkles size={14} />
-              Premium Fitness
-            </div>
-            <h1>
-              <span>HEDEFİNE ULAŞ</span>
-              <span className="hero-green">ZİRVEYİ YAŞA!</span>
-            </h1>
-            <p>{content.hero?.subtitle || defaultContent.hero.subtitle}</p>
+          <div className="mobile-hero-banner-rail">
+            {heroSlides.map((slide, index) => (
+              <article key={`${slide.title}-${index}`} className={`mobile-hero-banner-slide mobile-hero-banner-slide-${index + 1}`}>
+                <img className="mobile-hero-image" src={slide.image} alt={slide.title} />
+                <div className="hero-overlay hero-overlay-mobile" />
+                <div className="mobile-hero-content">
+                  <div className="hero-badge hero-badge-mobile">
+                    <Sparkles size={14} />
+                    Premium Fitness
+                  </div>
+                  <h1>
+                    <span>{slide.title}</span>
+                    <span className="hero-green">{slide.subtitle}</span>
+                  </h1>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="mobile-hero-cta-row">
             <HeroButtons
               compact
               onPrimary={() => scrollToSection('packages')}
