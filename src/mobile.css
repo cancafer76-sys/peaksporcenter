@@ -1404,6 +1404,41 @@ img { display: block; width: 100%; }
   font-size: 13px;
 }
 
+.admin-login-shell {
+  width: min(460px, calc(100vw - 32px));
+  border-radius: 28px;
+  background: rgba(13, 17, 23, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.admin-login-shell-top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-login-shell-top span {
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: 12px;
+}
+
+.admin-login-shell-top h3 {
+  margin: 6px 0 6px;
+  font-size: 24px;
+}
+
+.admin-login-shell-top p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .admin-panel .admin-header > div:first-child span {
   display: none;
 }
@@ -1746,6 +1781,13 @@ img { display: block; width: 100%; }
     min-height: 40px;
     padding: 0 12px;
     font-size: 11px;
+  }
+  .admin-login-shell {
+    width: min(100%, calc(100vw - 24px));
+    padding: 16px;
+  }
+  .admin-login-shell-top h3 {
+    font-size: 20px;
   }
   .admin-login-card {
     padding: 14px;
