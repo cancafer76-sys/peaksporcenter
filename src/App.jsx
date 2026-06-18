@@ -202,6 +202,59 @@ function HeroButtons({ compact = false, onPrimary, onSecondary }) {
   );
 }
 
+function HeroCarousel({ slides, mobile = false }) {
+  const heroSlides = slides.length
+    ? slides
+    : [{ title: defaultContent.hero.title, subtitle: defaultContent.hero.subtitle, image: defaultContent.hero.image }];
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [heroSlides.length]);
+
+  useEffect(() => {
+    if (heroSlides.length <= 1) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveIndex(current => (current + 1) % heroSlides.length);
+    }, mobile ? 3000 : 3600);
+    return () => window.clearInterval(timer);
+  }, [heroSlides.length, mobile]);
+
+  return (
+    <div className={`hero-carousel ${mobile ? 'hero-carousel-mobile' : 'hero-carousel-desktop'}`}>
+      <div className="hero-carousel-viewport">
+        <div
+          className="hero-carousel-track"
+          style={{ transform: `translateX(-${activeIndex * 100}%)`, width: `${heroSlides.length * 100}%` }}
+        >
+          {heroSlides.map((slide, index) => (
+            <article key={`${slide.title}-${index}`} className="hero-carousel-slide">
+              <img src={slide.image} alt={slide.title} />
+              <div className={`hero-overlay ${mobile ? 'hero-overlay-mobile' : ''}`} />
+              <div className={`hero-carousel-copy ${mobile ? 'hero-carousel-copy-mobile' : ''}`}>
+                <span className="hero-banner-kicker">PEAKSPOR</span>
+                <strong>{slide.title}</strong>
+                <p>{slide.subtitle}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+      <div className="hero-carousel-dots" aria-label="Hero banner göstergeleri">
+        {heroSlides.map((slide, index) => (
+          <button
+            key={`${slide.title}-dot-${index}`}
+            type="button"
+            className={`hero-carousel-dot ${index === activeIndex ? 'active' : ''}`}
+            onClick={() => setActiveIndex(index)}
+            aria-label={`Banner ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Ticker({ items }) {
   const text = resolveAnnouncementText(items);
   return (
@@ -291,18 +344,8 @@ function DesktopShell({ state, setState }) {
             />
           </div>
 
-          <div className="desktop-hero-media hero-banner-track">
-            {heroSlides.map((slide, index) => (
-              <article key={`${slide.title}-${index}`} className={`hero-banner-slide hero-banner-slide-${index + 1}`}>
-                <img src={slide.image} alt={slide.title} />
-                <div className="hero-overlay" />
-                <div className="hero-banner-copy">
-                  <span className="hero-banner-kicker">PEAKSPOR</span>
-                  <strong>{slide.title}</strong>
-                  <p>{slide.subtitle}</p>
-                </div>
-              </article>
-            ))}
+          <div className="desktop-hero-media">
+            <HeroCarousel slides={heroSlides} />
             <div className="hero-floating-card">
               <strong>5.000+</strong>
               <span>Aktif Üye</span>
@@ -499,28 +542,10 @@ function MobileShell({ state, setState }) {
       </header>
 
       <main className="shell-width mobile-page">
-        <HeroAutoScroller />
         <Ticker items={state.settings.announcements} />
 
         <section className="mobile-hero" id="home">
-          <div className="mobile-hero-banner-rail hero-banner-track">
-            {heroSlides.map((slide, index) => (
-              <article key={`${slide.title}-${index}`} className={`mobile-hero-banner-slide mobile-hero-banner-slide-${index + 1}`}>
-                <img className="mobile-hero-image" src={slide.image} alt={slide.title} />
-                <div className="hero-overlay hero-overlay-mobile" />
-                <div className="mobile-hero-content">
-                  <div className="hero-badge hero-badge-mobile">
-                    <Sparkles size={14} />
-                    Premium Fitness
-                  </div>
-                  <h1>
-                    <span>{slide.title}</span>
-                    <span className="hero-green">{slide.subtitle}</span>
-                  </h1>
-                </div>
-              </article>
-            ))}
-          </div>
+          <HeroCarousel slides={heroSlides} mobile />
           <div className="mobile-hero-cta-row">
             <HeroButtons
               compact
