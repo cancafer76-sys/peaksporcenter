@@ -1137,6 +1137,8 @@ img { display: block; width: 100%; }
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
   transform-origin: center bottom;
   will-change: transform;
+  max-height: 88px;
+  contain: layout paint;
 }
 
 .bottom-nav-item {
@@ -1154,6 +1156,7 @@ img { display: block; width: 100%; }
   overflow: hidden;
   transform: none;
   flex: 1 1 0;
+  width: 100%;
 }
 
 .bottom-nav-item.active,
@@ -1431,6 +1434,7 @@ img { display: block; width: 100%; }
   }
   .mobile-page {
     padding-bottom: 132px;
+    min-height: calc(100vh - 68px);
   }
   .mobile-home-shortcuts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1577,7 +1581,9 @@ img { display: block; width: 100%; }
     bottom: 8px;
     width: min(480px, calc(100% - 14px));
     height: 84px;
+    max-height: 84px;
     padding: 8px 10px 10px;
+    transform: translateX(-50%) translateZ(0);
   }
   .bottom-nav-item {
     min-height: 62px;
