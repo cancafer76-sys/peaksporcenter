@@ -159,6 +159,19 @@ img { display: block; width: 100%; }
   font-weight: 700;
 }
 
+.admin-entry-button-hero {
+  min-height: 50px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.18), rgba(34, 197, 94, 0.1));
+  box-shadow: 0 14px 30px rgba(124, 255, 79, 0.12);
+  border-color: rgba(124, 255, 79, 0.28);
+}
+
+.admin-entry-button-hero.compact {
+  min-height: 46px;
+  padding: 0 16px;
+}
+
 .header-left-group {
   display: inline-flex;
   align-items: center;
@@ -418,6 +431,15 @@ img { display: block; width: 100%; }
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.desktop-hero-copy .admin-entry-button-hero {
+  margin-top: 14px;
+}
+
+.mobile-hero-cta-row .admin-entry-button-hero {
+  width: 100%;
+  justify-content: center;
 }
 
 .hero-actions-compact .primary-button,

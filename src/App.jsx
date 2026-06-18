@@ -337,6 +337,15 @@ function HeroButtons({ compact = false, onPrimary, onSecondary }) {
   );
 }
 
+function AdminEntryButton({ onOpenAdmin, compact = false }) {
+  return (
+    <button className={`admin-entry-button admin-entry-button-hero ${compact ? 'compact' : ''}`} type="button" onClick={onOpenAdmin}>
+      <LayoutDashboard size={16} />
+      <span>Yetkili Giriş</span>
+    </button>
+  );
+}
+
 function HeroCarousel({ slides, mobile = false }) {
   const heroSlides = slides.length
     ? slides
@@ -648,6 +657,7 @@ function DesktopShell({ state, setState }) {
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
             />
+            <AdminEntryButton onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
           </div>
 
           <div className="desktop-hero-media">
@@ -892,6 +902,7 @@ function MobileShell({ state, setState }) {
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
             />
+            <AdminEntryButton compact onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
           </div>
         </section>
 
