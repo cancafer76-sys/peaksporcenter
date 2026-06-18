@@ -159,6 +159,18 @@ img { display: block; width: 100%; }
   font-weight: 700;
 }
 
+.admin-entry-button-header {
+  min-height: 44px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.24), rgba(34, 197, 94, 0.14));
+  border-color: rgba(124, 255, 79, 0.36);
+  box-shadow: 0 14px 32px rgba(124, 255, 79, 0.14);
+}
+
+.admin-entry-button-header span {
+  white-space: nowrap;
+}
+
 .admin-entry-button-hero {
   min-height: 50px;
   padding: 0 18px;
@@ -455,13 +467,31 @@ img { display: block; width: 100%; }
   box-shadow: 0 20px 42px rgba(124, 255, 79, 0.22);
 }
 
+.hero-admin-main {
+  display: inline-flex;
+  margin-top: 12px;
+  width: fit-content;
+}
+
+.admin-entry-button-header:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(124, 255, 79, 0.18);
+}
+
 .desktop-hero-copy .admin-entry-button-hero {
   margin-top: 14px;
 }
 
+.desktop-hero-copy .hero-admin-inline {
+  display: block;
+  width: fit-content;
+  margin-top: 12px;
+}
+
 .mobile-hero-cta-row {
-  display: grid;
+  display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .mobile-hero-cta-row .hero-admin-inline {
@@ -496,6 +526,16 @@ img { display: block; width: 100%; }
   .hero-admin-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .hero-admin-main {
+    width: 100%;
+  }
+
+  .admin-entry-button-header {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 11px;
   }
 }
 

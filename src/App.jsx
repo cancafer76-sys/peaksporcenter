@@ -199,7 +199,7 @@ function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin }) {
         </span>
       </button>
       {onOpenAdmin ? (
-        <button className="admin-entry-button" type="button" onClick={onOpenAdmin} aria-label="Yetkili giriş">
+        <button className="admin-entry-button admin-entry-button-header" type="button" onClick={onOpenAdmin} aria-label="Yetkili giriş">
           <LayoutDashboard size={16} />
           <span>Yetkili Giriş</span>
         </button>
@@ -324,7 +324,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
   );
 }
 
-function HeroButtons({ compact = false, onPrimary, onSecondary, onAdmin }) {
+function HeroButtons({ compact = false, onPrimary, onSecondary }) {
   return (
     <div className={`hero-actions ${compact ? 'hero-actions-compact' : ''}`}>
       <button className="primary-button" type="button" onClick={onPrimary}>
@@ -333,13 +333,20 @@ function HeroButtons({ compact = false, onPrimary, onSecondary, onAdmin }) {
       <button className="secondary-button" type="button" onClick={onSecondary}>
         SALONU KEŞFET
       </button>
-      {onAdmin ? (
-        <button className="admin-entry-button admin-entry-button-hero hero-admin-button" type="button" onClick={onAdmin}>
-          <LayoutDashboard size={16} />
-          <span>Yetkili Giriş</span>
-        </button>
-      ) : null}
     </div>
+  );
+}
+
+function AdminEntryButton({ compact = false, onOpenAdmin }) {
+  return (
+    <button
+      className={`admin-entry-button admin-entry-button-hero hero-admin-button hero-admin-main ${compact ? 'compact' : ''}`}
+      type="button"
+      onClick={onOpenAdmin}
+    >
+      <LayoutDashboard size={16} />
+      <span>Yetkili Giriş</span>
+    </button>
   );
 }
 
@@ -653,8 +660,8 @@ function DesktopShell({ state, setState }) {
             <HeroButtons
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
-              onAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
             />
+            <AdminEntryButton onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
           </div>
 
           <div className="desktop-hero-media">
@@ -884,6 +891,15 @@ function MobileShell({ state, setState }) {
                 <SunMedium size={14} />
               </span>
             </button>
+            <button
+              className="admin-entry-button admin-entry-button-header"
+              type="button"
+              onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
+              aria-label="Yetkili giriş"
+            >
+              <LayoutDashboard size={16} />
+              <span>Yetkili Giriş</span>
+            </button>
           </div>
         </div>
       </header>
@@ -898,8 +914,8 @@ function MobileShell({ state, setState }) {
               compact
               onPrimary={() => scrollToSection('packages')}
               onSecondary={() => scrollToSection('services')}
-              onAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
             />
+            <AdminEntryButton compact onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
           </div>
         </section>
 
