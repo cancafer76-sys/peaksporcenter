@@ -42,7 +42,7 @@ img { display: block; width: 100%; }
   margin: 0 auto;
 }
 
-.app-shell { min-height: 100vh; background: var(--bg); }
+.app-shell { min-height: 100dvh; background: var(--bg); }
 
 .desktop-header,
 .mobile-header {
@@ -1120,7 +1120,7 @@ img { display: block; width: 100%; }
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
   z-index: 92;
   width: min(480px, calc(100% - 20px));
   height: 88px;
@@ -1130,16 +1130,12 @@ img { display: block; width: 100%; }
   gap: 6px;
   padding: 10px 12px 12px;
   border-radius: 26px;
-  background: rgba(10, 12, 16, 0.84);
+  background: #050505;
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-  transform-origin: center bottom;
-  will-change: transform;
   max-height: 88px;
-  contain: layout paint;
-  pointer-events: auto;
   isolation: isolate;
 }
 
@@ -1436,7 +1432,7 @@ img { display: block; width: 100%; }
   }
   .mobile-page {
     padding-bottom: 132px;
-    min-height: calc(100vh - 68px);
+  min-height: calc(100dvh - 68px);
     overflow-x: hidden;
   }
   .mobile-home-shortcuts {
@@ -1581,12 +1577,12 @@ img { display: block; width: 100%; }
     font-size: 10px;
   }
   .bottom-nav {
-    bottom: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
     width: min(480px, calc(100% - 14px));
     height: 84px;
     max-height: 84px;
     padding: 8px 10px 10px;
-    transform: translateX(-50%) translateZ(0);
+    transform: translateX(-50%);
     left: 50%;
   }
   .bottom-nav-item {
