@@ -644,6 +644,28 @@ img { display: block; width: 100%; }
   scrollbar-width: none;
 }
 
+.service-carousel {
+  position: relative;
+}
+
+.service-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.46);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.service-carousel-arrow-left { left: -6px; }
+.service-carousel-arrow-right { right: -6px; }
+
 .mobile-horizontal-rail::-webkit-scrollbar {
   display: none;
 }
@@ -1214,6 +1236,12 @@ img { display: block; width: 100%; }
     inset: 0;
     background: linear-gradient(180deg, rgba(0,0,0,0.16), rgba(0,0,0,0.86));
   }
+  .service-carousel-arrow {
+    width: 24px;
+    height: 24px;
+  }
+  .service-carousel-arrow-left { left: -4px; }
+  .service-carousel-arrow-right { right: -4px; }
   .hero-badge-mobile {
     margin-bottom: 2px;
   }

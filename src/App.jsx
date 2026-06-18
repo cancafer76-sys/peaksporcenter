@@ -601,7 +601,19 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="service-grid-mobile mobile-horizontal-rail service-auto-scroll">
+          <div className="service-carousel">
+            <button
+              type="button"
+              className="service-carousel-arrow service-carousel-arrow-left"
+              onClick={() => {
+                const rail = document.querySelector('.service-auto-scroll');
+                if (rail) rail.scrollBy({ left: -rail.clientWidth * 0.75, behavior: 'smooth' });
+              }}
+              aria-label="Önceki hizmetler"
+            >
+              ‹
+            </button>
+            <div className="service-grid-mobile mobile-horizontal-rail service-auto-scroll">
             {services.map(service => (
               <button
                 key={service.title}
@@ -620,6 +632,18 @@ function MobileShell({ state, setState }) {
                 </div>
               </button>
             ))}
+            </div>
+            <button
+              type="button"
+              className="service-carousel-arrow service-carousel-arrow-right"
+              onClick={() => {
+                const rail = document.querySelector('.service-auto-scroll');
+                if (rail) rail.scrollBy({ left: rail.clientWidth * 0.75, behavior: 'smooth' });
+              }}
+              aria-label="Sonraki hizmetler"
+            >
+              ›
+            </button>
           </div>
           <ServiceAutoScroller />
         </section>
