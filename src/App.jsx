@@ -3,6 +3,7 @@ import { api } from './api';
 import {
   defaultAnnouncements,
   defaultContent,
+  defaultGallery,
   defaultPackages,
   defaultServices,
   defaultPosts,
@@ -16,6 +17,7 @@ import {
   Home,
   LayoutDashboard,
   Megaphone,
+  Image,
   Menu,
   MessageCircle,
   Medal,
@@ -46,6 +48,7 @@ const desktopNav = [
   { id: 'home', label: 'Ana Sayfa' },
   { id: 'services', label: 'Hizmetler' },
   { id: 'packages', label: 'Paketler' },
+  { id: 'gallery', label: 'Galeri' },
   { id: 'contact', label: 'İletişim' }
 ];
 
@@ -53,6 +56,7 @@ const mobileNav = [
   { id: 'home', label: 'Ana Sayfa', icon: Home },
   { id: 'services', label: 'Hizmetler', icon: Dumbbell },
   { id: 'packages', label: 'Paketler', icon: Package },
+  { id: 'gallery', label: 'Galeri', icon: Image },
   { id: 'contact', label: 'İletişim', icon: LayoutDashboard }
 ];
 
@@ -314,6 +318,7 @@ function DesktopShell({ state, setState }) {
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
+  const gallery = state.settings.gallery || defaultGallery;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
@@ -489,6 +494,26 @@ function DesktopShell({ state, setState }) {
           ) : null}
         </section>
 
+        <section className="section-block" id="gallery">
+          <SectionHeader
+            title="GALERİ"
+            subtitle="Tesis, antrenman ve premium atmosfer kareleri."
+            action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
+          />
+          <div className="gallery-grid">
+            {gallery.map(item => (
+              <article key={item.title} className="gallery-card">
+                <img src={item.image} alt={item.title} />
+                <div className="card-overlay" />
+                <div className="gallery-card-body">
+                  <span>{item.category}</span>
+                  <strong>{item.title}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="feature-bar">
           {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (
             <span key={item}>
@@ -539,6 +564,7 @@ function MobileShell({ state, setState }) {
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
+  const gallery = state.settings.gallery || defaultGallery;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
@@ -552,6 +578,14 @@ function MobileShell({ state, setState }) {
       <header className="mobile-header">
         <div className="mobile-header-inner shell-width">
           <div className="header-left-group">
+            <button
+              className="icon-button mobile-menu-button"
+              type="button"
+              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+              aria-label="Menü"
+            >
+              <Menu size={18} />
+            </button>
             <Brand compact />
           </div>
           <div className="header-actions">
@@ -671,6 +705,26 @@ function MobileShell({ state, setState }) {
           <PackageAutoScroller />
         </section>
 
+        <section className="section-block" id="gallery">
+          <SectionHeader
+            title="GALERİ"
+            subtitle="Tesis, antrenman ve premium atmosfer kareleri."
+            action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
+          />
+          <div className="gallery-grid gallery-grid-mobile">
+            {gallery.map(item => (
+              <article key={item.title} className="gallery-card">
+                <img src={item.image} alt={item.title} />
+                <div className="card-overlay" />
+                <div className="gallery-card-body">
+                  <span>{item.category}</span>
+                  <strong>{item.title}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="feature-bar feature-bar-mobile">
           {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (
             <span key={item}>
@@ -690,9 +744,9 @@ function MobileShell({ state, setState }) {
           <Dumbbell size={18} />
           <span>Hizmetler</span>
         </button>
-        <button type="button" className="bottom-nav-item menu-center" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
-          <Menu size={18} />
-          <span>Menü</span>
+        <button type="button" className="bottom-nav-item menu-center" onClick={() => scrollToSection('gallery')}>
+          <Image size={18} />
+          <span>Galeri</span>
         </button>
         <button type="button" className="bottom-nav-item" onClick={() => scrollToSection('packages')}>
           <Package size={18} />
