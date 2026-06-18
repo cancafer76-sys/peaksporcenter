@@ -166,14 +166,9 @@ function Brand({ compact = false }) {
   );
 }
 
-function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin, onOpenMenu }) {
+function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin }) {
   return (
     <div className="header-actions">
-      {onOpenMenu ? (
-        <button className="icon-button" type="button" onClick={onOpenMenu} aria-label="Menü">
-          <Menu size={18} />
-        </button>
-      ) : null}
       <button className="icon-button" type="button" aria-label="Bildirimler">
         <Bell size={18} />
       </button>
@@ -258,7 +253,6 @@ function DesktopShell({ state, setState }) {
             darkMode={state.darkMode}
             onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
             onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-            onOpenMenu={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
           />
         </div>
       </header>
@@ -462,12 +456,7 @@ function MobileShell({ state, setState }) {
     <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <header className="mobile-header">
         <div className="mobile-header-inner shell-width">
-          <button
-            className="icon-button"
-            type="button"
-            onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-            aria-label="Menü"
-          >
+          <button className="icon-button mobile-menu-button" type="button" onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))} aria-label="Menü">
             <Menu size={18} />
           </button>
           <Brand compact />

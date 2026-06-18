@@ -53,6 +53,14 @@ img { display: block; width: 100%; }
   gap: 20px;
 }
 
+.mobile-header-inner {
+  justify-content: flex-start;
+}
+
+.mobile-menu-button {
+  margin-right: 4px;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -98,6 +106,10 @@ img { display: block; width: 100%; }
   gap: 10px;
 }
 
+.mobile-header .header-actions {
+  margin-left: auto;
+}
+
 .icon-button {
   width: 42px;
   height: 42px;
@@ -133,6 +145,10 @@ img { display: block; width: 100%; }
 .theme-switch span.active {
   background: rgba(124, 255, 79, 0.14);
   color: var(--green);
+}
+
+.theme-switch {
+  position: relative;
 }
 
 .desktop-nav {
