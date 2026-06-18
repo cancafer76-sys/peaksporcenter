@@ -295,7 +295,7 @@ function Ticker({ items }) {
         Duyurular
       </div>
       <div className="ticker-track">
-        <span>{text}</span>
+        <span className="ticker-message">{text}</span>
       </div>
     </div>
   );

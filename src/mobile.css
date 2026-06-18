@@ -236,7 +236,7 @@ img { display: block; width: 100%; }
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(10, 12, 16, 0.96);
+  background: #050505;
   padding: 12px 14px;
   overflow: hidden;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
@@ -256,12 +256,39 @@ img { display: block; width: 100%; }
   overflow: hidden;
   white-space: nowrap;
   position: relative;
+  background: #050505;
+  border-radius: 12px;
+  padding-left: 8px;
 }
 
-.ticker-track span {
+.ticker-message {
   display: inline-block;
-  animation: ticker 30s linear infinite;
+  animation: ticker 24s linear infinite;
   color: var(--text);
+}
+
+.ticker-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  background: linear-gradient(90deg, #050505 0%, rgba(5, 5, 5, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ticker-track::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  background: linear-gradient(270deg, #050505 0%, rgba(5, 5, 5, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 @keyframes ticker {
@@ -1367,6 +1394,23 @@ img { display: block; width: 100%; }
   }
   .hero-carousel-mobile .hero-carousel-copy p {
     font-size: 11px;
+  }
+  .ticker {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+  .ticker-label {
+    width: fit-content;
+    background: #050505;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 6px 10px;
+  }
+  .ticker-track {
+    background: #050505;
+    border-radius: 999px;
+    padding: 8px 12px;
   }
   .ticker {
     background: rgba(10, 12, 16, 0.98);
