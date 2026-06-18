@@ -418,6 +418,31 @@ img { display: block; width: 100%; }
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.mobile-horizontal-rail {
+  display: flex !important;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.mobile-horizontal-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-horizontal-rail > * {
+  flex: 0 0 82%;
+  min-width: 82%;
+  scroll-snap-align: start;
+}
+
+.mobile-horizontal-rail .service-card-mobile,
+.mobile-horizontal-rail .package-card-mobile {
+  min-height: 200px;
+}
+
 .service-card {
   position: relative;
   min-height: 208px;
@@ -925,10 +950,6 @@ img { display: block; width: 100%; }
   }
   .hero-badge-mobile {
     margin-bottom: 2px;
-  }
-  .service-grid-mobile,
-  .package-rail-mobile {
-    grid-template-columns: 1fr;
   }
   .service-card,
   .package-card {

@@ -463,14 +463,6 @@ function MobileShell({ state, setState }) {
       <header className="mobile-header">
         <div className="mobile-header-inner shell-width">
           <div className="header-left-group">
-            <button
-              className="icon-button mobile-menu-button"
-              type="button"
-              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-              aria-label="Menü"
-            >
-              <Menu size={18} />
-            </button>
             <Brand compact />
           </div>
           <button
@@ -531,7 +523,7 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="service-grid-mobile">
+          <div className="service-grid-mobile mobile-horizontal-rail">
             {services.map(service => (
               <button
                 key={service.title}
@@ -558,7 +550,7 @@ function MobileShell({ state, setState }) {
             title="PAKETLER"
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="package-rail-mobile">
+          <div className="package-rail-mobile mobile-horizontal-rail">
             {packages.map((item, index) => (
               <article
                 key={item.title}
