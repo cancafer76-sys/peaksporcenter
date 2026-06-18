@@ -167,6 +167,14 @@ function DesktopHero({ content, onCta }) {
         <p>
           Profesyonel ekipmanlar, uzman eğitmenler ve modern tesislerle hedeflerine ulaş.
         </p>
+        <div className="hero-actions hero-actions-desktop">
+          <button className="primary-button" type="button" onClick={() => onCta('booking')}>
+            ÜYE OL
+          </button>
+          <button className="secondary-button" type="button" onClick={() => onCta('services')}>
+            SALONU KEŞFET
+          </button>
+        </div>
       </div>
 
       <div className="desktop-hero-media">
@@ -378,11 +386,6 @@ function DesktopPage({ state, setState }) {
 
   return (
     <div className={`desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
-      <DesktopTicker
-        items={announcements}
-        paused={state.announcementPaused}
-        onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
-      />
       <DesktopHeader
         onMenu={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
         onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
@@ -391,7 +394,7 @@ function DesktopPage({ state, setState }) {
 
       <main className="desktop-page">
         <DesktopBanner slides={content.bannerSlides} />
-        <DesktopTicker
+        <DesktopAnnouncementBar
           items={announcements}
           paused={state.announcementPaused}
           onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
@@ -520,6 +523,26 @@ function AnnouncementBar({ items, paused, onToggle }) {
   );
 }
 
+function DesktopAnnouncementBar({ items, paused, onToggle }) {
+  const list = items && items.length ? items : defaultAnnouncements;
+  const text = list[0] && typeof list[0] === 'string' ? list[0] : list[0]?.message || defaultAnnouncements[0];
+  return (
+    <section className="desktop-announcement-shell">
+      <div className="desktop-announcement-card">
+        <div className="announcement-left">
+          <Megaphone size={16} />
+        </div>
+        <div className={`announcement-track ${paused ? 'paused' : ''}`}>
+          <span>{text}</span>
+        </div>
+        <button className="announcement-toggle" type="button" onClick={onToggle} aria-label="Duyuru duraklat">
+          {paused ? <Play size={14} /> : <Pause size={14} />}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ServicesGrid({ services }) {
   return (
     <section className="section-stack" id="services">
@@ -624,11 +647,6 @@ function MobileApp({ state, setState }) {
 
   return (
     <div className={`mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
-      <AnnouncementBar
-        items={announcements}
-        paused={state.announcementPaused}
-        onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
-      />
       <MobileHeader
         content={content}
         onMenu={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
@@ -636,7 +654,6 @@ function MobileApp({ state, setState }) {
         darkMode={state.darkMode}
         onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
       />
-
       {state.drawerOpen ? (
         <aside className="drawer">
           <div className="drawer-head">
@@ -656,11 +673,6 @@ function MobileApp({ state, setState }) {
 
       <main className="mobile-main">
         <MobileBanner slides={content.bannerSlides} />
-        <AnnouncementBar
-          items={announcements}
-          paused={state.announcementPaused}
-          onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
-        />
         <HeroSection content={content} onCta={scrollToSection} />
         <StatCards stats={stats} />
         <ServicesGrid services={state.settings.services} />

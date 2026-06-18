@@ -1459,6 +1459,21 @@
   margin-bottom: 10px;
 }
 
+.desktop-announcement-shell {
+  margin: 8px 0 10px;
+}
+
+.desktop-announcement-card {
+  display: grid;
+  grid-template-columns: 40px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 14px;
+  padding: 10px 10px 10px 12px;
+  background: rgba(13, 17, 23, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .announcement-left {
   width: 40px;
   height: 40px;
