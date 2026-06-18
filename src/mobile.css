@@ -642,6 +642,7 @@ img { display: block; width: 100%; }
   scroll-snap-type: x proximity;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  scroll-behavior: auto;
 }
 
 .service-carousel {

@@ -765,24 +765,22 @@ function ServiceAutoScroller() {
   useEffect(() => {
     const rail = document.querySelector('.service-auto-scroll');
     if (!rail) return undefined;
-    let frameId;
-    let direction = -0.45;
+    let intervalId;
+    let direction = -1;
 
     const tick = () => {
       const maxScroll = rail.scrollWidth - rail.clientWidth;
       if (maxScroll <= 0) {
-        frameId = requestAnimationFrame(tick);
         return;
       }
 
       rail.scrollLeft += direction;
-      if (rail.scrollLeft <= 0) direction = 0.45;
-      if (rail.scrollLeft >= maxScroll) direction = -0.45;
-      frameId = requestAnimationFrame(tick);
+      if (rail.scrollLeft <= 0) direction = 1;
+      if (rail.scrollLeft >= maxScroll) direction = -1;
     };
 
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
+    intervalId = window.setInterval(tick, 18);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   return null;
