@@ -939,6 +939,7 @@ img { display: block; width: 100%; }
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  align-items: flex-start;
 }
 
 .package-price {
@@ -947,9 +948,18 @@ img { display: block; width: 100%; }
   color: var(--green);
   font-size: 20px;
   font-weight: 900;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 0 18px rgba(124, 255, 79, 0.22);
 }
 
-.package-price small { font-size: 11px; color: var(--muted); font-weight: 600; }
+.package-price small {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 600;
+  margin-top: 4px;
+}
 
 .package-card ul {
   margin: 16px 0 18px;
@@ -1060,6 +1070,7 @@ img { display: block; width: 100%; }
 .route-card-grid-mobile {
   width: min(100%, 980px);
   margin: 0 auto;
+  align-items: stretch;
 }
 
 .route-card {
@@ -1518,6 +1529,16 @@ img { display: block; width: 100%; }
   .route-card {
     min-height: 150px;
     border-radius: 16px;
+  }
+  .package-card-mobile {
+    min-height: 168px;
+    padding: 16px;
+  }
+  .package-card-mobile .package-price {
+    font-size: 18px;
+  }
+  .package-card-mobile .package-top {
+    gap: 10px;
   }
   .gallery-card {
     min-height: 160px;
