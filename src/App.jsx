@@ -345,7 +345,8 @@ function DesktopShell({ state, setState }) {
           </div>
 
           <div className="desktop-hero-media">
-            <HeroCarousel slides={heroSlides} />
+            <img src={content.hero?.image || defaultContent.hero.image} alt="Peakspor hero" />
+            <div className="hero-overlay" />
             <div className="hero-floating-card">
               <strong>5.000+</strong>
               <span>Aktif Üye</span>

@@ -1157,15 +1157,22 @@ img { display: block; width: 100%; }
   .mobile-hero {
     margin-top: 16px;
   }
-  .hero-banner-slide {
-    min-height: 240px;
-    flex: 0 0 min(88vw, 520px);
-    min-width: min(88vw, 520px);
+  .hero-carousel-mobile .hero-carousel-viewport {
+    border-radius: 18px;
   }
-  .mobile-hero-banner-slide {
-    min-height: 220px;
-    flex: 0 0 min(88vw, 520px);
-    min-width: min(88vw, 520px);
+  .hero-carousel-mobile .hero-carousel-slide {
+    aspect-ratio: 3 / 1;
+  }
+  .hero-carousel-mobile .hero-carousel-copy {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+  .hero-carousel-mobile .hero-carousel-copy strong {
+    font-size: 18px;
+  }
+  .hero-carousel-mobile .hero-carousel-copy p {
+    font-size: 11px;
   }
   .hero-overlay-mobile {
     position: absolute;
