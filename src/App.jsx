@@ -212,6 +212,8 @@ function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin }) {
 
 function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }) {
   const mobile = state.viewportWidth < 980;
+  const pathname = usePathname();
+  const isActiveRoute = route => pathname === route;
 
   return (
     <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
@@ -257,19 +259,19 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
 
       {mobile ? (
         <nav className="bottom-nav" aria-label="Alt menü">
-          <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/')}>
+          <button type="button" className={`bottom-nav-item ${isActiveRoute('/') ? 'active' : ''}`} onClick={() => navigateToPath('/')}>
             <Home size={18} />
             <span>Ana Sayfa</span>
           </button>
-          <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/services')}>
+          <button type="button" className={`bottom-nav-item ${isActiveRoute('/services') ? 'active' : ''}`} onClick={() => navigateToPath('/services')}>
             <Dumbbell size={18} />
             <span>Hizmetler</span>
           </button>
-          <button type="button" className="bottom-nav-item menu-center" onClick={() => navigateToPath('/gallery')}>
+          <button type="button" className={`bottom-nav-item ${isActiveRoute('/gallery') ? 'active' : ''}`} onClick={() => navigateToPath('/gallery')}>
             <Image size={18} />
             <span>Galeri</span>
           </button>
-          <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/packages')}>
+          <button type="button" className={`bottom-nav-item ${isActiveRoute('/packages') ? 'active' : ''}`} onClick={() => navigateToPath('/packages')}>
             <Package size={18} />
             <span>Paketler</span>
           </button>
@@ -834,6 +836,7 @@ function DesktopShell({ state, setState }) {
 }
 
 function MobileShell({ state, setState }) {
+  const pathname = usePathname();
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
@@ -1019,19 +1022,19 @@ function MobileShell({ state, setState }) {
       </main>
 
       <nav className="bottom-nav" aria-label="Alt menü">
-        <button type="button" className="bottom-nav-item active" onClick={() => navigateToPath('/')}>
+        <button type="button" className={`bottom-nav-item ${pathname === '/' ? 'active' : ''}`} onClick={() => navigateToPath('/')}>
           <Home size={18} />
           <span>Ana Sayfa</span>
         </button>
-        <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/services')}>
+        <button type="button" className={`bottom-nav-item ${pathname === '/services' ? 'active' : ''}`} onClick={() => navigateToPath('/services')}>
           <Dumbbell size={18} />
           <span>Hizmetler</span>
         </button>
-        <button type="button" className="bottom-nav-item menu-center" onClick={() => navigateToPath('/gallery')}>
+        <button type="button" className={`bottom-nav-item ${pathname === '/gallery' ? 'active' : ''}`} onClick={() => navigateToPath('/gallery')}>
           <Image size={18} />
           <span>Galeri</span>
         </button>
-        <button type="button" className="bottom-nav-item" onClick={() => navigateToPath('/packages')}>
+        <button type="button" className={`bottom-nav-item ${pathname === '/packages' ? 'active' : ''}`} onClick={() => navigateToPath('/packages')}>
           <Package size={18} />
           <span>Paketler</span>
         </button>
