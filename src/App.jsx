@@ -462,40 +462,34 @@ function MobileShell({ state, setState }) {
     <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <header className="mobile-header">
         <div className="mobile-header-inner shell-width">
+          <div className="header-left-group">
+            <button
+              className="icon-button mobile-menu-button"
+              type="button"
+              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+              aria-label="Menü"
+            >
+              <Menu size={18} />
+            </button>
+            <Brand compact />
+          </div>
           <button
-            className="icon-button mobile-menu-button"
+            className="theme-switch theme-switch-mobile"
             type="button"
-            onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-            aria-label="Menü"
+            onClick={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+            aria-label="Tema değiştir"
           >
-            <Menu size={18} />
+            <span className={state.darkMode ? 'active' : ''}>
+              <Moon size={14} />
+            </span>
+            <span className={!state.darkMode ? 'active' : ''}>
+              <SunMedium size={14} />
+            </span>
           </button>
-          <Brand compact />
-          <HeaderActions
-            darkMode={state.darkMode}
-            onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-            onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-          />
         </div>
       </header>
 
       <main className="shell-width mobile-page">
-        <div className="mobile-top-appbar">
-          <button type="button" className="mobile-top-appbar-chip active" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
-            <Menu size={14} />
-            Menü
-          </button>
-          <button type="button" className="mobile-top-appbar-chip" onClick={() => scrollToSection('services')}>
-            Hizmetler
-          </button>
-          <button type="button" className="mobile-top-appbar-chip" onClick={() => scrollToSection('packages')}>
-            Paketler
-          </button>
-          <button type="button" className="mobile-top-appbar-chip" onClick={() => scrollToSection('contact')}>
-            İletişim
-          </button>
-        </div>
-
         <Ticker items={state.settings.announcements} />
 
         <section className="mobile-hero" id="home">
@@ -617,11 +611,7 @@ function MobileShell({ state, setState }) {
           <Dumbbell size={18} />
           <span>Hizmetler</span>
         </button>
-        <button
-          type="button"
-          className="bottom-nav-item menu-center"
-          onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}
-        >
+        <button type="button" className="bottom-nav-item menu-center" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
           <Menu size={18} />
           <span>Menü</span>
         </button>
