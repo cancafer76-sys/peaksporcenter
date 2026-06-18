@@ -609,7 +609,7 @@ function MobileShell({ state, setState }) {
                   <button
                     key={`${service.title}-${index}`}
                     type="button"
-                    className={`service-card service-card-mobile ${selectedService?.title === service.title ? 'selected' : ''}`}
+                    className={`service-card service-card-mobile service-card-mini ${selectedService?.title === service.title ? 'selected' : ''}`}
                     onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
                   >
                     <img src={service.image} alt={service.title} />
@@ -744,11 +744,11 @@ function MobileShell({ state, setState }) {
 
 function ServiceAutoScroller() {
   useEffect(() => {
-    const rail = document.querySelector('.service-carousel-loop');
+    const rail = document.querySelector('.service-carousel-viewport');
     if (!rail) return undefined;
     let frameId;
     let startTime = 0;
-    const speed = 0.5;
+    const speed = 0.35;
     const loopWidth = rail.scrollWidth / 2;
 
     const tick = timestamp => {

@@ -651,6 +651,7 @@ img { display: block; width: 100%; }
 
 .service-carousel-viewport {
   overflow: hidden;
+  scroll-behavior: auto;
 }
 
 .service-carousel-track {
@@ -682,19 +683,57 @@ img { display: block; width: 100%; }
 .service-carousel-arrow-left { left: -6px; }
 .service-carousel-arrow-right { right: -6px; }
 
-.mobile-horizontal-rail::-webkit-scrollbar {
-  display: none;
+.service-carousel .service-card-mini {
+  flex: 0 0 104px;
+  min-width: 104px;
+  width: 104px;
+  height: 104px;
 }
 
-.mobile-horizontal-rail > * {
-  flex: 0 0 34%;
-  min-width: 34%;
-  scroll-snap-align: start;
+.service-carousel .service-card-mini .service-card-body {
+  left: 7px;
+  right: 7px;
+  bottom: 7px;
+  gap: 4px;
+}
+
+.service-carousel .service-card-mini .service-card-body strong {
+  font-size: 9px;
+}
+
+.service-carousel .service-card-mini .service-card-body span {
+  font-size: 8px;
+}
+
+.mobile-horizontal-rail::-webkit-scrollbar {
+  display: none;
 }
 
 .mobile-horizontal-rail .service-card-mobile {
   aspect-ratio: 1 / 1;
   border-radius: 14px;
+}
+
+.mobile-horizontal-rail .service-card-mini {
+  flex: 0 0 120px;
+  min-width: 120px;
+  width: 120px;
+  height: 120px;
+}
+
+.mobile-horizontal-rail .service-card-mini .service-card-body {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  gap: 6px;
+}
+
+.mobile-horizontal-rail .service-card-mini .service-card-body strong {
+  font-size: 10px;
+}
+
+.mobile-horizontal-rail .service-card-mini .service-card-body span {
+  font-size: 9px;
 }
 
 .mobile-horizontal-rail .package-card-mobile {
