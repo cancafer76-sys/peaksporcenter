@@ -415,19 +415,15 @@ function DesktopShell({ state, setState }) {
         </section>
       </main>
 
-      <button
-        className="whatsapp-fab whatsapp-fab-desktop"
-        type="button"
-        onClick={() =>
-          window.open(
-            `https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`,
-            '_blank'
-          )
-        }
+      <a
+        className="whatsapp-bubble whatsapp-bubble-desktop"
+        href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="WhatsApp"
       >
         <MessageCircle size={18} />
-        WhatsApp Hattı
-      </button>
+      </a>
 
       {state.drawerOpen ? (
         <div className="side-drawer">
@@ -635,18 +631,15 @@ function MobileShell({ state, setState }) {
         </button>
       </nav>
 
-      <button
-        className="whatsapp-fab whatsapp-fab-mobile"
-        type="button"
-        onClick={() =>
-          window.open(
-            `https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`,
-            '_blank'
-          )
-        }
+      <a
+        className="whatsapp-bubble whatsapp-bubble-mobile"
+        href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="WhatsApp"
       >
         <MessageCircle size={18} />
-      </button>
+      </a>
 
       {state.drawerOpen ? (
         <button
