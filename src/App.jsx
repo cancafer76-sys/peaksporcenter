@@ -145,6 +145,7 @@ function scrollToSection(id) {
 function navigateToPath(pathname) {
   window.history.pushState({}, '', pathname);
   window.dispatchEvent(new PopStateEvent('popstate'));
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 }
 
 function usePathname() {
@@ -1407,6 +1408,10 @@ export default function App() {
   const isMobile = useMemo(() => state.viewportWidth < 980, [state.viewportWidth]);
   const pathname = usePathname();
   const sectionPath = useSectionPath(pathname);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
 
   if (state.loading) {
     return (

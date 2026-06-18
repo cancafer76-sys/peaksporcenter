@@ -1139,6 +1139,8 @@ img { display: block; width: 100%; }
   will-change: transform;
   max-height: 88px;
   contain: layout paint;
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 .bottom-nav-item {
@@ -1435,6 +1437,7 @@ img { display: block; width: 100%; }
   .mobile-page {
     padding-bottom: 132px;
     min-height: calc(100vh - 68px);
+    overflow-x: hidden;
   }
   .mobile-home-shortcuts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1584,6 +1587,7 @@ img { display: block; width: 100%; }
     max-height: 84px;
     padding: 8px 10px 10px;
     transform: translateX(-50%) translateZ(0);
+    left: 50%;
   }
   .bottom-nav-item {
     min-height: 62px;
