@@ -1186,7 +1186,7 @@ img { display: block; width: 100%; }
   }
   .hero-carousel-mobile .hero-carousel-slide {
     aspect-ratio: 4 / 1;
-    max-height: 300px;
+    max-height: 180px;
   }
   .hero-carousel-mobile .hero-carousel-arrow {
     width: 22px;
