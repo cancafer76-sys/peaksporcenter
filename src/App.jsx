@@ -240,7 +240,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
         </div>
       </header>
 
-      <main className={`shell-width ${mobile ? 'mobile-page' : 'desktop-page'}`}>
+      <main className={`shell-width ${mobile ? 'mobile-page mobile-main' : 'desktop-page'}`}>
         <section className="section-block">
           <SectionHeader
             title={title}
@@ -259,7 +259,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
       </main>
 
       {mobile ? (
-        <nav className="bottom-nav" aria-label="Alt menü">
+        <nav className="bottom-nav mobile-bottom-nav" aria-label="Alt menü">
           <button type="button" className={`bottom-nav-item ${isActiveRoute('/') ? 'active' : ''}`} onClick={() => navigateToPath('/')}>
             <Home size={18} />
             <span>Ana Sayfa</span>
@@ -884,7 +884,7 @@ function MobileShell({ state, setState }) {
         </div>
       </header>
 
-      <main className="shell-width mobile-page">
+      <main className="shell-width mobile-page mobile-main">
         <Ticker items={state.settings.announcements} />
 
         <section className="mobile-hero" id="home">
@@ -1022,7 +1022,7 @@ function MobileShell({ state, setState }) {
         </section>
       </main>
 
-      <nav className="bottom-nav" aria-label="Alt menü">
+      <nav className="bottom-nav mobile-bottom-nav" aria-label="Alt menü">
         <button type="button" className={`bottom-nav-item ${pathname === '/' ? 'active' : ''}`} onClick={() => navigateToPath('/')}>
           <Home size={18} />
           <span>Ana Sayfa</span>
@@ -1412,6 +1412,31 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname]);
+
+  useEffect(() => {
+    document.documentElement.style.background = '#050505';
+    document.documentElement.style.minHeight = '100dvh';
+    document.documentElement.style.width = '100%';
+    document.documentElement.style.overflowX = 'hidden';
+    document.body.style.background = '#050505';
+    document.body.style.minHeight = '100dvh';
+    document.body.style.width = '100%';
+    document.body.style.overflowX = 'hidden';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.overscrollBehaviorY = 'none';
+    return () => {
+      document.documentElement.style.minHeight = '';
+      document.documentElement.style.width = '';
+      document.documentElement.style.overflowX = '';
+      document.body.style.minHeight = '';
+      document.body.style.width = '';
+      document.body.style.overflowX = '';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
+      document.body.style.overscrollBehaviorY = '';
+    };
+  }, []);
 
   if (state.loading) {
     return (

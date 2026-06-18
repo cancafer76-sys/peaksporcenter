@@ -26,10 +26,10 @@
 }
 
 * { box-sizing: border-box; }
-html, body, #root { min-height: 100%; margin: 0; }
+html, body, #root { min-height: 100%; margin: 0; padding: 0; width: 100%; background: #050505 !important; overflow-x: hidden; }
 body {
   font-family: 'Inter', sans-serif;
-  background: var(--bg);
+  background: #050505;
   color: var(--text);
   overflow-x: hidden;
 }
@@ -42,7 +42,11 @@ img { display: block; width: 100%; }
   margin: 0 auto;
 }
 
-.app-shell { min-height: 100dvh; background: var(--bg); }
+.app-shell { min-height: 100dvh; background: #050505; }
+.mobile-shell,
+.app-shell.light.mobile-shell {
+  background: #050505 !important;
+}
 
 .desktop-header,
 .mobile-header {
@@ -1116,31 +1120,33 @@ img { display: block; width: 100%; }
   font-size: 7px;
 }
 
-.bottom-nav {
+.bottom-nav,
+.mobile-bottom-nav {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(10px + env(safe-area-inset-bottom));
-  z-index: 92;
-  width: min(480px, calc(100% - 20px));
-  height: 88px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 78px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   gap: 6px;
-  padding: 10px 12px 12px;
-  border-radius: 26px;
-  background: #050505;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  border-radius: 0;
+  background: rgba(13, 17, 23, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-  max-height: 88px;
+  max-height: 78px;
   isolation: isolate;
+  transform: none;
 }
 
 .bottom-nav-item {
-  min-height: 66px;
+  min-height: 60px;
   border: 0;
   background: transparent;
   border-radius: 20px;
@@ -1220,7 +1226,7 @@ img { display: block; width: 100%; }
 }
 
 .whatsapp-bubble-desktop { bottom: 18px; }
-.whatsapp-bubble-mobile { bottom: 152px; }
+.whatsapp-bubble-mobile { bottom: calc(108px + env(safe-area-inset-bottom)); }
 
 @keyframes bubble-pulse {
   0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.42); }
@@ -1431,9 +1437,13 @@ img { display: block; width: 100%; }
     min-height: 68px;
   }
   .mobile-page {
-    padding-bottom: 132px;
-  min-height: calc(100dvh - 68px);
+    padding-bottom: calc(118px + env(safe-area-inset-bottom));
+    min-height: calc(100dvh - 68px);
     overflow-x: hidden;
+  }
+
+  .mobile-main {
+    padding-bottom: calc(118px + env(safe-area-inset-bottom));
   }
   .mobile-home-shortcuts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1576,17 +1586,19 @@ img { display: block; width: 100%; }
   .gallery-card-body span {
     font-size: 10px;
   }
-  .bottom-nav {
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    width: min(480px, calc(100% - 14px));
-    height: 84px;
-    max-height: 84px;
-    padding: 8px 10px 10px;
-    transform: translateX(-50%);
-    left: 50%;
+  .bottom-nav,
+  .mobile-bottom-nav {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 78px;
+    max-height: 78px;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+    transform: none;
   }
   .bottom-nav-item {
-    min-height: 62px;
+    min-height: 58px;
     font-size: 10px;
     border-radius: 18px;
   }
