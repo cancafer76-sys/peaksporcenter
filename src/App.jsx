@@ -207,6 +207,7 @@ function HeroCarousel({ slides, mobile = false }) {
     ? slides
     : [{ title: defaultContent.hero.title, subtitle: defaultContent.hero.subtitle, image: defaultContent.hero.image }];
   const [activeIndex, setActiveIndex] = useState(0);
+  const slideCount = heroSlides.length;
 
   useEffect(() => {
     setActiveIndex(0);
@@ -219,6 +220,12 @@ function HeroCarousel({ slides, mobile = false }) {
     }, mobile ? 3000 : 3600);
     return () => window.clearInterval(timer);
   }, [heroSlides.length, mobile]);
+
+  const goToSlide = nextIndex => {
+    if (!heroSlides.length) return;
+    const normalizedIndex = ((nextIndex % heroSlides.length) + heroSlides.length) % heroSlides.length;
+    setActiveIndex(normalizedIndex);
+  };
 
   return (
     <div className={`hero-carousel ${mobile ? 'hero-carousel-mobile' : 'hero-carousel-desktop'}`}>
@@ -239,6 +246,26 @@ function HeroCarousel({ slides, mobile = false }) {
             </article>
           ))}
         </div>
+        {slideCount > 1 ? (
+          <>
+            <button
+              type="button"
+              className="hero-carousel-arrow hero-carousel-arrow-left"
+              onClick={() => goToSlide(activeIndex - 1)}
+              aria-label="Önceki banner"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className="hero-carousel-arrow hero-carousel-arrow-right"
+              onClick={() => goToSlide(activeIndex + 1)}
+              aria-label="Sonraki banner"
+            >
+              ›
+            </button>
+          </>
+        ) : null}
       </div>
       <div className="hero-carousel-dots" aria-label="Hero banner göstergeleri">
         {heroSlides.map((slide, index) => (
