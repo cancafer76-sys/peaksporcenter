@@ -12,7 +12,6 @@ import {
   Bell,
   ChevronRight,
   Dumbbell,
-  Flame,
   Home,
   LayoutDashboard,
   Megaphone,
@@ -21,22 +20,13 @@ import {
   Package,
   Pause,
   Play,
-  Search,
   SunMedium,
-  UserRound,
   Users,
   Video,
   Zap,
   MessageCircle,
-  BadgeInfo,
-  Waves,
   Medal,
-  TimerReset,
-  SquareStack,
   Sparkles,
-  ArrowRight,
-  Bot,
-  BarChart3
 } from 'lucide-react';
 import './mobile.css';
 
@@ -53,8 +43,7 @@ const mobileNav = [
   { id: 'home', label: 'Ana Sayfa', icon: Home },
   { id: 'services', label: 'Hizmetler', icon: Dumbbell },
   { id: 'booking', label: 'Rezervasyon', icon: LayoutDashboard },
-  { id: 'packages', label: 'Paketler', icon: Package },
-  { id: 'profile', label: 'Profil', icon: UserRound }
+  { id: 'packages', label: 'Paketler', icon: Package }
 ];
 
 const statIcons = [Users, Users, Video, Medal];
@@ -65,7 +54,6 @@ const desktopNav = [
   { id: 'packages', label: 'Paketler' },
   { id: 'trainers', label: 'Eğitmenler' },
   { id: 'gallery', label: 'Galeri' },
-  { id: 'blog', label: 'Blog' },
   { id: 'contact', label: 'İletişim' }
 ];
 
@@ -157,9 +145,6 @@ function DesktopHeader({ onMenu, onToggleTheme, darkMode }) {
           <button className="desktop-header-toggle" type="button" onClick={onToggleTheme} aria-label="Tema değiştir">
             {darkMode ? <Moon size={14} /> : <SunMedium size={14} />}
           </button>
-          <button className="desktop-header-icon desktop-menu-button" type="button" onClick={onMenu} aria-label="Menü">
-            <Menu size={18} />
-          </button>
         </div>
       </div>
     </header>
@@ -246,7 +231,52 @@ function DesktopTicker({ items, paused, onToggle }) {
   );
 }
 
-function DesktopServices({ services }) {
+function DesktopBanner({ slides }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const bannerSlides = slides && slides.length ? slides : defaultContent.bannerSlides;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % bannerSlides.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [bannerSlides.length]);
+
+  const activeSlide = bannerSlides[activeIndex];
+
+  return (
+    <section className="desktop-banner" aria-label="Kampanya bannerı">
+      <div className="desktop-banner-media">
+        <img src={activeSlide.image} alt={activeSlide.title} />
+        <div className="desktop-banner-overlay" />
+      </div>
+      <div className="desktop-banner-content">
+        <div>
+          <span className="hero-badge">Kampanya Bannerı</span>
+          <h2>{activeSlide.title}</h2>
+          <p>{activeSlide.subtitle}</p>
+        </div>
+        <div className="desktop-banner-controls">
+          <button type="button" onClick={() => setActiveIndex(prev => (prev - 1 + bannerSlides.length) % bannerSlides.length)}>◀</button>
+          <div className="desktop-banner-dots">
+            {bannerSlides.map((slide, index) => (
+              <button
+                key={slide.title}
+                type="button"
+                className={index === activeIndex ? 'active' : ''}
+                onClick={() => setActiveIndex(index)}
+                aria-label={slide.title}
+              />
+            ))}
+          </div>
+          <button type="button" onClick={() => setActiveIndex(prev => (prev + 1) % bannerSlides.length)}>▶</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DesktopServices({ services, onSelectService }) {
   const list = services && services.length ? services : defaultServices;
   return (
     <section className="desktop-section" id="services">
@@ -256,7 +286,7 @@ function DesktopServices({ services }) {
       </div>
       <div className="desktop-services-row">
         {list.map(service => (
-          <article key={service.title} className="desktop-service-card">
+          <button key={service.title} type="button" className="desktop-service-card" onClick={() => onSelectService?.(service)}>
             <img src={service.image} alt={service.title} />
             <div className="service-shade" />
             <div className="desktop-service-footer">
@@ -265,14 +295,14 @@ function DesktopServices({ services }) {
               </div>
               <strong>{service.title}</strong>
             </div>
-          </article>
+          </button>
         ))}
       </div>
     </section>
   );
 }
 
-function DesktopPackages({ packages: packageList }) {
+function DesktopPackages({ packages: packageList, onSelectPackage }) {
   const packages = packageList && packageList.length ? packageList : defaultPackages;
   return (
     <section className="desktop-section" id="packages">
@@ -282,7 +312,7 @@ function DesktopPackages({ packages: packageList }) {
       </div>
       <div className="desktop-packages-grid">
         {packages.slice(0, 3).map((packageItem, index) => (
-          <article key={packageItem.title} className={`desktop-package-card theme-${index}`}>
+          <button key={packageItem.title} type="button" className={`desktop-package-card theme-${index}`} onClick={() => onSelectPackage?.(packageItem)}>
             <div className="package-graphic" />
             <div className="package-top">
               <div>
@@ -304,7 +334,7 @@ function DesktopPackages({ packages: packageList }) {
             <button className="package-button desktop-package-button" type="button">
               {packageItem.cta}
             </button>
-          </article>
+          </button>
         ))}
       </div>
     </section>
@@ -330,40 +360,14 @@ function DesktopBottomFeatures() {
   );
 }
 
-function DesktopAssistant({ open, onToggle, content }) {
-  const assistant = content.assistant || defaultContent.assistant;
+function DesktopWhatsApp({ content }) {
   return (
-    <>
-      {open ? (
-        <div className="assistant-panel desktop-assistant-panel">
-          <div className="assistant-panel-header">
-            <div>
-              <strong>PEAKSPOR ASİSTAN</strong>
-              <span>{assistant.message}</span>
-            </div>
-            <button type="button" className="panel-close" onClick={onToggle} aria-label="Kapat">
-              ×
-            </button>
-          </div>
-          <div className="assistant-actions">
-            {assistant.buttons.map(button => (
-              <button key={button} type="button" className="assistant-chip">
-                {button}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      <div className="floating-stack desktop-floating-stack">
-        <button className="floating-assistant" type="button" onClick={onToggle} aria-label="Asistan">
-          <Bot size={20} />
-        </button>
-        <a className="desktop-whatsapp-button" href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" aria-label="WhatsApp">
-          <MessageCircle size={18} />
-          WHATSAPP HATTINA KATIL
-        </a>
-      </div>
-    </>
+    <div className="floating-stack desktop-floating-stack">
+      <a className="desktop-whatsapp-button" href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" aria-label="WhatsApp">
+        <MessageCircle size={18} />
+        WHATSAPP HATTINA KATIL
+      </a>
+    </div>
   );
 }
 
@@ -371,6 +375,8 @@ function DesktopPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const announcements = state.settings.announcements || defaultAnnouncements;
+  const topAnnouncement = announcements[0] || defaultAnnouncements[0];
+  const lowerAnnouncement = announcements[1] || announcements[0] || defaultAnnouncements[1];
 
   return (
     <div className={`desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
@@ -381,15 +387,21 @@ function DesktopPage({ state, setState }) {
       />
 
       <main className="desktop-page">
+        <DesktopBanner slides={content.bannerSlides} />
         <DesktopHero content={content} onCta={scrollToSection} />
         <DesktopStats stats={stats} />
         <DesktopTicker
-          items={announcements}
+          items={[topAnnouncement]}
           paused={state.announcementPaused}
           onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
         />
-        <DesktopServices services={state.settings.services} />
-        <DesktopPackages packages={state.settings.packages} />
+        <DesktopTicker
+          items={[lowerAnnouncement]}
+          paused={state.announcementPaused}
+          onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
+        />
+        <DesktopServices services={state.settings.services} onSelectService={(service) => setState(prev => ({ ...prev, selectedService: service }))} />
+        <DesktopPackages packages={state.settings.packages} onSelectPackage={(item) => setState(prev => ({ ...prev, selectedPackage: item }))} />
         <DesktopBottomFeatures />
       </main>
 
@@ -409,11 +421,7 @@ function DesktopPage({ state, setState }) {
         </aside>
       ) : null}
 
-      <DesktopAssistant
-        open={state.assistantOpen}
-        onToggle={() => setState(prev => ({ ...prev, assistantOpen: !prev.assistantOpen }))}
-        content={content}
-      />
+      <DesktopWhatsApp content={content} />
     </div>
   );
 }
@@ -421,14 +429,6 @@ function DesktopPage({ state, setState }) {
 function MobileHeader({ onMenu, onAdmin, darkMode, onToggleTheme, content }) {
   return (
     <header className="mobile-status-shell">
-      <div className="status-bar">
-        <span>09:41</span>
-        <div className="status-icons">
-          <span>5G</span>
-          <span>WiFi</span>
-          <span>100%</span>
-        </div>
-      </div>
       <div className="mobile-topbar">
         <button className="glass-icon-button" type="button" onClick={onMenu} aria-label="Menü">
           <Menu size={19} />
@@ -542,7 +542,7 @@ function ServicesGrid({ services }) {
       </div>
       <div className="services-grid">
         {(services && services.length ? services : defaultServices).slice(0, 8).map(service => (
-          <article key={service.title} className="service-card">
+          <button key={service.title} type="button" className="service-card">
             <img src={service.image} alt={service.title} />
             <div className="service-shade" />
             <div className="service-meta">
@@ -554,7 +554,7 @@ function ServicesGrid({ services }) {
                 <span>{service.category}</span>
               </div>
             </div>
-          </article>
+          </button>
         ))}
       </div>
     </section>
@@ -570,7 +570,7 @@ function PackagesRail({ packages: packageList }) {
       </div>
       <div className="package-rail">
         {(packageList && packageList.length ? packageList : defaultPackages).map(packageItem => (
-          <article key={packageItem.title} className="package-card-mobile" style={{ '--accent': packageItem.accent }}>
+          <button key={packageItem.title} type="button" className="package-card-mobile" style={{ '--accent': packageItem.accent }}>
             <div className="package-badge" />
             <div className="package-top">
               <div>
@@ -593,7 +593,7 @@ function PackagesRail({ packages: packageList }) {
             <button className="package-button" type="button">
               {packageItem.cta}
             </button>
-          </article>
+          </button>
         ))}
       </div>
     </section>
@@ -605,38 +605,12 @@ function CheckMark() {
 }
 
 function AssistantWidget({ open, onToggle, content }) {
-  const assistant = content.assistant || defaultContent.assistant;
   return (
-    <>
-      {open ? (
-        <div className="assistant-panel">
-          <div className="assistant-panel-header">
-            <div>
-              <strong>👋 Hoş Geldiniz</strong>
-              <span>{assistant.message}</span>
-            </div>
-            <button type="button" className="panel-close" onClick={onToggle} aria-label="Kapat">
-              ×
-            </button>
-          </div>
-          <div className="assistant-actions">
-            {assistant.buttons.map(button => (
-              <button key={button} type="button" className="assistant-chip">
-                {button}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      <div className="floating-stack">
-        <button className="floating-assistant" type="button" onClick={onToggle} aria-label="Asistan">
-          <Bot size={20} />
-        </button>
-        <a className="floating-whatsapp" href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" aria-label="WhatsApp">
-          <MessageCircle size={20} />
-        </a>
-      </div>
-    </>
+    <div className="floating-stack">
+      <a className="floating-whatsapp" href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" aria-label="WhatsApp">
+        <MessageCircle size={20} />
+      </a>
+    </div>
   );
 }
 
@@ -660,6 +634,8 @@ function MobileApp({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const announcements = state.settings.announcements || defaultAnnouncements;
+  const topAnnouncement = announcements[0] || defaultAnnouncements[0];
+  const lowerAnnouncement = announcements[1] || announcements[0] || defaultAnnouncements[1];
 
   return (
     <div className={`mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
@@ -689,19 +665,15 @@ function MobileApp({ state, setState }) {
       ) : null}
 
       <main className="mobile-main">
+        <MobileBanner slides={content.bannerSlides} />
         <HeroSection content={content} onCta={scrollToSection} />
         <StatCards stats={stats} />
-        <TickerBand items={announcements} />
+        <AnnouncementBar items={[topAnnouncement]} paused={state.announcementPaused} onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))} />
+        <TickerBand items={[lowerAnnouncement]} />
         <ServicesGrid services={state.settings.services} />
         <PackagesRail packages={state.settings.packages} />
         <TrainersBlock trainers={state.settings.trainers} />
       </main>
-
-      <AnnouncementBar
-        items={announcements}
-        paused={state.announcementPaused}
-        onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
-      />
       <AssistantWidget
         open={state.assistantOpen}
         onToggle={() => setState(prev => ({ ...prev, assistantOpen: !prev.assistantOpen }))}
@@ -726,6 +698,47 @@ function TickerBand({ items }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function MobileBanner({ slides }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const bannerSlides = slides && slides.length ? slides : defaultContent.bannerSlides;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % bannerSlides.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [bannerSlides.length]);
+
+  const activeSlide = bannerSlides[activeIndex];
+
+  return (
+    <section className="mobile-banner">
+      <div className="mobile-banner-media">
+        <img src={activeSlide.image} alt={activeSlide.title} />
+        <div className="mobile-banner-overlay" />
+      </div>
+      <div className="mobile-banner-content">
+        <div>
+          <span className="hero-pill">Banner</span>
+          <strong>{activeSlide.title}</strong>
+          <p>{activeSlide.subtitle}</p>
+        </div>
+        <div className="mobile-banner-dots">
+          {bannerSlides.map((slide, index) => (
+            <button
+              key={slide.title}
+              type="button"
+              className={index === activeIndex ? 'active' : ''}
+              onClick={() => setActiveIndex(index)}
+              aria-label={slide.title}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

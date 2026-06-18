@@ -31,7 +31,7 @@
 .desktop-header-inner {
   width: min(1600px, calc(100% - 48px));
   margin: 0 auto;
-  min-height: 80px;
+  min-height: 64px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -85,7 +85,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -12px;
+  bottom: -10px;
   height: 2px;
   border-radius: 999px;
   background: #7cff4f;
@@ -127,7 +127,156 @@
 .desktop-page {
   width: min(1600px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 22px 0 36px;
+  padding: 14px 0 36px;
+}
+
+.mobile-banner {
+  margin-bottom: 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(13, 17, 23, 0.92);
+}
+
+.mobile-banner-media {
+  position: relative;
+  height: 96px;
+}
+
+.mobile-banner-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(5, 5, 5, 0.8) 0%, rgba(5, 5, 5, 0.15) 100%);
+}
+
+.mobile-banner-content {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-banner-content strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.mobile-banner-content p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+}
+
+.mobile-banner-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.mobile-banner-dots button {
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.mobile-banner-dots button.active {
+  background: #7cff4f;
+}
+
+.desktop-banner {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 14px;
+  min-height: 118px;
+}
+
+.desktop-banner-media {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: 118px;
+}
+
+.desktop-banner-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.desktop-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(5, 5, 5, 0.78) 0%, rgba(5, 5, 5, 0.1) 100%);
+}
+
+.desktop-banner-content {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(13, 17, 23, 0.92);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.desktop-banner-content h2 {
+  margin: 10px 0 4px;
+  font-size: 20px;
+}
+
+.desktop-banner-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+}
+
+.desktop-banner-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.desktop-banner-controls button {
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.desktop-banner-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.desktop-banner-dots button {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.desktop-banner-dots button.active {
+  background: #7cff4f;
+  box-shadow: 0 0 10px rgba(124, 255, 79, 0.42);
 }
 
 .desktop-hero {
@@ -337,6 +486,8 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #111827;
+  padding: 0;
+  cursor: pointer;
 }
 
 .desktop-service-card img {
@@ -378,6 +529,8 @@
   overflow: hidden;
   background: rgba(17, 24, 39, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  text-align: left;
 }
 
 .desktop-package-card.theme-0 .package-graphic {
@@ -425,13 +578,6 @@
   font-size: 13px;
 }
 
-.desktop-assistant-panel {
-  width: 320px;
-  left: auto;
-  right: 20px;
-  bottom: 86px;
-}
-
 .desktop-floating-stack {
   right: 20px;
   bottom: 18px;
@@ -454,12 +600,13 @@
   text-decoration: none;
 }
 
-.desktop-drawer {
-  top: 90px;
+.desktop-whatsapp-button::before {
+  content: '◉';
+  font-size: 16px;
 }
 
-.desktop-shell .desktop-menu-button {
-  display: none;
+.desktop-drawer {
+  top: 90px;
 }
 
 @media (max-width: 1180px) {
