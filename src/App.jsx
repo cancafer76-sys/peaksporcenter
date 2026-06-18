@@ -241,7 +241,17 @@ function DesktopShell({ state, setState }) {
     <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <header className="desktop-header">
         <div className="shell-width desktop-header-inner">
-          <Brand />
+          <div className="header-left-group">
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+              aria-label="Menü"
+            >
+              <Menu size={18} />
+            </button>
+            <Brand />
+          </div>
           <nav className="desktop-nav" aria-label="Ana menü">
             {desktopNav.map(item => (
               <button key={item.id} type="button" className="desktop-nav-link" onClick={() => scrollToSection(item.id)}>
@@ -456,7 +466,12 @@ function MobileShell({ state, setState }) {
     <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <header className="mobile-header">
         <div className="mobile-header-inner shell-width">
-          <button className="icon-button mobile-menu-button" type="button" onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))} aria-label="Menü">
+          <button
+            className="icon-button mobile-menu-button"
+            type="button"
+            onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+            aria-label="Menü"
+          >
             <Menu size={18} />
           </button>
           <Brand compact />
@@ -469,16 +484,19 @@ function MobileShell({ state, setState }) {
       </header>
 
       <main className="shell-width mobile-page">
-        <div className="mobile-home-shortcuts">
-          <button type="button" className="mobile-home-shortcut" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
-            <Menu size={16} />
+        <div className="mobile-top-appbar">
+          <button type="button" className="mobile-top-appbar-chip active" onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}>
+            <Menu size={14} />
             Menü
           </button>
-          <button type="button" className="mobile-home-shortcut" onClick={() => scrollToSection('services')}>
+          <button type="button" className="mobile-top-appbar-chip" onClick={() => scrollToSection('services')}>
             Hizmetler
           </button>
-          <button type="button" className="mobile-home-shortcut" onClick={() => scrollToSection('packages')}>
+          <button type="button" className="mobile-top-appbar-chip" onClick={() => scrollToSection('packages')}>
             Paketler
+          </button>
+          <button type="button" className="mobile-top-appbar-chip" onClick={() => scrollToSection('contact')}>
+            İletişim
           </button>
         </div>
 
@@ -595,15 +613,26 @@ function MobileShell({ state, setState }) {
       </main>
 
       <nav className="bottom-nav" aria-label="Alt menü">
-        {mobileNav.map(item => {
-          const Icon = item.icon;
-          return (
-            <button key={item.id} type="button" className="bottom-nav-item" onClick={() => scrollToSection(item.id)}>
-              <Icon size={18} />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+        <button type="button" className="bottom-nav-item active" onClick={() => scrollToSection('home')}>
+          <Home size={18} />
+          <span>Ana Sayfa</span>
+        </button>
+        <button type="button" className="bottom-nav-item" onClick={() => scrollToSection('services')}>
+          <Dumbbell size={18} />
+          <span>Hizmetler</span>
+        </button>
+        <button
+          type="button"
+          className="bottom-nav-item menu-center"
+          onClick={() => setState(prev => ({ ...prev, drawerOpen: true }))}
+        >
+          <Menu size={18} />
+          <span>Menü</span>
+        </button>
+        <button type="button" className="bottom-nav-item" onClick={() => scrollToSection('packages')}>
+          <Package size={18} />
+          <span>Paketler</span>
+        </button>
       </nav>
 
       <button

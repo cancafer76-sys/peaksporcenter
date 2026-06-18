@@ -53,6 +53,12 @@ img { display: block; width: 100%; }
   gap: 20px;
 }
 
+.header-left-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .mobile-header-inner {
   justify-content: flex-start;
 }
@@ -102,6 +108,12 @@ img { display: block; width: 100%; }
 
 .header-actions {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-left-group {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
 }
@@ -167,9 +179,44 @@ img { display: block; width: 100%; }
   font-size: 14px;
 }
 
+.desktop-header .icon-button:first-child,
+.mobile-header .icon-button:first-child {
+  order: -1;
+}
+
+.menu-center {
+  color: var(--green);
+}
+
 .desktop-page,
 .mobile-page {
   padding: 18px 0 100px;
+}
+
+.mobile-top-appbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+
+.mobile-top-appbar-chip {
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.mobile-top-appbar-chip.active {
+  background: rgba(124, 255, 79, 0.12);
+  border-color: rgba(124, 255, 79, 0.24);
+  color: var(--green);
 }
 
 .mobile-home-shortcuts {
@@ -634,6 +681,10 @@ img { display: block; width: 100%; }
   background: rgba(13, 17, 23, 0.96);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
+}
+
+.desktop-shell .side-drawer {
+  top: 80px;
 }
 
 .mobile-drawer {
