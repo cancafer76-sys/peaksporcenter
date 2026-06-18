@@ -131,7 +131,7 @@
 }
 
 .mobile-banner {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -421,13 +421,13 @@
 }
 
 .desktop-ticker {
-  margin-top: 12px;
+  margin-top: 0;
   min-height: 46px;
   display: grid;
   grid-template-columns: 46px 1fr 36px;
   align-items: center;
   gap: 10px;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 0 10px 0 12px;
   background: rgba(13, 17, 23, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -775,7 +775,7 @@
 }
 
 .mobile-main {
-  padding: 12px 14px 24px;
+  padding: 10px 14px 24px;
 }
 
 .mobile-hero {
@@ -1398,8 +1398,8 @@
 }
 
 .announcement-shell {
-  padding: 14px;
-  margin-top: 14px;
+  padding: 0 0 8px;
+  margin-top: 0;
 }
 
 .announcement-card {
@@ -1409,6 +1409,15 @@
   gap: 10px;
   border-radius: 18px;
   padding: 10px 10px 10px 12px;
+}
+
+.mobile-shell .announcement-card {
+  border-radius: 14px;
+}
+
+.desktop-shell .desktop-ticker {
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
 .announcement-left {

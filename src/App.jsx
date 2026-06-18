@@ -375,11 +375,14 @@ function DesktopPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const announcements = state.settings.announcements || defaultAnnouncements;
-  const topAnnouncement = announcements[0] || defaultAnnouncements[0];
-  const lowerAnnouncement = announcements[1] || announcements[0] || defaultAnnouncements[1];
 
   return (
     <div className={`desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
+      <DesktopTicker
+        items={announcements}
+        paused={state.announcementPaused}
+        onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
+      />
       <DesktopHeader
         onMenu={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
         onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
@@ -390,16 +393,6 @@ function DesktopPage({ state, setState }) {
         <DesktopBanner slides={content.bannerSlides} />
         <DesktopHero content={content} onCta={scrollToSection} />
         <DesktopStats stats={stats} />
-        <DesktopTicker
-          items={[topAnnouncement]}
-          paused={state.announcementPaused}
-          onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
-        />
-        <DesktopTicker
-          items={[lowerAnnouncement]}
-          paused={state.announcementPaused}
-          onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
-        />
         <DesktopServices services={state.settings.services} onSelectService={(service) => setState(prev => ({ ...prev, selectedService: service }))} />
         <DesktopPackages packages={state.settings.packages} onSelectPackage={(item) => setState(prev => ({ ...prev, selectedPackage: item }))} />
         <DesktopBottomFeatures />
@@ -634,11 +627,14 @@ function MobileApp({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const announcements = state.settings.announcements || defaultAnnouncements;
-  const topAnnouncement = announcements[0] || defaultAnnouncements[0];
-  const lowerAnnouncement = announcements[1] || announcements[0] || defaultAnnouncements[1];
 
   return (
     <div className={`mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
+      <AnnouncementBar
+        items={announcements}
+        paused={state.announcementPaused}
+        onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))}
+      />
       <MobileHeader
         content={content}
         onMenu={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
@@ -668,8 +664,6 @@ function MobileApp({ state, setState }) {
         <MobileBanner slides={content.bannerSlides} />
         <HeroSection content={content} onCta={scrollToSection} />
         <StatCards stats={stats} />
-        <AnnouncementBar items={[topAnnouncement]} paused={state.announcementPaused} onToggle={() => setState(prev => ({ ...prev, announcementPaused: !prev.announcementPaused }))} />
-        <TickerBand items={[lowerAnnouncement]} />
         <ServicesGrid services={state.settings.services} />
         <PackagesRail packages={state.settings.packages} />
         <TrainersBlock trainers={state.settings.trainers} />
@@ -682,21 +676,6 @@ function MobileApp({ state, setState }) {
       <BottomNav onJump={scrollToSection} />
 
       {state.adminOpen ? <AdminSheet onClose={() => setState(prev => ({ ...prev, adminOpen: false }))} user={state.user} /> : null}
-    </div>
-  );
-}
-
-function TickerBand({ items }) {
-  const list = items && items.length ? items : defaultAnnouncements;
-  return (
-    <div className="ticker-band">
-      <div className="ticker-track-mobile">
-        {[...list, ...list].map((item, index) => (
-          <span key={`${index}-${typeof item === 'string' ? item : item.message}`}>
-            {typeof item === 'string' ? item : item.message}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
