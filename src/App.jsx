@@ -554,19 +554,21 @@ function MobileShell({ state, setState }) {
           <div className="header-left-group">
             <Brand compact />
           </div>
-          <button
-            className="theme-switch theme-switch-mobile"
-            type="button"
-            onClick={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-            aria-label="Tema değiştir"
-          >
-            <span className={state.darkMode ? 'active' : ''}>
-              <Moon size={14} />
-            </span>
-            <span className={!state.darkMode ? 'active' : ''}>
-              <SunMedium size={14} />
-            </span>
-          </button>
+          <div className="header-actions">
+            <button
+              className="theme-switch theme-switch-mobile"
+              type="button"
+              onClick={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+              aria-label="Tema değiştir"
+            >
+              <span className={state.darkMode ? 'active' : ''}>
+                <Moon size={14} />
+              </span>
+              <span className={!state.darkMode ? 'active' : ''}>
+                <SunMedium size={14} />
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 

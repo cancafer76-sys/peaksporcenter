@@ -83,6 +83,14 @@ img { display: block; width: 100%; }
   margin-left: auto;
 }
 
+.app-shell.light .mobile-header .theme-switch span {
+  color: #0f172a;
+}
+
+.app-shell.light .mobile-header .theme-switch span.active {
+  color: #050505;
+}
+
 .mobile-menu-button {
   margin-right: 4px;
 }
@@ -1039,7 +1047,7 @@ img { display: block; width: 100%; }
 }
 
 .whatsapp-bubble-desktop { bottom: 18px; }
-.whatsapp-bubble-mobile { bottom: 84px; }
+.whatsapp-bubble-mobile { bottom: 132px; }
 
 @keyframes bubble-pulse {
   0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.42); }
