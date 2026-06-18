@@ -433,14 +433,32 @@ img { display: block; width: 100%; }
 }
 
 .mobile-horizontal-rail > * {
-  flex: 0 0 82%;
-  min-width: 82%;
+  flex: 0 0 34%;
+  min-width: 34%;
   scroll-snap-align: start;
 }
 
-.mobile-horizontal-rail .service-card-mobile,
+.mobile-horizontal-rail .service-card-mobile {
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+}
+
 .mobile-horizontal-rail .package-card-mobile {
-  min-height: 200px;
+  min-height: 118px;
+}
+
+.mobile-horizontal-rail .service-card-body {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+}
+
+.mobile-horizontal-rail .service-card-body strong {
+  font-size: 10px;
+}
+
+.mobile-horizontal-rail .service-card-body span {
+  font-size: 9px;
 }
 
 .service-card {

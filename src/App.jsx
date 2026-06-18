@@ -523,7 +523,7 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="service-grid-mobile mobile-horizontal-rail">
+          <div className="service-grid-mobile mobile-horizontal-rail service-auto-scroll">
             {services.map(service => (
               <button
                 key={service.title}
@@ -543,6 +543,7 @@ function MobileShell({ state, setState }) {
               </button>
             ))}
           </div>
+          <ServiceAutoScroller />
         </section>
 
         <section className="section-block" id="packages">
@@ -655,6 +656,33 @@ function MobileShell({ state, setState }) {
       {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
     </div>
   );
+}
+
+function ServiceAutoScroller() {
+  useEffect(() => {
+    const rail = document.querySelector('.service-auto-scroll');
+    if (!rail) return undefined;
+    let frameId;
+    let direction = -0.45;
+
+    const tick = () => {
+      const maxScroll = rail.scrollWidth - rail.clientWidth;
+      if (maxScroll <= 0) {
+        frameId = requestAnimationFrame(tick);
+        return;
+      }
+
+      rail.scrollLeft += direction;
+      if (rail.scrollLeft <= 0) direction = 0.45;
+      if (rail.scrollLeft >= maxScroll) direction = -0.45;
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  return null;
 }
 
 function AdminModal({ state, setState }) {
