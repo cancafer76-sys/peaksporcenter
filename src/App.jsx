@@ -235,7 +235,9 @@ function DesktopShell({ state, setState }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
-  const heroSlides = bannerSlides.length ? bannerSlides : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const heroSlides = bannerSlides.length
+    ? bannerSlides
+    : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -289,7 +291,7 @@ function DesktopShell({ state, setState }) {
             />
           </div>
 
-          <div className="desktop-hero-media hero-banner-rail">
+          <div className="desktop-hero-media hero-banner-track">
             {heroSlides.map((slide, index) => (
               <article key={`${slide.title}-${index}`} className={`hero-banner-slide hero-banner-slide-${index + 1}`}>
                 <img src={slide.image} alt={slide.title} />
@@ -467,7 +469,9 @@ function MobileShell({ state, setState }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
-  const heroSlides = bannerSlides.length ? bannerSlides : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const heroSlides = bannerSlides.length
+    ? bannerSlides
+    : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -495,10 +499,11 @@ function MobileShell({ state, setState }) {
       </header>
 
       <main className="shell-width mobile-page">
+        <HeroAutoScroller />
         <Ticker items={state.settings.announcements} />
 
         <section className="mobile-hero" id="home">
-          <div className="mobile-hero-banner-rail">
+          <div className="mobile-hero-banner-rail hero-banner-track">
             {heroSlides.map((slide, index) => (
               <article key={`${slide.title}-${index}`} className={`mobile-hero-banner-slide mobile-hero-banner-slide-${index + 1}`}>
                 <img className="mobile-hero-image" src={slide.image} alt={slide.title} />
@@ -696,6 +701,36 @@ function ServiceAutoScroller() {
       rail.scrollLeft += direction;
       if (rail.scrollLeft <= 0) direction = 0.45;
       if (rail.scrollLeft >= maxScroll) direction = -0.45;
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  return null;
+}
+
+function HeroAutoScroller() {
+  useEffect(() => {
+    const rail = document.querySelector('.hero-banner-track');
+    if (!rail) return undefined;
+    let frameId;
+    let direction = 0.85;
+    let lastTick = 0;
+
+    const tick = timestamp => {
+      if (!lastTick) lastTick = timestamp;
+      const elapsed = timestamp - lastTick;
+      if (elapsed >= 16) {
+        const maxScroll = rail.scrollWidth - rail.clientWidth;
+        if (maxScroll > 0) {
+          rail.scrollLeft += direction;
+          if (rail.scrollLeft <= 0) direction = 0.85;
+          if (rail.scrollLeft >= maxScroll) direction = -0.85;
+        }
+        lastTick = timestamp;
+      }
       frameId = requestAnimationFrame(tick);
     };
 

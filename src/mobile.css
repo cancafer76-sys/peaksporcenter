@@ -305,14 +305,26 @@ img { display: block; width: 100%; }
 }
 
 .mobile-hero-banner-rail {
-  display: grid;
+  display: flex;
   gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.mobile-hero-banner-rail::-webkit-scrollbar {
+  display: none;
 }
 
 .mobile-hero-banner-slide {
   min-height: 300px;
+  flex: 0 0 min(86vw, 460px);
+  min-width: min(86vw, 460px);
   border-radius: 24px;
   border: 1px solid var(--line);
+  scroll-snap-align: start;
 }
 
 .mobile-hero-content {
@@ -435,6 +447,46 @@ img { display: block; width: 100%; }
   font-size: 13px;
 }
 
+.hero-banner-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hero-banner-track::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-banner-track > article {
+  flex: 0 0 min(86vw, 520px);
+  min-width: min(86vw, 520px);
+  scroll-snap-align: start;
+}
+
+.hero-banner-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hero-banner-track::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-banner-track > article {
+  flex: 0 0 min(86vw, 520px);
+  min-width: min(86vw, 520px);
+  scroll-snap-align: start;
+}
+
 .desktop-hero-media img {
   width: 100%;
   height: 100%;
@@ -460,6 +512,15 @@ img { display: block; width: 100%; }
 
 .hero-floating-card strong { display: block; font-size: 24px; }
 .hero-floating-card span { color: var(--muted); font-size: 12px; }
+
+.hero-banner-marquee {
+  animation: hero-marquee 22s linear infinite;
+}
+
+@keyframes hero-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-1 * (min(86vw, 520px) + 12px))); }
+}
 
 .stats-grid {
   display: grid;
@@ -1071,14 +1132,15 @@ img { display: block; width: 100%; }
   .mobile-hero {
     margin-top: 16px;
   }
-  .hero-banner-rail {
-    grid-template-columns: 1fr;
-  }
   .hero-banner-slide {
     min-height: 320px;
+    flex: 0 0 min(88vw, 520px);
+    min-width: min(88vw, 520px);
   }
   .mobile-hero-banner-slide {
     min-height: 300px;
+    flex: 0 0 min(88vw, 520px);
+    min-width: min(88vw, 520px);
   }
   .hero-overlay-mobile {
     position: absolute;
