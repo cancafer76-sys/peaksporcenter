@@ -1510,7 +1510,6 @@ export default function App() {
     document.body.style.margin = '0';
     document.body.style.padding = '0';
     document.body.style.overscrollBehaviorY = 'none';
-    document.body.style.overflowY = 'auto';
     return () => {
       document.documentElement.style.minHeight = '';
       document.documentElement.style.width = '';
@@ -1521,7 +1520,6 @@ export default function App() {
       document.body.style.margin = '';
       document.body.style.padding = '';
       document.body.style.overscrollBehaviorY = '';
-      document.body.style.overflowY = '';
     };
   }, []);
 

@@ -1504,7 +1504,12 @@ img { display: block; width: 100%; }
 
 @media (max-width: 980px) {
   .desktop-shell { display: none; }
-  .mobile-shell { display: block; }
+  .mobile-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
   .desktop-nav { display: none; }
   .desktop-header-inner,
   .mobile-header-inner {
@@ -1512,16 +1517,28 @@ img { display: block; width: 100%; }
   }
   .mobile-page {
     width: 100%;
+    flex: 1 1 auto;
+    height: calc(100dvh - 68px);
     padding-bottom: calc(180px + env(safe-area-inset-bottom));
-    min-height: calc(100dvh + 140px);
+    min-height: 0;
     overflow-x: hidden;
-    overflow-y: visible;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
   }
 
   .mobile-main {
     width: 100%;
+    flex: 1 1 auto;
+    height: calc(100dvh - 68px);
     padding-bottom: calc(180px + env(safe-area-inset-bottom));
-    min-height: calc(100dvh + 140px);
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
   }
   .shell-width {
     width: min(100%, calc(100vw - 24px));
