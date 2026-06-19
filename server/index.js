@@ -11,6 +11,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import crypto from 'crypto';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { PrismaClient } from '@prisma/client';
 import {
   defaultAnnouncements,
@@ -29,6 +31,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const prisma = new PrismaClient();
+const execFileAsync = promisify(execFile);
 const app = express();
 const uploadDir = path.join(__dirname, 'uploads');
 
@@ -138,6 +141,42 @@ async function adminRequired(req, res, next) {
     return res.status(403).json({ message: 'Yetersiz yetki' });
   }
   next();
+}
+
+async function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function connectDatabase(retries = 10) {
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await prisma.$connect();
+      console.log('Database connected');
+      return;
+    } catch (error) {
+      console.warn(`Database connect attempt ${attempt}/${retries} failed:`, error.message);
+      if (attempt === retries) throw error;
+      await wait(2000 * attempt);
+    }
+  }
+}
+
+async function pushDatabaseSchema(retries = 8) {
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await execFileAsync('npx', ['prisma', 'db', 'push', '--skip-generate'], {
+        cwd: rootDir,
+        env: process.env
+      });
+      console.log('Database schema synced');
+      return;
+    } catch (error) {
+      const message = error.stderr || error.message || 'unknown error';
+      console.warn(`Database push attempt ${attempt}/${retries} failed:`, message);
+      if (attempt === retries) throw error;
+      await wait(2500 * attempt);
+    }
+  }
 }
 
 async function ensureSeedData() {
@@ -341,10 +380,12 @@ app.use((req, res) => {
 
 async function start() {
   try {
+    await connectDatabase();
+    await pushDatabaseSchema();
     await ensureSeedData();
     console.log('Database seeded successfully');
   } catch (error) {
-    console.error('Database seed failed:', error);
+    console.error('Database startup failed:', error);
     throw error;
   }
 
