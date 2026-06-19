@@ -146,42 +146,52 @@ img { display: block; width: 100%; }
 }
 
 .admin-entry-button {
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 34px;
+  padding: 0 11px;
   border-radius: 999px;
-  border: 1px solid rgba(124, 255, 79, 0.22);
-  background: rgba(124, 255, 79, 0.08);
+  border: 1px solid rgba(124, 255, 79, 0.18);
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.14), rgba(34, 197, 94, 0.08));
   color: var(--green);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
 .admin-entry-button-header {
-  min-height: 44px;
-  padding: 0 16px;
-  background: linear-gradient(135deg, rgba(124, 255, 79, 0.24), rgba(34, 197, 94, 0.14));
-  border-color: rgba(124, 255, 79, 0.36);
-  box-shadow: 0 14px 32px rgba(124, 255, 79, 0.14);
+  min-height: 34px;
+  padding: 0 11px;
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.18), rgba(34, 197, 94, 0.1));
+  border-color: rgba(124, 255, 79, 0.24);
+  box-shadow: 0 10px 22px rgba(124, 255, 79, 0.12);
 }
 
 .admin-entry-button-header span {
   white-space: nowrap;
 }
 
+.admin-entry-button-header svg,
+.admin-entry-button-hero svg {
+  filter: drop-shadow(0 0 10px rgba(124, 255, 79, 0.2));
+}
+
 .admin-entry-button-hero {
-  min-height: 50px;
-  padding: 0 18px;
-  background: linear-gradient(135deg, rgba(124, 255, 79, 0.18), rgba(34, 197, 94, 0.1));
-  box-shadow: 0 14px 30px rgba(124, 255, 79, 0.12);
-  border-color: rgba(124, 255, 79, 0.28);
+  min-height: 38px;
+  padding: 0 13px;
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.2), rgba(34, 197, 94, 0.12));
+  box-shadow: 0 12px 26px rgba(124, 255, 79, 0.14);
+  border-color: rgba(124, 255, 79, 0.24);
 }
 
 .admin-entry-button-hero.compact {
-  min-height: 46px;
-  padding: 0 16px;
+  min-height: 36px;
+  padding: 0 11px;
 }
 
 .header-left-group {
@@ -192,6 +202,8 @@ img { display: block; width: 100%; }
 
 .mobile-header .header-actions {
   margin-left: auto;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .app-shell.light .mobile-header .theme-switch span {
@@ -454,28 +466,28 @@ img { display: block; width: 100%; }
 }
 
 .hero-admin-button {
-  min-height: 52px;
-  padding: 0 18px;
+  min-height: 38px;
+  padding: 0 13px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(124, 255, 79, 0.22), rgba(34, 197, 94, 0.12));
-  border: 1px solid rgba(124, 255, 79, 0.34);
-  box-shadow: 0 18px 40px rgba(124, 255, 79, 0.16);
+  background: linear-gradient(135deg, rgba(124, 255, 79, 0.22), rgba(34, 197, 94, 0.14));
+  border: 1px solid rgba(124, 255, 79, 0.28);
+  box-shadow: 0 14px 28px rgba(124, 255, 79, 0.14);
 }
 
 .hero-admin-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 20px 42px rgba(124, 255, 79, 0.22);
+  box-shadow: 0 16px 32px rgba(124, 255, 79, 0.18);
 }
 
 .hero-admin-main {
   display: inline-flex;
-  margin-top: 12px;
+  margin-top: 10px;
   width: fit-content;
 }
 
 .admin-entry-button-header:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 34px rgba(124, 255, 79, 0.18);
+  box-shadow: 0 12px 26px rgba(124, 255, 79, 0.16);
 }
 
 .desktop-hero-copy .admin-entry-button-hero {
@@ -490,16 +502,16 @@ img { display: block; width: 100%; }
 
 .mobile-hero-cta-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .mobile-hero-cta-row .hero-admin-inline {
-  width: 100%;
+  width: auto;
 }
 
 .mobile-hero-cta-row .admin-entry-button-hero {
-  width: 100%;
+  width: fit-content;
   justify-content: center;
 }
 
@@ -520,22 +532,37 @@ img { display: block; width: 100%; }
   }
 
   .hero-admin-inline {
-    width: 100%;
+    width: auto;
   }
 
   .hero-admin-button {
-    width: 100%;
+    width: fit-content;
     justify-content: center;
   }
 
   .hero-admin-main {
-    width: 100%;
+    width: fit-content;
   }
 
   .admin-entry-button-header {
-    min-height: 40px;
-    padding: 0 12px;
-    font-size: 11px;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .admin-entry-button-header span {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-entry-button-header span {
+    display: none;
+  }
+
+  .admin-entry-button-header {
+    min-width: 38px;
+    padding: 0 9px;
   }
 }
 
