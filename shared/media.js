@@ -230,13 +230,39 @@ export function normalizeAbout(item = {}) {
 }
 
 export function normalizeTestimonial(item = {}, index = 0) {
+  const rawRating = Number(item.rating);
+  const rating = Number.isFinite(rawRating)
+    ? Math.min(5, Math.max(0.5, Math.round(rawRating * 2) / 2))
+    : 5;
   return {
     id: item.id || `review-${index}`,
     name: item.name || 'Üye',
     role: item.role || 'Üye',
     text: item.text || item.message || '',
-    rating: Math.min(5, Math.max(1, Number(item.rating) || 5)),
+    rating,
     image: item.image || ''
+  };
+}
+
+export function getTestimonialStarTypes(rating) {
+  const value = Math.min(5, Math.max(0, Number(rating) || 5));
+  return Array.from({ length: 5 }, (_, index) => {
+    const star = index + 1;
+    if (value >= star) return 'full';
+    if (value >= star - 0.5) return 'half';
+    return 'empty';
+  });
+}
+
+export function normalizeOnlineCounter(config = {}) {
+  const min = Math.max(1, Number(config.min) || 10);
+  const max = Math.max(min, Number(config.max) || 50);
+  return {
+    enabled: config.enabled !== false,
+    min,
+    max,
+    label: config.label || 'kişi online',
+    intervalMs: Math.max(2000, Number(config.intervalMs) || 3500)
   };
 }
 

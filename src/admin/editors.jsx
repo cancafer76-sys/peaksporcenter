@@ -13,6 +13,7 @@ import {
   normalizeStats,
   normalizeHomeCards,
   normalizeTestimonial,
+  getTestimonialStarTypes,
   normalizeTrainer,
   packageCardVars,
   serviceCardVars,
@@ -665,9 +666,18 @@ export function TestimonialsEditor({ items, onChange }) {
           <div className="admin-form-grid">
             <label className="admin-field">İsim<input value={current.name} onChange={e => update('name', e.target.value)} /></label>
             <label className="admin-field">Ünvan / Paket<input value={current.role} onChange={e => update('role', e.target.value)} placeholder="Premium Üye · 6 ay" /></label>
-            <label className="admin-field">Puan (1-5)<input type="number" min={1} max={5} value={current.rating} onChange={e => update('rating', Number(e.target.value))} /></label>
+            <label className="admin-field">
+              Puan
+              <select value={current.rating} onChange={e => update('rating', Number(e.target.value))}>
+                <option value={5}>5 yıldız</option>
+                <option value={4.5}>4.5 yıldız</option>
+                <option value={4}>4 yıldız</option>
+                <option value={3.5}>3.5 yıldız</option>
+                <option value={3}>3 yıldız</option>
+              </select>
+            </label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Yorum<textarea rows={3} value={current.text} onChange={e => update('text', e.target.value)} /></label>
-            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Fotoğraf URL (opsiyonel)<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
+            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Fotoğraf URL<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
           </div>
           <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
         </div>
@@ -675,10 +685,18 @@ export function TestimonialsEditor({ items, onChange }) {
       <aside className="admin-editor-preview">
         <div className="admin-preview-head"><Eye size={16} /> Canlı Önizleme</div>
         <article className="testimonial-card preview-testimonial-card">
-          <div className="testimonial-stars">{'★'.repeat(current.rating)}{'☆'.repeat(5 - current.rating)}</div>
+          <div className="testimonial-stars testimonial-stars-gold">
+            {getTestimonialStarTypes(current.rating).map((type, index) => (
+              <span key={index} className={`testimonial-star testimonial-star-${type}`}>★</span>
+            ))}
+          </div>
           <p>{current.text || 'Yorum metni...'}</p>
           <div className="testimonial-author">
-            <span className="testimonial-avatar">{current.name.charAt(0)}</span>
+            {current.image ? (
+              <img src={current.image} alt={current.name} className="testimonial-photo" />
+            ) : (
+              <span className="testimonial-avatar">{current.name.charAt(0)}</span>
+            )}
             <div><strong>{current.name}</strong><span>{current.role}</span></div>
           </div>
         </article>

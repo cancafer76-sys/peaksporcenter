@@ -64,6 +64,13 @@ export const defaultContent = {
     message: 'Merhaba, ben PEAKSPOR yapay zeka asistanıyım. Size nasıl yardımcı olabilirim?',
     buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Ders Programları', 'Kampanyalar', 'WhatsApp Destek']
   },
+  onlineCounter: {
+    enabled: true,
+    min: 10,
+    max: 50,
+    label: 'kişi online',
+    intervalMs: 3500
+  },
   stats: [
     { id: 'stat-1', label: 'Aktif Üye', value: '5.000+', icon: 'users', accentColor: '', bgColor: '', valueColor: '', labelColor: '', visible: true },
     { id: 'stat-2', label: 'Uzman Eğitmen', value: '25', icon: 'coach', accentColor: '', bgColor: '', valueColor: '', labelColor: '', visible: true },
@@ -412,15 +419,15 @@ export const defaultTestimonials = [
     role: 'Premium Üye · 8 ay',
     text: 'Ekipman kalitesi ve eğitmen ilgisi gerçekten üst düzey. 3 ayda hedeflediğim forma ulaştım, kesinlikle tavsiye ederim.',
     rating: 5,
-    image: ''
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80'
   },
   {
     id: 'review-2',
     name: 'Emre T.',
     role: 'Pro Plan · 1 yıl',
     text: 'Grup dersleri ve PT desteği sayesinde motivasyonum hiç düşmedi. Temizlik ve ortam kalitesi de çok iyi.',
-    rating: 5,
-    image: ''
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
   },
   {
     id: 'review-3',
@@ -428,15 +435,15 @@ export const defaultTestimonials = [
     role: 'Starter Üye · 4 ay',
     text: 'İlk kez düzenli spor yapıyorum, eğitmenler her adımda yanımda. Paket fiyatları da gayet makul.',
     rating: 5,
-    image: ''
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
   },
   {
     id: 'review-4',
     name: 'Can D.',
     role: 'Elite Üye · 6 ay',
     text: 'VIP alan ve personal antrenör desteği fark yaratıyor. Profesyonel bir kulüp arayanlar için ideal.',
-    rating: 5,
-    image: ''
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80'
   }
 ];
 

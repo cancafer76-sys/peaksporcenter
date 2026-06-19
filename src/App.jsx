@@ -13,7 +13,7 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizeHomeCards, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
 import {
@@ -93,6 +93,73 @@ function pickStyle(entries) {
     if (value) style[key] = value;
   });
   return Object.keys(style).length ? style : undefined;
+}
+
+function TestimonialStars({ rating, compact = false }) {
+  const value = Math.min(5, Math.max(0, Number(rating) || 5));
+  return (
+    <div
+      className={`testimonial-stars testimonial-stars-gold ${compact ? 'is-compact' : ''}`}
+      aria-label={`${value} yıldız`}
+    >
+      {getTestimonialStarTypes(value).map((type, index) => (
+        <span key={index} className={`testimonial-star testimonial-star-${type}`} aria-hidden="true">
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function randomOnlineCount(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function OnlineCounterBar({ config }) {
+  const settings = useMemo(() => normalizeOnlineCounter(config), [config]);
+  const [count, setCount] = useState(() => randomOnlineCount(settings.min, settings.max));
+
+  useEffect(() => {
+    if (!settings.enabled) return undefined;
+    setCount(randomOnlineCount(settings.min, settings.max));
+    const timer = window.setInterval(() => {
+      setCount(randomOnlineCount(settings.min, settings.max));
+    }, settings.intervalMs);
+    return () => window.clearInterval(timer);
+  }, [settings.enabled, settings.min, settings.max, settings.intervalMs]);
+
+  if (!settings.enabled) return null;
+
+  return (
+    <div className="online-counter-bar shell-width" aria-live="polite">
+      <span className="online-counter-pulse" aria-hidden="true" />
+      <span className="online-counter-text">
+        <strong>{count}</strong> {settings.label}
+      </span>
+    </div>
+  );
+}
+
+function AppTopBand({ state, header }) {
+  const content = state.settings.content || defaultContent;
+  const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
+  const onlineEnabled = normalizeOnlineCounter(onlineCounter).enabled;
+
+  return (
+    <div className={`top-band ${onlineEnabled ? 'has-online-bar' : ''}`}>
+      <OnlineCounterBar config={onlineCounter} />
+      {header}
+      <div className="ticker-shell shell-width">
+        <Ticker items={state.settings.announcements} />
+      </div>
+    </div>
+  );
+}
+
+function useOnlineBarClass(state) {
+  const content = state.settings.content || defaultContent;
+  const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
+  return normalizeOnlineCounter(onlineCounter).enabled ? 'has-online-bar' : '';
 }
 
 function PackageCard({ item, selected = false, compact = false, showCta = true, onSelect, onCtaClick }) {
@@ -230,10 +297,7 @@ function TestimonialsSection({ items, compact = false }) {
       <div className={`testimonials-grid ${compact ? 'testimonials-grid-home' : ''}`}>
         {visible.map(item => (
           <article key={item.id} className={`testimonial-card ${compact ? 'testimonial-card-compact' : ''}`}>
-            <div className="testimonial-stars" aria-label={`${item.rating} yıldız`}>
-              {'★'.repeat(item.rating)}
-              {'☆'.repeat(Math.max(0, 5 - item.rating))}
-            </div>
+            <TestimonialStars rating={item.rating} compact={compact} />
             <p>{item.text}</p>
             <div className="testimonial-author">
               {item.image ? (
@@ -995,50 +1059,50 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
   const isActiveRoute = route => pathname === route;
 
   return (
-    <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
-      <div className="top-band">
-        <header className={mobile ? 'mobile-header' : 'desktop-header'}>
-          <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
-            <div className="header-left-group">
-              <MenuToggle
-                open={state.drawerOpen}
-                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+    <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'} ${useOnlineBarClass(state)}`}>
+      <AppTopBand
+        state={state}
+        header={
+          <header className={mobile ? 'mobile-header' : 'desktop-header'}>
+            <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
+              <div className="header-left-group">
+                <MenuToggle
+                  open={state.drawerOpen}
+                  onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                />
+                <Brand compact={mobile} />
+              </div>
+              {!mobile ? (
+                <nav className="desktop-nav" aria-label="Ana menü">
+                  {desktopNav.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`desktop-nav-link ${item.route && isActiveRoute(item.route) ? 'active' : ''}`}
+                      onClick={() => {
+                        if (item.route) {
+                          navigateToPath(item.route);
+                          return;
+                        }
+                        navigateToPath('/');
+                        window.setTimeout(() => scrollToSection(item.id), 150);
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </nav>
+              ) : null}
+              <HeaderActions
+                darkMode={state.darkMode}
+                onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+                onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+                mobile={mobile}
               />
-              <Brand compact={mobile} />
             </div>
-            {!mobile ? (
-              <nav className="desktop-nav" aria-label="Ana menü">
-                {desktopNav.map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`desktop-nav-link ${item.route && isActiveRoute(item.route) ? 'active' : ''}`}
-                    onClick={() => {
-                      if (item.route) {
-                        navigateToPath(item.route);
-                        return;
-                      }
-                      navigateToPath('/');
-                      window.setTimeout(() => scrollToSection(item.id), 150);
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-            ) : null}
-            <HeaderActions
-              darkMode={state.darkMode}
-              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-              mobile={mobile}
-            />
-          </div>
-        </header>
-        <div className="ticker-shell shell-width">
-          <Ticker items={state.settings.announcements} />
-        </div>
-      </div>
+          </header>
+        }
+      />
 
       <main className={`shell-width route-page-main ${mobile ? 'mobile-page mobile-main' : 'desktop-page'}`}>
         <section className="section-block">
@@ -1386,7 +1450,6 @@ function ServicesPage({ state, setState }) {
 
 function PackagesPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
-  const homeCards = normalizeHomeCards(content.homeCards);
   const packages = state.settings.packages || defaultPackages;
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -1404,12 +1467,11 @@ function PackagesPage({ state, setState }) {
                 key={item.title}
                 item={item}
                 selected={selectedPackage?.title === item.title}
-                showCta={false}
                 onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
+                onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
           </div>
-          <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </>
       }
       backTo="/"
@@ -1748,40 +1810,40 @@ function DesktopShell({ state, setState }) {
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
 
   return (
-    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
-      <div className="top-band">
-        <header className="desktop-header">
-          <div className="shell-width desktop-header-inner">
-            <div className="header-left-group">
-              <MenuToggle
-                open={state.drawerOpen}
-                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'} ${useOnlineBarClass(state)}`}>
+      <AppTopBand
+        state={state}
+        header={
+          <header className="desktop-header">
+            <div className="shell-width desktop-header-inner">
+              <div className="header-left-group">
+                <MenuToggle
+                  open={state.drawerOpen}
+                  onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                />
+                <Brand />
+              </div>
+              <nav className="desktop-nav" aria-label="Ana menü">
+                {desktopNav.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="desktop-nav-link"
+                    onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+              <HeaderActions
+                darkMode={state.darkMode}
+                onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+                onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
               />
-              <Brand />
             </div>
-            <nav className="desktop-nav" aria-label="Ana menü">
-              {desktopNav.map(item => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="desktop-nav-link"
-                  onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-            <HeaderActions
-              darkMode={state.darkMode}
-              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-            />
-          </div>
-        </header>
-        <div className="ticker-shell shell-width">
-          <Ticker items={state.settings.announcements} />
-        </div>
-      </div>
+          </header>
+        }
+      />
 
       <main className="shell-width desktop-page">
         <section className="desktop-home-hero section-block" id="home">
@@ -1945,29 +2007,29 @@ function MobileShell({ state, setState }) {
   const selectedPackage = state.selectedPackage || packages[0];
 
   return (
-    <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
-      <div className="top-band">
-        <header className="mobile-header">
-          <div className="mobile-header-inner shell-width">
-            <div className="header-left-group">
-              <MenuToggle
-                open={state.drawerOpen}
-                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+    <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'} ${useOnlineBarClass(state)}`}>
+      <AppTopBand
+        state={state}
+        header={
+          <header className="mobile-header">
+            <div className="mobile-header-inner shell-width">
+              <div className="header-left-group">
+                <MenuToggle
+                  open={state.drawerOpen}
+                  onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                />
+                <Brand compact />
+              </div>
+              <HeaderActions
+                darkMode={state.darkMode}
+                onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+                onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+                mobile
               />
-              <Brand compact />
             </div>
-            <HeaderActions
-              darkMode={state.darkMode}
-              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-              mobile
-            />
-          </div>
-        </header>
-        <div className="ticker-shell shell-width">
-          <Ticker items={state.settings.announcements} />
-        </div>
-      </div>
+          </header>
+        }
+      />
 
       <main className="shell-width mobile-page mobile-main">
         <section className="mobile-hero" id="home">

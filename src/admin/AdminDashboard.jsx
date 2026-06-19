@@ -126,6 +126,7 @@ function SettingsSection({ content, onChange }) {
   const theme = { ...defaultContent.theme, ...(data.theme || {}) };
   const whatsapp = { ...defaultContent.whatsapp, ...(data.whatsapp || {}) };
   const seo = { ...defaultContent.seo, ...(data.seo || {}) };
+  const onlineCounter = { ...defaultContent.onlineCounter, ...(data.onlineCounter || {}) };
 
   const patch = next => onChange({ ...data, ...next });
   const patchTheme = next => {
@@ -186,6 +187,55 @@ function SettingsSection({ content, onChange }) {
         }}>
           <span style={{ color: theme.primary }}>Önizleme</span>
           <button type="button" style={{ background: theme.primary, color: theme.background }}>Buton</button>
+        </div>
+      </div>
+      <div className="admin-form-card">
+        <h4>Online Sayacı (Üst Bar)</h4>
+        <p className="admin-hint">Sitenin en üstünde sürekli değişen sahte online ziyaretçi sayısı gösterilir.</p>
+        <label className="admin-toggle">
+          <input
+            type="checkbox"
+            checked={onlineCounter.enabled !== false}
+            onChange={e => patch({ onlineCounter: { ...onlineCounter, enabled: e.target.checked } })}
+          />
+          Online sayacını göster
+        </label>
+        <div className="admin-form-grid">
+          <label className="admin-field">
+            Minimum
+            <input
+              type="number"
+              min={1}
+              value={onlineCounter.min}
+              onChange={e => patch({ onlineCounter: { ...onlineCounter, min: Number(e.target.value) || 1 } })}
+            />
+          </label>
+          <label className="admin-field">
+            Maksimum
+            <input
+              type="number"
+              min={1}
+              value={onlineCounter.max}
+              onChange={e => patch({ onlineCounter: { ...onlineCounter, max: Number(e.target.value) || 50 } })}
+            />
+          </label>
+          <label className="admin-field">
+            Etiket
+            <input
+              value={onlineCounter.label || 'kişi online'}
+              onChange={e => patch({ onlineCounter: { ...onlineCounter, label: e.target.value } })}
+            />
+          </label>
+          <label className="admin-field">
+            Güncelleme (ms)
+            <input
+              type="number"
+              min={2000}
+              step={500}
+              value={onlineCounter.intervalMs || 3500}
+              onChange={e => patch({ onlineCounter: { ...onlineCounter, intervalMs: Number(e.target.value) || 3500 } })}
+            />
+          </label>
         </div>
       </div>
       <div className="admin-form-card">

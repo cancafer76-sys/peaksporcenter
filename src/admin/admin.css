@@ -1432,9 +1432,23 @@
 }
 
 .preview-testimonial-card .testimonial-stars {
-  color: #fff;
-  font-size: 12px;
-  margin-bottom: 8px;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.preview-testimonial-card .testimonial-star-full {
+  color: #facc15;
+}
+
+.preview-testimonial-card .testimonial-star-half {
+  background: linear-gradient(90deg, #facc15 50%, rgba(255, 255, 255, 0.22) 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.preview-testimonial-card .testimonial-star-empty {
+  color: rgba(255, 255, 255, 0.22);
 }
 
 .preview-testimonial-card p {
