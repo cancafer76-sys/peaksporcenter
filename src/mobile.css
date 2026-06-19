@@ -3160,7 +3160,7 @@ img { display: block; width: 100%; }
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 149;
+  z-index: 205;
   border: 0;
   background: rgba(0, 0, 0, 0.62);
   animation: drawerFadeIn 0.28s ease;
@@ -3177,8 +3177,10 @@ img { display: block; width: 100%; }
   left: 0;
   bottom: 0;
   width: min(86vw, 320px);
-  z-index: 150;
+  z-index: 210;
   padding: 18px 16px 24px;
+  padding-top: calc(18px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
   border-radius: 0 24px 24px 0;
   background: linear-gradient(165deg, rgba(14, 18, 24, 0.98), rgba(8, 10, 12, 0.98));
   border: 1px solid rgba(var(--accent-rgb), 0.14);
@@ -3198,8 +3200,8 @@ img { display: block; width: 100%; }
   border-color: rgba(15, 23, 42, 0.08);
 }
 
-.desktop-shell .side-drawer {
-  top: 80px;
+.desktop-shell .side-drawer.is-open {
+  top: 0;
 }
 
 .mobile-drawer {

@@ -59,9 +59,14 @@ const fallbackSettings = {
   galleryCategories: defaultGalleryCategories
 };
 
-const drawerExtraNav = [
-  { id: 'about', label: 'Hakkımızda', icon: FileText, route: '/about' },
-  { id: 'trainers', label: 'Hocalarımız', icon: Medal, route: '/trainers' }
+const drawerNav = [
+  { id: 'home', label: 'Ana Sayfa', icon: Home, route: '/' },
+  { id: 'services', label: 'Hizmetler', icon: Dumbbell, route: '/services' },
+  { id: 'packages', label: 'Paketler', icon: Package, route: '/packages' },
+  { id: 'gallery', label: 'Galeri', icon: Image, route: '/gallery' },
+  { id: 'trainers', label: 'Hocalarımız', icon: Medal, route: '/trainers' },
+  { id: 'contact', label: 'İletişim', icon: Phone, route: '/contact' },
+  { id: 'about', label: 'Hakkımızda', icon: FileText, route: '/about' }
 ];
 
 const desktopNav = [
@@ -70,14 +75,6 @@ const desktopNav = [
   { id: 'packages', label: 'Paketler', route: '/packages' },
   { id: 'gallery', label: 'Galeri', route: '/gallery' },
   { id: 'contact', label: 'İletişim', route: '/contact' }
-];
-
-const mobileNav = [
-  { id: 'home', label: 'Ana Sayfa', icon: Home, route: '/' },
-  { id: 'services', label: 'Hizmetler', icon: Dumbbell, route: '/services' },
-  { id: 'packages', label: 'Paketler', icon: Package, route: '/packages' },
-  { id: 'gallery', label: 'Galeri', icon: Image, route: '/gallery' },
-  { id: 'contact', label: 'İletişim', icon: Phone, route: '/contact' }
 ];
 
 function getStatIcon(name) {
@@ -948,7 +945,7 @@ function AppDrawer({ open, onClose, pathname }) {
         </div>
         <p className="drawer-kicker">Keşfet</p>
         <nav className="drawer-links">
-          {mobileNav.map((item, index) => {
+          {drawerNav.map((item, index) => {
             const Icon = item.icon;
             const active = item.route ? pathname === item.route : false;
             return (
@@ -957,26 +954,6 @@ function AppDrawer({ open, onClose, pathname }) {
                 type="button"
                 className={`drawer-link ${active ? 'active' : ''}`}
                 style={{ '--i': index }}
-                onClick={() => handleNavigate(item)}
-              >
-                <span className="drawer-link-icon">
-                  <Icon size={18} />
-                </span>
-                <span className="drawer-link-text">{item.label}</span>
-                <ChevronRight size={16} />
-              </button>
-            );
-          })}
-          <div className="drawer-links-divider" aria-hidden="true" />
-          {drawerExtraNav.map((item, index) => {
-            const Icon = item.icon;
-            const active = pathname === item.route;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`drawer-link ${active ? 'active' : ''}`}
-                style={{ '--i': mobileNav.length + index }}
                 onClick={() => handleNavigate(item)}
               >
                 <span className="drawer-link-icon">
@@ -1742,6 +1719,7 @@ function GalleryPage({ state, setState }) {
 }
 
 function DesktopShell({ state, setState }) {
+  const pathname = usePathname();
   const content = state.settings.content || defaultContent;
   const stats = normalizeStats(content.stats || defaultContent.stats);
   const homeCards = normalizeHomeCards(content.homeCards);
@@ -1917,48 +1895,11 @@ function DesktopShell({ state, setState }) {
 
       <MediaLightbox item={activeGalleryItem} onClose={() => setActiveGalleryItem(null)} />
 
-      {state.drawerOpen ? (
-        <div className="side-drawer">
-          <button
-            type="button"
-            className="drawer-close"
-            onClick={() => setState(prev => ({ ...prev, drawerOpen: false }))}
-          >
-            <X size={18} />
-          </button>
-          <Brand compact />
-          <div className="drawer-links">
-            {desktopNav.map(item => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setState(prev => ({ ...prev, drawerOpen: false }));
-                  if (item.route) navigateToPath(item.route);
-                  else {
-                    navigateToPath('/');
-                    window.setTimeout(() => scrollToSection(item.id), 150);
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-            {drawerExtraNav.map(item => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setState(prev => ({ ...prev, drawerOpen: false }));
-                  navigateToPath(item.route);
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <AppDrawer
+        open={state.drawerOpen}
+        onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
+        pathname={pathname}
+      />
 
       {state.adminOpen ? (
         <AdminDashboard
