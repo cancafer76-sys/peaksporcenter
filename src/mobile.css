@@ -320,46 +320,33 @@ img { display: block; width: 100%; }
 
 .circle-logo {
   position: relative;
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   flex: 0 0 auto;
   overflow: visible;
-}
-
-.circle-logo-xs {
-  width: 28px;
-  height: 28px;
-}
-
-.circle-logo-lg {
-  width: 46px;
-  height: 46px;
-}
-
-.circle-logo-md {
-  width: 40px;
-  height: 40px;
-}
-
-.circle-logo-sm {
-  width: 34px;
-  height: 34px;
-}
-
-.circle-logo-fab {
-  width: 54px;
-  height: 54px;
-}
-
-.circle-logo-glow {
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.34), transparent 68%);
-  z-index: 0;
-  pointer-events: none;
+  isolation: isolate;
   animation: circleLogoPulse 3s ease-in-out infinite;
+}
+
+.circle-logo-xs { width: 30px; height: 30px; }
+.circle-logo-sm { width: 36px; height: 36px; }
+.circle-logo-md { width: 44px; height: 44px; }
+.circle-logo-lg { width: 52px; height: 52px; }
+.circle-logo-xl { width: 62px; height: 62px; }
+.circle-logo-fab { width: 58px; height: 58px; }
+
+.circle-logo-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #1c1c1c 0%, #060606 72%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 2px rgba(var(--accent-rgb), 0.38),
+    0 6px 18px rgba(0, 0, 0, 0.5);
+  z-index: 1;
 }
 
 .circle-logo-img {
@@ -368,76 +355,86 @@ img { display: block; width: 100%; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
-  transform: scale(1.04);
-  animation: circleLogoPulse 3s ease-in-out infinite;
-  box-shadow:
-    0 0 0 2px rgba(var(--accent-rgb), 0.35),
-    0 4px 14px rgba(0, 0, 0, 0.35);
+  padding: 3px;
+  box-sizing: border-box;
+  pointer-events: none;
+  user-select: none;
+}
+
+.circle-logo-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.28), transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  animation: circleLogoGlow 3s ease-in-out infinite;
 }
 
 .circle-logo-orbit {
   position: absolute;
-  inset: -2px;
+  inset: -3px;
   border-radius: 50%;
   border: 2px solid transparent;
   border-top-color: rgba(var(--accent-rgb), 0.95);
-  border-right-color: rgba(var(--accent-rgb), 0.45);
+  border-right-color: rgba(var(--accent-rgb), 0.5);
   animation: circleLogoOrbit 2.4s linear infinite;
-  z-index: 3;
+  z-index: 4;
   pointer-events: none;
-}
-
-.assistant-logo-mark.circle-logo-sm,
-.assistant-logo-mark .circle-logo-sm {
-  width: 38px;
-  height: 38px;
 }
 
 .assistant-teaser-logo {
   display: flex;
   justify-content: center;
-  margin: 2px 0 10px;
+  margin: 4px 0 12px;
 }
 
-.assistant-teaser-logo .circle-logo-lg {
-  width: 52px;
-  height: 52px;
+.assistant-teaser-logo .circle-logo-xl {
+  width: 68px;
+  height: 68px;
 }
 
-.assistant-teaser-avatar .circle-logo-sm,
-.assistant-panel-avatar .circle-logo-sm,
+.assistant-panel-avatar .circle-logo-md,
 .assistant-message-avatar .circle-logo-sm {
-  width: 40px;
-  height: 40px;
-}
-
-.assistant-teaser-avatar .circle-logo-img,
-.assistant-panel-avatar .circle-logo-img,
-.assistant-message-avatar .circle-logo-img {
-  transform: scale(1);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.45), 0 6px 16px rgba(0, 0, 0, 0.45);
+  width: 42px;
+  height: 42px;
 }
 
 .assistant-fab-logo.circle-logo-fab {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
 }
 
-.assistant-fab-logo.circle-logo-fab .circle-logo-img {
-  transform: scale(1);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.45), 0 8px 22px rgba(0, 0, 0, 0.5);
+.drawer-logo-mark.circle-logo-xl {
+  width: 58px;
+  height: 58px;
 }
 
-.assistant-logo-mark .circle-logo-orbit {
-  inset: 0;
-  border-width: 1.5px;
+.brand .circle-logo-lg {
+  width: 48px;
+  height: 48px;
+}
+
+.brand-compact .circle-logo-md {
+  width: 42px;
+  height: 42px;
+}
+
+.loading-screen .circle-logo-lg {
+  width: 72px;
+  height: 72px;
+}
+
+@keyframes circleLogoGlow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
 }
 
 @keyframes circleLogoPulse {
-  0%, 100% { transform: scale(1.04); }
-  50% { transform: scale(1.08); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
 }
 
 @keyframes circleLogoOrbit {

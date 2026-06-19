@@ -211,15 +211,16 @@ function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone 
   return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 }
 
-const LOGO_CIRCLE = '/logo-circle.png';
-const LOGO_ALT = 'PEAK SPOR CENTER logo';
+const LOGO_CIRCLE = '/logo-circle.png?v=3';
+const LOGO_ALT = 'PEAK SPORTS CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
   return (
     <span className={`circle-logo circle-logo-${size} ${className}`.trim()}>
-      <span className="circle-logo-glow" aria-hidden="true" />
-      <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" draggable="false" />
+      <span className="circle-logo-ring" aria-hidden="true" />
+      <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" draggable="false" loading="eager" decoding="async" />
       <span className="circle-logo-orbit" aria-hidden="true" />
+      <span className="circle-logo-glow" aria-hidden="true" />
     </span>
   );
 }
@@ -250,7 +251,7 @@ function Brand({ compact = false, logoOnly = false }) {
 }
 
 function AssistantLogo({ size = 'md' }) {
-  const mapped = { xs: 'xs', sm: 'sm', md: 'md', lg: 'lg', fab: 'fab' }[size] || 'md';
+  const mapped = { xs: 'xs', sm: 'sm', md: 'md', lg: 'lg', xl: 'xl', fab: 'fab' }[size] || 'md';
   return <CircleLogo size={mapped} className="assistant-logo-mark" />;
 }
 
@@ -431,7 +432,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
             <X size={12} />
           </button>
           <div className="assistant-teaser-logo">
-            <AssistantLogo size="lg" />
+            <AssistantLogo size="xl" />
           </div>
           <div className="assistant-teaser-top">
             <div>
@@ -599,7 +600,7 @@ function AppDrawer({ open, onClose, pathname }) {
       <aside className="side-drawer mobile-drawer is-open" aria-label="Ana menü">
         <div className="drawer-head">
           <div className="drawer-brand-block">
-            <CircleLogo size="lg" className="drawer-logo-mark" />
+            <CircleLogo size="xl" className="drawer-logo-mark" />
             <div className="drawer-brand-text">
               <strong>
                 <span className="brand-caption-peak">PEAK</span>
