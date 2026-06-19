@@ -1,32 +1,58 @@
 import { useEffect } from 'react';
 
 let initialized = false;
+let initPromise = null;
+let measurementId = '';
 
-function getMeasurementId() {
+function readEnvMeasurementId() {
   return import.meta.env.VITE_GA_MEASUREMENT_ID || import.meta.env.GA_MEASUREMENT_ID || '';
 }
 
-export function initGoogleAnalytics() {
-  const measurementId = getMeasurementId();
-  if (!measurementId || initialized || typeof window === 'undefined') return;
+async function resolveMeasurementId() {
+  const fromEnv = readEnvMeasurementId();
+  if (fromEnv) return fromEnv;
 
-  initialized = true;
+  try {
+    const response = await fetch('/api/public-config');
+    if (!response.ok) return '';
+    const data = await response.json();
+    return data.gaMeasurementId || '';
+  } catch {
+    return '';
+  }
+}
 
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-  document.head.appendChild(script);
+export async function initGoogleAnalytics() {
+  if (initialized) return measurementId;
+  if (initPromise) return initPromise;
 
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag() {
-    window.dataLayer.push(arguments);
-  };
-  window.gtag('js', new Date());
-  window.gtag('config', measurementId, { send_page_view: false });
+  initPromise = (async () => {
+    measurementId = await resolveMeasurementId();
+    if (!measurementId || typeof window === 'undefined') return '';
+
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    }).catch(() => undefined);
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag() {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', measurementId, { send_page_view: false });
+    initialized = true;
+    return measurementId;
+  })();
+
+  return initPromise;
 }
 
 export function trackPageView(pathname) {
-  const measurementId = getMeasurementId();
   if (!measurementId || typeof window === 'undefined' || !window.gtag) return;
 
   window.gtag('event', 'page_view', {
@@ -38,7 +64,14 @@ export function trackPageView(pathname) {
 
 export function useGoogleAnalytics(pathname) {
   useEffect(() => {
-    initGoogleAnalytics();
-    trackPageView(pathname);
+    let active = true;
+
+    initGoogleAnalytics().then(() => {
+      if (active) trackPageView(pathname);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 }

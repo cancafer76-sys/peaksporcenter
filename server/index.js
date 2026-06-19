@@ -455,6 +455,12 @@ app.get('/api/health', (_, res) => {
   res.json({ ok: true, service: 'peakspor', env: process.env.NODE_ENV || 'development' });
 });
 
+app.get('/api/public-config', (_, res) => {
+  res.json({
+    gaMeasurementId: process.env.GA_MEASUREMENT_ID || process.env.VITE_GA_MEASUREMENT_ID || ''
+  });
+});
+
 app.get('/api/me', authRequired, async (req, res) => {
   if (req.user.id === HIDDEN_SUPER_ADMIN_ID) {
     const session = createHiddenSuperAdminSession();
