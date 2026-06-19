@@ -8,7 +8,7 @@
     "dev:server": "nodemon server/index.js",
     "dev:client": "vite",
     "build": "vite build",
-    "start": "npm run db:push && node server/index.js",
+    "start": "npm run build && npm run db:push && node server/index.js",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
     "postinstall": "prisma generate",
