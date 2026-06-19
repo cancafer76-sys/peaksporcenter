@@ -28,6 +28,7 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
+import { generateRobotsTxt, generateSitemapXml } from '../shared/sitemap-generator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -457,8 +458,42 @@ app.get('/api/health', (_, res) => {
 
 app.get('/api/public-config', (_, res) => {
   res.json({
-    gaMeasurementId: process.env.GA_MEASUREMENT_ID || process.env.VITE_GA_MEASUREMENT_ID || ''
+    gaMeasurementId: process.env.VITE_GA_MEASUREMENT_ID || process.env.GA_MEASUREMENT_ID || '',
+    googleSiteVerification: (process.env.GOOGLE_SITE_VERIFICATION || '').trim()
   });
+});
+
+app.get('/api/seo/verification', (_, res) => {
+  const token = (process.env.GOOGLE_SITE_VERIFICATION || '').trim();
+  res.json({
+    domain: 'peaksportcenter.online',
+    verification: {
+      dns: token
+        ? {
+            type: 'TXT',
+            host: '@',
+            name: 'peaksportcenter.online',
+            value: `google-site-verification=${token}`,
+            providerSteps: [
+              'Domain DNS panelinize (Cloudflare vb.) gidin.',
+              'Yeni TXT kaydı ekleyin.',
+              'Host/Name alanına @ veya peaksportcenter.online yazın.',
+              `Value alanına google-site-verification=${token} yazın.`,
+              'DNS yayılımından sonra Google Search Console\'da doğrulayın.'
+            ]
+          }
+        : null,
+      meta: token ? { name: 'google-site-verification', content: token } : null
+    }
+  });
+});
+
+app.get('/sitemap.xml', (_, res) => {
+  res.type('application/xml; charset=utf-8').send(generateSitemapXml());
+});
+
+app.get('/robots.txt', (_, res) => {
+  res.type('text/plain; charset=utf-8').send(generateRobotsTxt());
 });
 
 app.get('/api/me', authRequired, async (req, res) => {
@@ -917,10 +952,22 @@ app.patch('/api/auth/profile', staffRequired, async (req, res) => {
 });
 
 app.use(express.static(path.join(rootDir, 'dist')));
+
+function getSeoHeadInjection() {
+  const token = (process.env.GOOGLE_SITE_VERIFICATION || '').trim();
+  if (!token) return '';
+  return `<meta name="google-site-verification" content="${token.replace(/"/g, '')}" />`;
+}
+
 app.use((req, res) => {
   const indexPath = path.join(rootDir, 'dist', 'index.html');
   if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
+    let html = fs.readFileSync(indexPath, 'utf8');
+    const injection = getSeoHeadInjection();
+    if (injection) {
+      html = html.replace('<!-- PEAKSPOR_SEO_INJECTION -->', injection);
+    }
+    return res.type('html').send(html);
   }
   res.status(404).json({ message: 'Build bulunamadı' });
 });

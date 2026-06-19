@@ -43,10 +43,12 @@ export const defaultContent = {
     city: 'Kocaeli'
   },
   seo: {
-    title: 'PEAKSPORTS CENTER | Kocaeli Fitness ve Spor Salonu',
-    description: 'Kocaeli\'nin premium fitness ve spor merkezi PEAKSPORTS CENTER. Kişisel antrenman, pilates, crossfit, grup dersleri ve üyelik paketleri. Türkiye\'nin modern spor salonu deneyimi.',
-    keywords: 'kocaeli spor salonu, kocaeli fitness, peak spor center, türkiye fitness, gym kocaeli, fitness merkezi kocaeli, personal training, pilates kocaeli, crossfit kocaeli, spor merkezi türkiye',
-    siteUrl: '',
+    title: 'PEAKSPOR CENTER | Kocaeli Gebze Fitness ve Spor Salonu',
+    description:
+      'PEAKSPOR CENTER: Kocaeli, Gebze, Çayırova, Darıca, İzmit ve İstanbul Anadolu Yakası\'na hizmet veren premium fitness merkezi. Kişisel antrenman, pilates, crossfit, grup dersleri ve üyelik paketleri.',
+    keywords:
+      'kocaeli spor salonu, gebze fitness, çayırova spor salonu, darıca gym, izmit fitness, pendik spor salonu, kartal fitness, peakspor center, pilates kocaeli, crossfit gebze, personal training, istanbul anadolu yakası spor salonu',
+    siteUrl: 'https://peaksportcenter.online',
     city: 'Kocaeli',
     region: 'Kocaeli',
     country: 'TR',

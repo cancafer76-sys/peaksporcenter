@@ -1,3 +1,5 @@
+import { ALL_REGIONAL_PATHS } from './local-areas.js';
+
 export const SITE_URL = 'https://peaksportcenter.online';
 
 export const MAIN_SITEMAP_PATHS = [
@@ -20,17 +22,7 @@ export const APP_ROUTE_PATHS = [
   '/explore'
 ];
 
-export const REGIONAL_SITEMAP_PATHS = [
-  '/kocaeli-spor-salonu',
-  '/gebze-spor-salonu',
-  '/cayirova-spor-salonu',
-  '/darica-spor-salonu',
-  '/dilovasi-spor-salonu',
-  '/izmit-spor-salonu',
-  '/pendik-spor-salonu',
-  '/tuzla-spor-salonu',
-  '/kartal-spor-salonu'
-];
+export const REGIONAL_SITEMAP_PATHS = ALL_REGIONAL_PATHS;
 
 export const ALL_SITEMAP_PATHS = [
   ...new Set([...MAIN_SITEMAP_PATHS, ...APP_ROUTE_PATHS, ...REGIONAL_SITEMAP_PATHS])

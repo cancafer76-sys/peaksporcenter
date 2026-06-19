@@ -13,7 +13,8 @@ export function useRegionalPageSeo(page) {
       breadcrumbs: [
         { name: 'Ana Sayfa', path: '/' },
         { name: page.h1, path: `/${page.slug}` }
-      ]
+      ],
+      regionalPage: page
     });
   }, [page]);
 }

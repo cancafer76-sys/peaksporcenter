@@ -21,6 +21,7 @@ oy = (side - img.size[1]) // 2
 square.paste(img, (ox, oy), img)
 
 outputs = [
+    (16, 'favicon-16x16.png'),
     (32, 'favicon-32x32.png'),
     (32, 'favicon.png'),
     (180, 'apple-touch-icon.png'),

@@ -2394,10 +2394,25 @@ export default function App() {
     const theme = state.settings.content?.theme;
     const content = state.settings.content;
     applySiteTheme(theme, { darkMode: state.darkMode });
-    if (!isRegionalPath(pathname)) {
-      applySiteSeo(content?.seo, content?.brand);
-    }
-  }, [state.settings.content?.theme, state.settings.content?.seo, state.settings.content?.brand, state.darkMode, pathname]);
+    if (isRegionalPath(pathname)) return undefined;
+
+    let active = true;
+    fetch('/api/public-config')
+      .then(response => (response.ok ? response.json() : {}))
+      .then(config => {
+        if (!active) return;
+        applySiteSeo(content?.seo, content?.brand, content?.contact, {
+          googleSiteVerification: config.googleSiteVerification || ''
+        });
+      })
+      .catch(() => {
+        if (active) applySiteSeo(content?.seo, content?.brand, content?.contact);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [state.settings.content?.theme, state.settings.content?.seo, state.settings.content?.brand, state.settings.content?.contact, state.darkMode, pathname]);
 
   useEffect(() => {
     const isLight = !state.darkMode;
