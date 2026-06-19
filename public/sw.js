@@ -1,5 +1,5 @@
 const CACHE_NAME = 'peak-sports-v3';
-const PRECACHE = ['/', '/index.html', '/site.webmanifest', '/pwa-icon.png', '/favicon-192x192.png'];
+const PRECACHE = ['/', '/index.html', '/site.webmanifest', '/pwa-icon.png', '/favicon.png', '/favicon-192x192.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(

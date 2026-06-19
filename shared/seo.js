@@ -1,5 +1,6 @@
 import { defaultContent } from './defaults.js';
 
+export const SITE_URL = 'https://peaksportcenter.online';
 const LOGO_PATH = '/logo-circle.png';
 const OG_IMAGE_PATH = '/og-image.jpg';
 
@@ -90,6 +91,7 @@ export function applySiteSeo(seoInput = {}, brandInput = {}) {
 
   upsertLink('canonical', pageUrl);
   upsertLink('icon', '/favicon.ico', { type: 'image/x-icon' });
+  upsertLink('icon', '/favicon.png', { type: 'image/png' });
   upsertLink('icon', '/favicon-32x32.png', { type: 'image/png', sizes: '32x32' });
   upsertLink('apple-touch-icon', '/apple-touch-icon.png');
 
@@ -123,4 +125,41 @@ export function applySiteSeo(seoInput = {}, brandInput = {}) {
     logo: logoUrl,
     description: seo.description
   });
+}
+
+export function applyPageSeo({ title, description, canonicalPath, breadcrumbs = [] }) {
+  const canonical = canonicalPath?.startsWith('http')
+    ? canonicalPath
+    : `${SITE_URL}${canonicalPath || '/'}`;
+  const imageUrl = `${SITE_URL}${OG_IMAGE_PATH}`;
+
+  if (title) document.title = title;
+  upsertMeta('description', description);
+  upsertMeta('robots', 'index, follow, max-image-preview:large');
+  upsertLink('canonical', canonical);
+
+  upsertProperty('og:type', 'website');
+  upsertProperty('og:title', title);
+  upsertProperty('og:description', description);
+  upsertProperty('og:url', canonical);
+  upsertProperty('og:image', imageUrl);
+  upsertProperty('og:locale', 'tr_TR');
+
+  upsertMeta('twitter:card', 'summary_large_image');
+  upsertMeta('twitter:title', title);
+  upsertMeta('twitter:description', description);
+  upsertMeta('twitter:image', imageUrl);
+
+  if (breadcrumbs.length) {
+    upsertJsonLd('peakspor-breadcrumb', {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbs.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: `${SITE_URL}${item.path}`
+      }))
+    });
+  }
 }

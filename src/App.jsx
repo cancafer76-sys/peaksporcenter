@@ -17,6 +17,10 @@ import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSour
 import { fallbackSettings, normalizeSettings } from '../shared/settings.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
+import { normalizePathname } from '../shared/route-aliases.js';
+import { getRegionalPageByPath, isRegionalPath } from '../shared/regional-pages.js';
+import { RegionalLandingContent, useRegionalPageSeo } from './seo/RegionalLandingPage.jsx';
+import { useGoogleAnalytics } from './analytics.js';
 import {
   BadgeInfo,
   ChevronRight,
@@ -2347,14 +2351,29 @@ function MobileShell({ state, setState }) {
   );
 }
 
+function RegionalPageRoute({ state, setState, page }) {
+  useRegionalPageSeo(page);
+  return (
+    <RouteChrome
+      state={state}
+      setState={setState}
+      title={page.h1.toUpperCase()}
+      subtitle={`${page.city} ve çevresinde premium fitness deneyimi`}
+      backTo="/"
+      content={<RegionalLandingContent page={page} />}
+    />
+  );
+}
+
 function useSectionPath(pathname) {
-  const isServices = pathname === '/services';
-  const isPackages = pathname === '/packages';
-  const isGallery = pathname === '/gallery';
-  const isContact = pathname === '/contact';
-  const isExplore = pathname === '/explore';
-  const isAbout = pathname === '/about';
-  const isTrainers = pathname === '/trainers';
+  const path = normalizePathname(pathname);
+  const isServices = path === '/services';
+  const isPackages = path === '/packages';
+  const isGallery = path === '/gallery';
+  const isContact = path === '/contact';
+  const isExplore = path === '/explore';
+  const isAbout = path === '/about';
+  const isTrainers = path === '/trainers';
   return { isServices, isPackages, isGallery, isContact, isExplore, isAbout, isTrainers };
 }
 
@@ -2365,6 +2384,7 @@ export default function App() {
   const sectionPath = useSectionPath(pathname);
 
   useAnalytics(pathname);
+  useGoogleAnalytics(pathname);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -2374,8 +2394,10 @@ export default function App() {
     const theme = state.settings.content?.theme;
     const content = state.settings.content;
     applySiteTheme(theme, { darkMode: state.darkMode });
-    applySiteSeo(content?.seo, content?.brand);
-  }, [state.settings.content?.theme, state.settings.content?.seo, state.settings.content?.brand, state.darkMode]);
+    if (!isRegionalPath(pathname)) {
+      applySiteSeo(content?.seo, content?.brand);
+    }
+  }, [state.settings.content?.theme, state.settings.content?.seo, state.settings.content?.brand, state.darkMode, pathname]);
 
   useEffect(() => {
     const isLight = !state.darkMode;
@@ -2401,6 +2423,11 @@ export default function App() {
         <div className="loading-bar" />
       </div>
     );
+  }
+
+  const regionalPage = getRegionalPageByPath(pathname);
+  if (regionalPage) {
+    return <RegionalPageRoute state={state} setState={setState} page={regionalPage} />;
   }
 
   if (sectionPath.isServices) {

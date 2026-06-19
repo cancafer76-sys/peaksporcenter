@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "nodemon server/index.js",
     "dev:client": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-sitemap.mjs",
     "prestart": "node -e \"if(!process.env.RAILWAY_ENVIRONMENT&&process.env.NODE_ENV!=='production'){const fs=require('fs');if(!fs.existsSync('.env')&&fs.existsSync('.env.example'))fs.copyFileSync('.env.example','.env')}\"",
     "start": "node server/index.js",
     "start:local": "npm run build && npm run db:push && node server/index.js",
