@@ -12,6 +12,12 @@ async function request(path, options = {}) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 400 && path.includes('/auth/login')) {
+      throw new Error(data.message || 'E-posta veya şifre hatalı');
+    }
+    if (response.status === 0 || response.status >= 500) {
+      throw new Error('Sunucuya bağlanılamadı. npm start ile backend çalıştığından emin olun.');
+    }
     throw new Error(data.message || 'İşlem başarısız oldu');
   }
   return data;

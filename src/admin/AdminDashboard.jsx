@@ -102,7 +102,8 @@ function clone(value) {
 }
 
 function AdminLogin({ onSuccess, onClose }) {
-  const [form, setForm] = useState({ email: 'admin@peakspor.com', password: '' });
+  const [loginMode, setLoginMode] = useState('email');
+  const [form, setForm] = useState({ email: 'admin@peakspor.com', username: 'admin', password: '' });
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
 
@@ -111,7 +112,8 @@ function AdminLogin({ onSuccess, onClose }) {
     setPending(true);
     setError('');
     try {
-      const result = await api.login({ email: form.email.trim(), password: form.password });
+      const email = loginMode === 'email' ? form.email.trim() : form.username.trim();
+      const result = await api.login({ email, password: form.password });
       if (result.user?.role !== 'ADMIN') {
         throw new Error('Bu hesap yönetici yetkisine sahip değil.');
       }
@@ -138,16 +140,37 @@ function AdminLogin({ onSuccess, onClose }) {
             </button>
           </div>
           <form className="admin-login-form-v2" onSubmit={handleSubmit}>
-            <label>
-              E-posta
-              <input
-                type="email"
-                value={form.email}
-                onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="admin@peakspor.com"
-                required
-              />
-            </label>
+            <div className="admin-login-tabs">
+              <button type="button" className={loginMode === 'email' ? 'active' : ''} onClick={() => setLoginMode('email')}>
+                E-Posta
+              </button>
+              <button type="button" className={loginMode === 'username' ? 'active' : ''} onClick={() => setLoginMode('username')}>
+                Kullanıcı Adı
+              </button>
+            </div>
+            {loginMode === 'email' ? (
+              <label>
+                E-posta
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="admin@peakspor.com"
+                  required
+                />
+              </label>
+            ) : (
+              <label>
+                Kullanıcı adı
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={e => setForm(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="admin"
+                  required
+                />
+              </label>
+            )}
             <label>
               Şifre
               <input
@@ -165,7 +188,9 @@ function AdminLogin({ onSuccess, onClose }) {
             </button>
           </form>
           <div className="admin-login-tip-v2">
-            Varsayılan: admin@peakspor.com / Admin1234!
+            Giriş: admin@peakspor.com veya kullanıcı adı <strong>admin</strong> — şifre <strong>Admin1234!</strong>
+            <br />
+            Sunucuyu yeniden başlattıktan sonra tekrar deneyin.
           </div>
         </div>
       </div>

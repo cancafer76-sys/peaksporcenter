@@ -50,8 +50,14 @@ app.use('/uploads', express.static(uploadDir));
 const authCookieOptions = {
   httpOnly: true,
   sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production'
+  secure: process.env.COOKIE_SECURE === 'true'
 };
+
+function resolveAdminEmail(value) {
+  const input = (value || '').trim().toLowerCase();
+  if (!input || input === 'admin') return 'admin@peakspor.com';
+  return input;
+}
 
 const storage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, uploadDir),
@@ -105,19 +111,24 @@ async function adminRequired(req, res, next) {
 }
 
 async function ensureSeedData() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@peakspor.com';
+  const adminEmail = resolveAdminEmail(process.env.ADMIN_EMAIL || 'admin@peakspor.com');
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin1234!';
-  const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
-  if (!adminCount) {
-    await prisma.user.create({
-      data: {
-        name: 'Peakspor Admin',
-        email: adminEmail,
-        passwordHash: await bcrypt.hash(adminPassword, 10),
-        role: 'ADMIN'
-      }
-    });
-  }
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    create: {
+      name: 'Peakspor Admin',
+      email: adminEmail,
+      passwordHash,
+      role: 'ADMIN'
+    },
+    update: {
+      name: 'Peakspor Admin',
+      passwordHash,
+      role: 'ADMIN'
+    }
+  });
 
   const settings = [
     ['content', defaultContent],
@@ -176,7 +187,8 @@ app.get('/api/me', authRequired, async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { email } });
+  const lookupEmail = resolveAdminEmail(email);
+  const user = await prisma.user.findUnique({ where: { email: lookupEmail } });
   if (!user || !(await bcrypt.compare(password || '', user.passwordHash))) {
     return res.status(400).json({ message: 'E-posta veya şifre hatalı' });
   }
