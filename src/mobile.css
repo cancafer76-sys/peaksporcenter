@@ -19,6 +19,9 @@
   --blue: #FFFFFF;
   --purple: #E5E5E5;
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --app-header-height: 72px;
+  --app-ticker-block: 54px;
+  --app-top-offset: calc(env(safe-area-inset-top, 0px) + var(--app-header-height) + var(--app-ticker-block));
 }
 
 .app-shell.light {
@@ -145,7 +148,7 @@ img { display: block; width: 100%; }
   top: 0;
   left: 0;
   right: 0;
-  z-index: 140;
+  z-index: 200;
   width: 100%;
   max-width: 100vw;
   overflow: hidden;
@@ -155,6 +158,7 @@ img { display: block; width: 100%; }
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   touch-action: pan-y;
   padding-top: env(safe-area-inset-top);
+  isolation: isolate;
 }
 
 .desktop-header,
@@ -780,7 +784,14 @@ img { display: block; width: 100%; }
 
 .desktop-page,
 .mobile-page {
-  padding: 18px 0 100px;
+  position: relative;
+  z-index: 1;
+  padding: calc(var(--app-top-offset) + 14px) 0 100px;
+  scroll-padding-top: var(--app-top-offset);
+}
+
+.route-page-main > .section-block:first-child {
+  margin-top: 0;
 }
 
 .ticker {
@@ -1187,6 +1198,11 @@ img { display: block; width: 100%; }
 }
 
 @media (max-width: 980px) {
+  :root {
+    --app-header-height: 68px;
+    --app-ticker-block: 50px;
+  }
+
   .ticker {
     padding: 3px;
     border-radius: 16px;
@@ -1204,11 +1220,6 @@ img { display: block; width: 100%; }
 
   .ticker-clip {
     border-radius: 0 14px 14px 0;
-  }
-
-  .desktop-page,
-  .mobile-page {
-    padding-top: 118px;
   }
 
   .hero-admin-inline {
@@ -3598,7 +3609,7 @@ img { display: block; width: 100%; }
   .mobile-page {
     width: 100%;
     flex: 1 1 auto;
-    height: calc(100dvh - 68px);
+    height: calc(100dvh - var(--app-top-offset));
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
     min-height: 0;
     overflow-x: hidden;
@@ -3611,7 +3622,7 @@ img { display: block; width: 100%; }
   .mobile-main {
     width: 100%;
     flex: 1 1 auto;
-    height: calc(100dvh - 68px);
+    height: calc(100dvh - var(--app-top-offset));
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
     min-height: 0;
     overflow-x: hidden;

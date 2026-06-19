@@ -923,7 +923,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
         </div>
       </div>
 
-      <main className={`shell-width ${mobile ? 'mobile-page mobile-main' : 'desktop-page'}`}>
+      <main className={`shell-width route-page-main ${mobile ? 'mobile-page mobile-main' : 'desktop-page'}`}>
         <section className="section-block">
           <SectionHeader
             title={title}
