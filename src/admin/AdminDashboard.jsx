@@ -131,6 +131,7 @@ function SettingsSection({ content, onChange }) {
   const whatsapp = { ...defaultContent.whatsapp, ...(data.whatsapp || {}) };
   const seo = { ...defaultContent.seo, ...(data.seo || {}) };
   const onlineCounter = { ...defaultContent.onlineCounter, ...(data.onlineCounter || {}) };
+  const contact = { ...defaultContent.contact, ...(data.contact || {}) };
 
   const patch = next => onChange({ ...data, ...next });
   const patchTheme = next => {
@@ -239,6 +240,24 @@ function SettingsSection({ content, onChange }) {
               value={onlineCounter.intervalMs || 3500}
               onChange={e => patch({ onlineCounter: { ...onlineCounter, intervalMs: Number(e.target.value) || 3500 } })}
             />
+          </label>
+        </div>
+      </div>
+      <div className="admin-form-card">
+        <h4>İletişim & Harita</h4>
+        <p className="admin-hint">İletişim sayfası, harita ve yapay zeka asistanında görünür.</p>
+        <div className="admin-form-grid single">
+          <label className="admin-field">
+            E-posta
+            <input value={contact.email} onChange={e => patch({ contact: { ...contact, email: e.target.value } })} />
+          </label>
+          <label className="admin-field">
+            Adres
+            <textarea rows={2} value={contact.address} onChange={e => patch({ contact: { ...contact, address: e.target.value } })} />
+          </label>
+          <label className="admin-field">
+            Şehir
+            <input value={contact.city || 'Kocaeli'} onChange={e => patch({ contact: { ...contact, city: e.target.value } })} />
           </label>
         </div>
       </div>

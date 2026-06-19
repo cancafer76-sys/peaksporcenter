@@ -280,6 +280,24 @@ export function normalizeOnlineCounter(config = {}) {
   };
 }
 
+export function normalizeContact(config = {}, defaults = {}) {
+  const address = config.address || defaults.address || '';
+  const city = config.city || defaults.city || 'Kocaeli';
+  const email = config.email || defaults.email || '';
+  const mapQuery = config.mapQuery || [address, city, 'PEAKSPORTS CENTER'].filter(Boolean).join(', ');
+  return { email, address, city, mapQuery };
+}
+
+export function buildMapEmbedUrl(query) {
+  if (!query) return '';
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=tr&z=16&output=embed`;
+}
+
+export function buildMapSearchUrl(query) {
+  if (!query) return '';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
 export function normalizeTestimonials(items) {
   const list = Array.isArray(items) && items.length ? items : [];
   return list.map((item, index) => normalizeTestimonial(item, index));

@@ -13,16 +13,19 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeContact, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
 import {
   BadgeInfo,
   ChevronRight,
+  Download,
   Dumbbell,
   FileText,
   Home,
   LayoutDashboard,
+  Mail,
+  MapPin,
   Megaphone,
   Image,
   MessageCircle,
@@ -79,9 +82,91 @@ const desktopNav = [
   { id: 'contact', label: 'İletişim', route: '/contact' }
 ];
 
-function buildHomeRailItems(items) {
-  const list = Array.isArray(items) ? items : [];
-  return list.length > 1 ? [...list, ...list] : list;
+function AnimatedHomeRail({ className = '', loop = false, duration = 48, children }) {
+  const items = React.Children.toArray(children);
+  const shouldLoop = loop && items.length > 1;
+  const trackItems = shouldLoop ? [...items, ...items] : items;
+
+  return (
+    <div className={`home-rail-viewport ${className}`.trim()}>
+      <div
+        className={`home-rail-track ${shouldLoop ? 'is-loop' : ''}`}
+        style={{ '--rail-duration': `${duration}s` }}
+      >
+        {trackItems}
+      </div>
+    </div>
+  );
+}
+
+function getSiteContact(content) {
+  return normalizeContact(content?.contact, defaultContent.contact);
+}
+
+function buildAssistantWelcomeText(contact, baseMessage) {
+  const info = normalizeContact(contact, defaultContent.contact);
+  const fullAddress = [info.address, info.city].filter(Boolean).join(', ');
+  return `${baseMessage}\n\nAdres: ${fullAddress}\nE-posta: ${info.email}`;
+}
+
+function usePwaInstall() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+
+  useEffect(() => {
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+    setInstalled(standalone);
+    setIsIos(/iphone|ipad|ipod/i.test(window.navigator.userAgent));
+
+    const onPrompt = event => {
+      event.preventDefault();
+      setDeferredPrompt(event);
+    };
+    const onInstalled = () => {
+      setInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  const install = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice.catch(() => undefined);
+      setDeferredPrompt(null);
+      return;
+    }
+    if (isIos) {
+      window.alert('Safari menüsünden Paylaş > Ana Ekrana Ekle seçeneğini kullanın.');
+    }
+  };
+
+  return {
+    canInstall: !installed && Boolean(deferredPrompt || isIos),
+    install,
+    installed
+  };
+}
+
+function PwaInstallButton() {
+  const { install, installed } = usePwaInstall();
+  if (installed) return null;
+
+  return (
+    <button type="button" className="pwa-install-btn" onClick={install}>
+      <Download size={12} />
+      Yükle
+    </button>
+  );
 }
 
 function getStatIcon(name) {
@@ -142,13 +227,31 @@ function OnlineCounterChip({ config }) {
   );
 }
 
-function AppTopBand({ header, announcements }) {
+function TopStatusBar({ onlineCounter }) {
+  const settings = useMemo(() => normalizeOnlineCounter(onlineCounter), [onlineCounter]);
+  const showCounter = settings.enabled;
+  const { installed } = usePwaInstall();
+
+  if (!showCounter && installed) return null;
+
+  return (
+    <div className="top-status-bar shell-width">
+      <div className="top-status-left">
+        {showCounter ? <OnlineCounterChip config={onlineCounter} /> : null}
+      </div>
+      <PwaInstallButton />
+    </div>
+  );
+}
+
+function AppTopBand({ header, announcements, onlineCounter }) {
   return (
     <div className="top-band">
       {header}
       <div className="ticker-shell shell-width">
         <Ticker items={announcements} />
       </div>
+      <TopStatusBar onlineCounter={onlineCounter} />
     </div>
   );
 }
@@ -694,9 +797,34 @@ function openWhatsAppChat(number, text) {
   window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
 }
 
-function generateAssistantReply(text, { packages, announcements }) {
+function generateAssistantReply(text, { packages, announcements, contact }) {
   const q = text.toLowerCase().trim();
+  const info = normalizeContact(contact, defaultContent.contact);
+  const fullAddress = [info.address, info.city].filter(Boolean).join(', ');
 
+  if (/adres|konum|nerede|yol|harita|lokasyon|map|bul|adres & harita/.test(q)) {
+    return {
+      text: `Adresimiz:\n${fullAddress}\n\nE-posta: ${info.email}`,
+      suggestMap: true,
+      mapUrl: buildMapSearchUrl(info.mapQuery)
+    };
+  }
+  if (/e-?posta|email|mail|eposta/.test(q)) {
+    return {
+      text: `İşyeri e-postamız: ${info.email}\n\nAdres: ${fullAddress}`,
+      suggestEmail: true,
+      email: info.email
+    };
+  }
+  if (/iletisim|iletişim|ulas|ulaş|contact/.test(q)) {
+    return {
+      text: `İletişim bilgilerimiz:\nAdres: ${fullAddress}\nE-posta: ${info.email}`,
+      suggestMap: true,
+      suggestEmail: true,
+      mapUrl: buildMapSearchUrl(info.mapQuery),
+      email: info.email
+    };
+  }
   if (/whatsapp|insan|temsilci|arama|telefon|konuş|konus|gorus|görüş|canlı|canli/.test(q)) {
     return {
       text: 'Sizi WhatsApp destek hattımıza yönlendirebilirim. Aşağıdaki WhatsApp butonuna tıklayın, ekibimiz hemen yardımcı olsun.',
@@ -747,6 +875,8 @@ function AssistantChat({ mobile, content, packages, announcements }) {
   const assistant = content?.assistant || defaultContent.assistant;
   const whatsappNumber = content?.whatsapp?.number || defaultContent.whatsapp.number;
   const whatsappText = content?.whatsapp?.text || defaultContent.whatsapp.text;
+  const contact = getSiteContact(content);
+  const welcomeText = buildAssistantWelcomeText(contact, assistant.message);
   const [open, setOpen] = useState(false);
   const [teaserVisible, setTeaserVisible] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -763,8 +893,8 @@ function AssistantChat({ mobile, content, packages, announcements }) {
 
   useEffect(() => {
     if (!open || messages.length) return;
-    setMessages([{ id: 'welcome', role: 'assistant', text: assistant.message }]);
-  }, [open, assistant.message, messages.length]);
+    setMessages([{ id: 'welcome', role: 'assistant', text: welcomeText }]);
+  }, [open, welcomeText, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -780,7 +910,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
     setOpen(true);
   };
 
-  const pushAssistantReply = (text, suggestWhatsApp = false) => {
+  const pushAssistantReply = (text, extras = {}) => {
     setTyping(true);
     window.setTimeout(() => {
       setMessages(prev => [
@@ -789,7 +919,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
           text,
-          suggestWhatsApp
+          ...extras
         }
       ]);
       setTyping(false);
@@ -801,9 +931,23 @@ function AssistantChat({ mobile, content, packages, announcements }) {
       openWhatsAppChat(whatsappNumber, whatsappText);
       return;
     }
+    if (/adres|harita/i.test(label)) {
+      window.open(buildMapSearchUrl(contact.mapQuery), '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (/e-?posta|email|mail/i.test(label)) {
+      window.location.href = `mailto:${contact.email}`;
+      return;
+    }
     setMessages(prev => [...prev, { id: `user-${Date.now()}`, role: 'user', text: label }]);
-    const reply = generateAssistantReply(label, { packages, announcements });
-    pushAssistantReply(reply.text, reply.suggestWhatsApp);
+    const reply = generateAssistantReply(label, { packages, announcements, contact });
+    pushAssistantReply(reply.text, {
+      suggestWhatsApp: reply.suggestWhatsApp,
+      suggestMap: reply.suggestMap,
+      suggestEmail: reply.suggestEmail,
+      mapUrl: reply.mapUrl,
+      email: reply.email
+    });
   };
 
   const handleSubmit = event => {
@@ -812,8 +956,14 @@ function AssistantChat({ mobile, content, packages, announcements }) {
     if (!text) return;
     setInput('');
     setMessages(prev => [...prev, { id: `user-${Date.now()}`, role: 'user', text }]);
-    const reply = generateAssistantReply(text, { packages, announcements });
-    pushAssistantReply(reply.text, reply.suggestWhatsApp);
+    const reply = generateAssistantReply(text, { packages, announcements, contact });
+    pushAssistantReply(reply.text, {
+      suggestWhatsApp: reply.suggestWhatsApp,
+      suggestMap: reply.suggestMap,
+      suggestEmail: reply.suggestEmail,
+      mapUrl: reply.mapUrl,
+      email: reply.email
+    });
   };
 
   return (
@@ -832,7 +982,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
               <span className="assistant-teaser-status">Çevrimiçi • AI Destek</span>
             </div>
           </div>
-          <p>Merhaba, size nasıl yardımcı olabilirim? Üyelik ve paketler hakkında hemen bilgi verebilirim.</p>
+          <p style={{ whiteSpace: 'pre-line' }}>{welcomeText}</p>
           <button type="button" className="assistant-teaser-action" onClick={openChat}>
             <Sparkles size={13} />
             Sohbete Başla
@@ -876,6 +1026,22 @@ function AssistantChat({ mobile, content, packages, announcements }) {
                       <MessageCircle size={12} />
                       WhatsApp
                     </button>
+                  ) : null}
+                  {message.suggestMap && message.mapUrl ? (
+                    <button
+                      type="button"
+                      className="assistant-whatsapp-inline assistant-map-inline"
+                      onClick={() => window.open(message.mapUrl, '_blank', 'noopener,noreferrer')}
+                    >
+                      <MapPin size={12} />
+                      Haritada Aç
+                    </button>
+                  ) : null}
+                  {message.suggestEmail && message.email ? (
+                    <a className="assistant-whatsapp-inline assistant-email-inline" href={`mailto:${message.email}`}>
+                      <Mail size={12} />
+                      {message.email}
+                    </a>
                   ) : null}
                 </div>
               </div>
@@ -1031,13 +1197,10 @@ function AppDrawer({ open, onClose, pathname }) {
   );
 }
 
-function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin, mobile = false, onlineCounter }) {
+function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin, mobile = false }) {
   return (
-    <div className="header-actions">
-      <div className="header-tools-stack">
-        <ThemeSwitch darkMode={darkMode} onToggle={onToggleTheme} mobile={mobile} />
-        <OnlineCounterChip config={onlineCounter} />
-      </div>
+    <div className="header-actions header-actions-row">
+      <ThemeSwitch darkMode={darkMode} onToggle={onToggleTheme} mobile={mobile} />
       {onOpenAdmin ? (
         <button className="admin-entry-button admin-entry-button-header" type="button" onClick={onOpenAdmin} aria-label="Yetkili giriş">
           <LayoutDashboard size={16} />
@@ -1059,6 +1222,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
     <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
         announcements={state.settings.announcements}
+        onlineCounter={onlineCounter}
         header={
           <header className={mobile ? 'mobile-header' : 'desktop-header'}>
             <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
@@ -1095,7 +1259,6 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
                 mobile={mobile}
-                onlineCounter={onlineCounter}
               />
             </div>
           </header>
@@ -1633,8 +1796,50 @@ function ExplorePage({ state, setState }) {
   );
 }
 
+function ContactInfoBlock({ contact }) {
+  const info = normalizeContact(contact, defaultContent.contact);
+  const fullAddress = [info.address, info.city].filter(Boolean).join(', ');
+  const mapEmbedUrl = buildMapEmbedUrl(info.mapQuery);
+  const mapSearchUrl = buildMapSearchUrl(info.mapQuery);
+
+  return (
+    <div className="contact-details-box">
+      <h3>İşyeri Bilgileri</h3>
+      <div className="contact-info-row">
+        <MapPin size={18} />
+        <div>
+          <strong>Adres</strong>
+          <p>{fullAddress}</p>
+          <a href={mapSearchUrl} target="_blank" rel="noopener noreferrer" className="contact-link-button">
+            Haritada Aç
+          </a>
+        </div>
+      </div>
+      <div className="contact-info-row">
+        <Mail size={18} />
+        <div>
+          <strong>E-posta</strong>
+          <p>
+            <a href={`mailto:${info.email}`}>{info.email}</a>
+          </p>
+        </div>
+      </div>
+      <div className="contact-map-card">
+        <iframe
+          title="PEAKSPORTS CENTER konum haritası"
+          src={mapEmbedUrl}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+}
+
 function ContactPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
+  const contact = getSiteContact(content);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
   const [error, setError] = useState('');
 
@@ -1676,7 +1881,8 @@ function ContactPage({ state, setState }) {
       title="İLETİŞİM"
       subtitle="Bilgilerinizi bırakın, WhatsApp üzerinden üyelik için sizi yönlendirelim."
       content={
-        <form className="contact-form" onSubmit={handleSubmit}>
+        <>
+          <form className="contact-form" onSubmit={handleSubmit}>
           <div className="contact-form-grid">
             <label>
               Ad
@@ -1731,6 +1937,8 @@ function ContactPage({ state, setState }) {
             Üye Ol butonuna bastığınızda bilgileriniz hazır mesaj olarak WhatsApp&apos;a yönlendirilir.
           </p>
         </form>
+          <ContactInfoBlock contact={contact} />
+        </>
       }
       backTo="/"
     />
@@ -1794,11 +2002,7 @@ function DesktopShell({ state, setState }) {
   const allServices = services.map(normalizeService);
   const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
   const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
-  const servicesRailItems = buildHomeRailItems(allServices);
-  const galleryRailItems = buildHomeRailItems(allGallery);
-  const coachesRailItems = buildHomeRailItems(allCoaches);
   const homePackages = featuredOrAll(packages, 8);
-  const packagesRailItems = buildHomeRailItems(homePackages);
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
@@ -1813,6 +2017,7 @@ function DesktopShell({ state, setState }) {
     <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
         announcements={state.settings.announcements}
+        onlineCounter={onlineCounter}
         header={
           <header className="desktop-header">
             <div className="shell-width desktop-header-inner">
@@ -1839,7 +2044,6 @@ function DesktopShell({ state, setState }) {
                 darkMode={state.darkMode}
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-                onlineCounter={onlineCounter}
               />
             </div>
           </header>
@@ -1864,10 +2068,10 @@ function DesktopShell({ state, setState }) {
             subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail" data-loop={servicesRailItems.length > allServices.length ? 'true' : 'false'}>
-            {servicesRailItems.map((service, index) => (
+          <AnimatedHomeRail className="home-services-rail" loop={allServices.length > 1} duration={52}>
+            {allServices.map(service => (
               <ServiceCardButton
-                key={`${service.title}-${index}`}
+                key={service.title}
                 service={service}
                 compact
                 mini
@@ -1878,8 +2082,7 @@ function DesktopShell({ state, setState }) {
                 }}
               />
             ))}
-          </div>
-          <ServiceAutoScroller />
+          </AnimatedHomeRail>
 
           <SelectedServiceCard
             service={selectedService}
@@ -1895,13 +2098,10 @@ function DesktopShell({ state, setState }) {
             subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div
-            className="home-scroll-rail mobile-horizontal-rail home-packages-rail"
-            data-loop={packagesRailItems.length > homePackages.length ? 'true' : 'false'}
-          >
-            {packagesRailItems.map((item, index) => (
+          <AnimatedHomeRail className="home-packages-rail" loop={homePackages.length > 1} duration={46}>
+            {homePackages.map(item => (
               <PackageCard
-                key={`${item.title}-${index}`}
+                key={item.title}
                 item={item}
                 compact
                 featureLimit={3}
@@ -1910,8 +2110,7 @@ function DesktopShell({ state, setState }) {
                 onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
-          </div>
-          <PackageAutoScroller />
+          </AnimatedHomeRail>
 
           <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </section>
@@ -1922,12 +2121,11 @@ function DesktopShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail" data-loop={coachesRailItems.length > allCoaches.length ? 'true' : 'false'}>
-            {coachesRailItems.map((coach, index) => (
-              <CoachCard key={`${normalizeTrainer(coach).id}-${index}`} coach={coach} mini />
+          <AnimatedHomeRail className="home-coaches-rail" loop={allCoaches.length > 1} duration={50}>
+            {allCoaches.map(coach => (
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
             ))}
-          </div>
-          <CoachAutoScroller />
+          </AnimatedHomeRail>
         </section>
 
         <section className="section-block" id="gallery">
@@ -1936,10 +2134,10 @@ function DesktopShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail" data-loop={galleryRailItems.length > allGallery.length ? 'true' : 'false'}>
-            {galleryRailItems.map((item, index) => (
+          <AnimatedHomeRail className="home-gallery-rail" loop={allGallery.length > 1} duration={54}>
+            {allGallery.map(item => (
               <GalleryCard
-                key={`${normalizeGalleryItem(item).id}-${index}`}
+                key={normalizeGalleryItem(item).id}
                 item={item}
                 interactive
                 compact
@@ -1949,8 +2147,7 @@ function DesktopShell({ state, setState }) {
                 }}
               />
             ))}
-          </div>
-          <GalleryAutoScroller />
+          </AnimatedHomeRail>
         </section>
 
         <StatsGrid stats={stats} />
@@ -1999,11 +2196,7 @@ function MobileShell({ state, setState }) {
   const allServices = services.map(normalizeService);
   const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
   const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
-  const servicesRailItems = buildHomeRailItems(allServices);
-  const galleryRailItems = buildHomeRailItems(allGallery);
-  const coachesRailItems = buildHomeRailItems(allCoaches);
   const homePackages = featuredOrAll(packages, 6);
-  const packagesRailItems = buildHomeRailItems(homePackages);
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
@@ -2017,6 +2210,7 @@ function MobileShell({ state, setState }) {
     <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
         announcements={state.settings.announcements}
+        onlineCounter={onlineCounter}
         header={
           <header className="mobile-header">
             <div className="mobile-header-inner shell-width">
@@ -2032,7 +2226,6 @@ function MobileShell({ state, setState }) {
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
                 mobile
-                onlineCounter={onlineCounter}
               />
             </div>
           </header>
@@ -2056,10 +2249,10 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail" data-loop={servicesRailItems.length > allServices.length ? 'true' : 'false'}>
-            {servicesRailItems.map((service, index) => (
+          <AnimatedHomeRail className="home-services-rail" loop={allServices.length > 1} duration={52}>
+            {allServices.map(service => (
               <ServiceCardButton
-                key={`${service.title}-${index}`}
+                key={service.title}
                 service={service}
                 compact
                 mini
@@ -2067,8 +2260,7 @@ function MobileShell({ state, setState }) {
                 onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
               />
             ))}
-          </div>
-          <ServiceAutoScroller />
+          </AnimatedHomeRail>
           <SelectedServiceCard
             service={selectedService}
             config={homeCards.selectedService}
@@ -2082,13 +2274,10 @@ function MobileShell({ state, setState }) {
             title="PAKETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div
-            className="home-scroll-rail mobile-horizontal-rail home-packages-rail"
-            data-loop={packagesRailItems.length > homePackages.length ? 'true' : 'false'}
-          >
-            {packagesRailItems.map((item, index) => (
+          <AnimatedHomeRail className="home-packages-rail" loop={homePackages.length > 1} duration={46}>
+            {homePackages.map(item => (
               <PackageCard
-                key={`${item.title}-${index}`}
+                key={item.title}
                 item={item}
                 compact
                 featureLimit={3}
@@ -2097,8 +2286,7 @@ function MobileShell({ state, setState }) {
                 onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
-          </div>
-          <PackageAutoScroller />
+          </AnimatedHomeRail>
           <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </section>
 
@@ -2108,12 +2296,11 @@ function MobileShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail" data-loop={coachesRailItems.length > allCoaches.length ? 'true' : 'false'}>
-            {coachesRailItems.map((coach, index) => (
-              <CoachCard key={`${normalizeTrainer(coach).id}-${index}`} coach={coach} mini />
+          <AnimatedHomeRail className="home-coaches-rail" loop={allCoaches.length > 1} duration={50}>
+            {allCoaches.map(coach => (
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
             ))}
-          </div>
-          <CoachAutoScroller />
+          </AnimatedHomeRail>
         </section>
 
         <section className="section-block" id="gallery">
@@ -2122,10 +2309,10 @@ function MobileShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail" data-loop={galleryRailItems.length > allGallery.length ? 'true' : 'false'}>
-            {galleryRailItems.map((item, index) => (
+          <AnimatedHomeRail className="home-gallery-rail" loop={allGallery.length > 1} duration={54}>
+            {allGallery.map(item => (
               <GalleryCard
-                key={`${normalizeGalleryItem(item).id}-${index}`}
+                key={normalizeGalleryItem(item).id}
                 item={item}
                 interactive
                 compact
@@ -2135,8 +2322,7 @@ function MobileShell({ state, setState }) {
                 }}
               />
             ))}
-          </div>
-          <GalleryAutoScroller />
+          </AnimatedHomeRail>
         </section>
 
         <StatsGrid stats={stats} mobile />
@@ -2199,82 +2385,6 @@ function MobileShell({ state, setState }) {
       ) : null}
     </div>
   );
-}
-
-function RailAutoScroller({ selector, speed = 0.35 }) {
-  useEffect(() => {
-    const rail = document.querySelector(selector);
-    if (!rail) return undefined;
-
-    let frameId;
-    let paused = false;
-    const loop = rail.dataset.loop === 'true';
-    const step = Math.abs(speed);
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const pause = () => {
-      paused = true;
-    };
-    const resume = () => {
-      window.setTimeout(() => {
-        paused = false;
-      }, 1200);
-    };
-
-    rail.addEventListener('pointerdown', pause);
-    rail.addEventListener('touchstart', pause, { passive: true });
-    rail.addEventListener('wheel', pause, { passive: true });
-    rail.addEventListener('pointerup', resume);
-    rail.addEventListener('touchend', resume, { passive: true });
-    rail.addEventListener('mouseenter', pause);
-    rail.addEventListener('mouseleave', resume);
-
-    const tick = () => {
-      const maxScroll = rail.scrollWidth - rail.clientWidth;
-      if (!paused && !reducedMotion && maxScroll > 0) {
-        rail.scrollLeft += step;
-        if (loop) {
-          const loopPoint = rail.scrollWidth / 2;
-          if (rail.scrollLeft >= loopPoint) {
-            rail.scrollLeft -= loopPoint;
-          }
-        } else if (rail.scrollLeft >= maxScroll) {
-          rail.scrollLeft = 0;
-        }
-      }
-      frameId = requestAnimationFrame(tick);
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(frameId);
-      rail.removeEventListener('pointerdown', pause);
-      rail.removeEventListener('touchstart', pause);
-      rail.removeEventListener('wheel', pause);
-      rail.removeEventListener('pointerup', resume);
-      rail.removeEventListener('touchend', resume);
-      rail.removeEventListener('mouseenter', pause);
-      rail.removeEventListener('mouseleave', resume);
-    };
-  }, [selector, speed]);
-
-  return null;
-}
-
-function ServiceAutoScroller() {
-  return <RailAutoScroller selector=".home-services-rail" speed={0.32} />;
-}
-
-function PackageAutoScroller() {
-  return <RailAutoScroller selector=".home-packages-rail" speed={0.28} />;
-}
-
-function CoachAutoScroller() {
-  return <RailAutoScroller selector=".home-coaches-rail" speed={0.3} />;
-}
-
-function GalleryAutoScroller() {
-  return <RailAutoScroller selector=".home-gallery-rail" speed={0.32} />;
 }
 
 function useSectionPath(pathname) {

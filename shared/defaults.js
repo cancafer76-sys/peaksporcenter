@@ -37,6 +37,11 @@ export const defaultContent = {
     text: 'Merhaba, PEAKSPOR hakkında bilgi almak istiyorum.',
     label: 'WhatsApp'
   },
+  contact: {
+    email: 'Peaksportscenterr@gmail.com',
+    address: 'Akse mahallesi 501. Sokak serçe halısaha yanı',
+    city: 'Kocaeli'
+  },
   seo: {
     title: 'PEAKSPORTS CENTER | Kocaeli Fitness ve Spor Salonu',
     description: 'Kocaeli\'nin premium fitness ve spor merkezi PEAKSPORTS CENTER. Kişisel antrenman, pilates, crossfit, grup dersleri ve üyelik paketleri. Türkiye\'nin modern spor salonu deneyimi.',
@@ -61,8 +66,8 @@ export const defaultContent = {
   },
   assistant: {
     welcome: 'PEAKSPOR AI Asistan',
-    message: 'Merhaba, ben PEAKSPOR yapay zeka asistanıyım. Size nasıl yardımcı olabilirim?',
-    buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Ders Programları', 'Kampanyalar', 'WhatsApp Destek']
+    message: 'Merhaba, ben PEAKSPOR yapay zeka asistanıyım. Adres, e-posta, üyelik ve paketler hakkında sorabilirsiniz.',
+    buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Adres & Harita', 'E-posta', 'WhatsApp Destek']
   },
   onlineCounter: {
     enabled: true,
