@@ -5,6 +5,7 @@ import {
   FileText,
   GalleryHorizontal,
   Home,
+  Images,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -31,6 +32,7 @@ import { applySiteTheme, hexToRgbString, themePresets } from '../../shared/theme
 import {
   AnnouncementsEditor,
   AboutEditor,
+  BannerEditor,
   CardsEditor,
   DashboardStats,
   GalleryEditor,
@@ -50,6 +52,7 @@ const NAV = [
   { id: 'about', label: 'Hakkımızda', icon: FileText },
   { id: 'testimonials', label: 'Yorumlar', icon: Star },
   { id: 'announcements', label: 'Duyurular', icon: Megaphone },
+  { id: 'banner', label: 'Banner', icon: Images },
   { id: 'cards', label: 'Kartlar', icon: LayoutGrid },
   { id: 'settings', label: 'Ayarlar', icon: Settings2 }
 ];
@@ -63,6 +66,7 @@ const TITLES = {
   about: 'Hakkımızda',
   testimonials: 'Müşteri Yorumları',
   announcements: 'Duyurular',
+  banner: 'Ana Sayfa Banner',
   cards: 'Kartlar',
   settings: 'Ayarlar'
 };
@@ -343,6 +347,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
     if (section === 'about') return persist('about', draft.about || defaultAbout, 'Hakkımızda');
     if (section === 'testimonials') return persist('testimonials', draft.testimonials || defaultTestimonials, 'Müşteri Yorumları');
     if (section === 'announcements') return persist('announcements', draft.announcements, 'Duyurular');
+    if (section === 'banner') return persist('content', draft.content, 'Banner');
     if (section === 'cards') return persist('content', draft.content, 'Kartlar');
     if (section === 'settings') return persist('content', draft.content, 'Ayarlar');
     return null;
@@ -418,6 +423,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
             {section === 'about' ? <AboutEditor data={draft.about || defaultAbout} onChange={v => setDraft(p => ({ ...p, about: v }))} /> : null}
             {section === 'testimonials' ? <TestimonialsEditor items={draft.testimonials || defaultTestimonials} onChange={v => setDraft(p => ({ ...p, testimonials: v }))} /> : null}
             {section === 'announcements' ? <AnnouncementsEditor items={draft.announcements} onChange={v => setDraft(p => ({ ...p, announcements: v }))} /> : null}
+            {section === 'banner' ? <BannerEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
           </main>

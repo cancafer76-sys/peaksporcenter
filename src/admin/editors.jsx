@@ -12,6 +12,8 @@ import {
   normalizeStat,
   normalizeStats,
   normalizeHomeCards,
+  normalizeBannerSlide,
+  normalizeBannerSlides,
   normalizeTestimonial,
   getTestimonialStarTypes,
   normalizeTrainer,
@@ -19,7 +21,7 @@ import {
   serviceCardVars,
   STAT_ICON_OPTIONS
 } from '../../shared/media.js';
-import { defaultContent, defaultGalleryCategories, defaultAbout } from '../../shared/defaults.js';
+import { defaultContent, defaultGalleryCategories, defaultAbout, defaultBannerSlides } from '../../shared/defaults.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -525,6 +527,91 @@ export function CardsEditor({ content, onChange }) {
         </label>
       </div>
     </>
+  );
+}
+
+export function BannerEditor({ content, onChange }) {
+  const data = content || defaultContent;
+  const slides = normalizeBannerSlides(
+    Array.isArray(data.bannerSlides) && data.bannerSlides.length ? data.bannerSlides : defaultBannerSlides
+  );
+  const [active, setActive] = useState(0);
+  const current = slides[active] || normalizeBannerSlide({});
+
+  const patchSlides = next => onChange({ ...data, bannerSlides: next });
+  const update = (key, value) => {
+    const next = clone(slides);
+    next[active] = { ...next[active], [key]: value };
+    patchSlides(next);
+  };
+
+  return (
+    <div className="admin-editor-layout">
+      <div className="admin-editor-main">
+        <div className="admin-toolbar">
+          <div>
+            <h2 className="admin-page-title">Ana Sayfa Banner</h2>
+            <p className="admin-page-sub">Hero alanındaki kaydırmalı banner görselleri ve metinleri.</p>
+          </div>
+          <button
+            type="button"
+            className="admin-mini-btn primary"
+            onClick={() => {
+              patchSlides([...slides, normalizeBannerSlide({ title: 'Yeni Banner' }, slides.length)]);
+              setActive(slides.length);
+            }}
+          >
+            <Plus size={14} /> Ekle
+          </button>
+        </div>
+
+        <div className="admin-chip-row">
+          {slides.map((item, index) => (
+            <button
+              key={`${item.id}-${index}`}
+              type="button"
+              className={`admin-chip ${active === index ? 'active' : ''}`}
+              onClick={() => setActive(index)}
+            >
+              {item.title}
+            </button>
+          ))}
+        </div>
+
+        <div className="admin-form-card">
+          <div className="admin-form-grid">
+            <label className="admin-field">Başlık<input value={current.title} onChange={e => update('title', e.target.value)} /></label>
+            <label className="admin-field">Alt Başlık<input value={current.subtitle} onChange={e => update('subtitle', e.target.value)} /></label>
+            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>
+              Görsel URL
+              <input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." />
+            </label>
+          </div>
+          <button
+            type="button"
+            className="admin-mini-btn danger"
+            onClick={() => {
+              const next = slides.filter((_, i) => i !== active);
+              patchSlides(next.length ? next : [normalizeBannerSlide({ title: 'Yeni Banner' })]);
+              setActive(0);
+            }}
+          >
+            <Trash2 size={14} /> Sil
+          </button>
+        </div>
+      </div>
+
+      <aside className="admin-editor-preview">
+        <div className="admin-preview-head"><Eye size={16} /> Canlı Önizleme</div>
+        <div className="preview-banner-card">
+          {current.image ? <img src={current.image} alt={current.title} /> : <div className="preview-empty">Görsel yok</div>}
+          <div className="preview-banner-copy">
+            <strong>{current.title || 'Banner başlığı'}</strong>
+            <p>{current.subtitle || 'Alt başlık'}</p>
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }
 

@@ -229,6 +229,20 @@ export function normalizeAbout(item = {}) {
   };
 }
 
+export function normalizeBannerSlide(item = {}, index = 0) {
+  return {
+    id: item.id || `banner-${index}`,
+    title: item.title || 'Yeni Banner',
+    subtitle: item.subtitle || '',
+    image: item.image || ''
+  };
+}
+
+export function normalizeBannerSlides(items) {
+  const list = Array.isArray(items) && items.length ? items : [];
+  return list.map((item, index) => normalizeBannerSlide(item, index));
+}
+
 export function normalizeTestimonial(item = {}, index = 0) {
   const rawRating = Number(item.rating);
   const rating = Number.isFinite(rawRating)

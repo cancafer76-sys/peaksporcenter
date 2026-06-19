@@ -74,6 +74,8 @@ const desktopNav = [
   { id: 'services', label: 'Hizmetler', route: '/services' },
   { id: 'packages', label: 'Paketler', route: '/packages' },
   { id: 'gallery', label: 'Galeri', route: '/gallery' },
+  { id: 'trainers', label: 'Hocalarımız', route: '/trainers' },
+  { id: 'about', label: 'Hakkımızda', route: '/about' },
   { id: 'contact', label: 'İletişim', route: '/contact' }
 ];
 
@@ -115,7 +117,7 @@ function randomOnlineCount(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function OnlineCounterBar({ config }) {
+function OnlineCounterChip({ config }) {
   const settings = useMemo(() => normalizeOnlineCounter(config), [config]);
   const [count, setCount] = useState(() => randomOnlineCount(settings.min, settings.max));
 
@@ -131,7 +133,7 @@ function OnlineCounterBar({ config }) {
   if (!settings.enabled) return null;
 
   return (
-    <div className="online-counter-bar shell-width" aria-live="polite">
+    <div className="online-counter-chip" aria-live="polite">
       <span className="online-counter-pulse" aria-hidden="true" />
       <span className="online-counter-text">
         <strong>{count}</strong> {settings.label}
@@ -140,31 +142,21 @@ function OnlineCounterBar({ config }) {
   );
 }
 
-function AppTopBand({ state, header }) {
-  const content = state.settings.content || defaultContent;
-  const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
-  const onlineEnabled = normalizeOnlineCounter(onlineCounter).enabled;
-
+function AppTopBand({ header, announcements }) {
   return (
-    <div className={`top-band ${onlineEnabled ? 'has-online-bar' : ''}`}>
-      <OnlineCounterBar config={onlineCounter} />
+    <div className="top-band">
       {header}
       <div className="ticker-shell shell-width">
-        <Ticker items={state.settings.announcements} />
+        <Ticker items={announcements} />
       </div>
     </div>
   );
 }
 
-function useOnlineBarClass(state) {
-  const content = state.settings.content || defaultContent;
-  const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
-  return normalizeOnlineCounter(onlineCounter).enabled ? 'has-online-bar' : '';
-}
-
-function PackageCard({ item, selected = false, compact = false, showCta = true, onSelect, onCtaClick }) {
+function PackageCard({ item, selected = false, compact = false, featureLimit, showCta = true, onSelect, onCtaClick }) {
   const pkg = normalizePackage(item);
-  const visibleFeatures = compact ? pkg.features.slice(0, 5) : pkg.features;
+  const limit = featureLimit ?? (compact ? 5 : pkg.features.length);
+  const visibleFeatures = compact ? pkg.features.slice(0, limit) : pkg.features;
 
   return (
     <article
@@ -1039,10 +1031,13 @@ function AppDrawer({ open, onClose, pathname }) {
   );
 }
 
-function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin, mobile = false }) {
+function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin, mobile = false, onlineCounter }) {
   return (
     <div className="header-actions">
-      <ThemeSwitch darkMode={darkMode} onToggle={onToggleTheme} mobile={mobile} />
+      <div className="header-tools-stack">
+        <ThemeSwitch darkMode={darkMode} onToggle={onToggleTheme} mobile={mobile} />
+        <OnlineCounterChip config={onlineCounter} />
+      </div>
       {onOpenAdmin ? (
         <button className="admin-entry-button admin-entry-button-header" type="button" onClick={onOpenAdmin} aria-label="Yetkili giriş">
           <LayoutDashboard size={16} />
@@ -1057,11 +1052,13 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
   const mobile = state.viewportWidth < 980;
   const pathname = usePathname();
   const isActiveRoute = route => pathname === route;
+  const pageContent = state.settings.content || defaultContent;
+  const onlineCounter = pageContent.onlineCounter || defaultContent.onlineCounter;
 
   return (
-    <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'} ${useOnlineBarClass(state)}`}>
+    <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
-        state={state}
+        announcements={state.settings.announcements}
         header={
           <header className={mobile ? 'mobile-header' : 'desktop-header'}>
             <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
@@ -1098,6 +1095,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
                 mobile={mobile}
+                onlineCounter={onlineCounter}
               />
             </div>
           </header>
@@ -1800,7 +1798,9 @@ function DesktopShell({ state, setState }) {
   const galleryRailItems = buildHomeRailItems(allGallery);
   const coachesRailItems = buildHomeRailItems(allCoaches);
   const homePackages = featuredOrAll(packages, 8);
+  const packagesRailItems = buildHomeRailItems(homePackages);
   const testimonials = state.settings.testimonials || defaultTestimonials;
+  const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
@@ -1810,9 +1810,9 @@ function DesktopShell({ state, setState }) {
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
 
   return (
-    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'} ${useOnlineBarClass(state)}`}>
+    <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
-        state={state}
+        announcements={state.settings.announcements}
         header={
           <header className="desktop-header">
             <div className="shell-width desktop-header-inner">
@@ -1839,6 +1839,7 @@ function DesktopShell({ state, setState }) {
                 darkMode={state.darkMode}
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+                onlineCounter={onlineCounter}
               />
             </div>
           </header>
@@ -1894,12 +1895,16 @@ function DesktopShell({ state, setState }) {
             subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-packages-rail">
-            {homePackages.map(item => (
+          <div
+            className="home-scroll-rail mobile-horizontal-rail home-packages-rail"
+            data-loop={packagesRailItems.length > homePackages.length ? 'true' : 'false'}
+          >
+            {packagesRailItems.map((item, index) => (
               <PackageCard
-                key={item.title}
+                key={`${item.title}-${index}`}
                 item={item}
                 compact
+                featureLimit={3}
                 selected={selectedPackage?.title === item.title}
                 onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
                 onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
@@ -1998,7 +2003,9 @@ function MobileShell({ state, setState }) {
   const galleryRailItems = buildHomeRailItems(allGallery);
   const coachesRailItems = buildHomeRailItems(allCoaches);
   const homePackages = featuredOrAll(packages, 6);
+  const packagesRailItems = buildHomeRailItems(homePackages);
   const testimonials = state.settings.testimonials || defaultTestimonials;
+  const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
@@ -2007,9 +2014,9 @@ function MobileShell({ state, setState }) {
   const selectedPackage = state.selectedPackage || packages[0];
 
   return (
-    <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'} ${useOnlineBarClass(state)}`}>
+    <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
-        state={state}
+        announcements={state.settings.announcements}
         header={
           <header className="mobile-header">
             <div className="mobile-header-inner shell-width">
@@ -2025,6 +2032,7 @@ function MobileShell({ state, setState }) {
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
                 mobile
+                onlineCounter={onlineCounter}
               />
             </div>
           </header>
@@ -2074,12 +2082,16 @@ function MobileShell({ state, setState }) {
             title="PAKETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-packages-rail">
-            {homePackages.map(item => (
+          <div
+            className="home-scroll-rail mobile-horizontal-rail home-packages-rail"
+            data-loop={packagesRailItems.length > homePackages.length ? 'true' : 'false'}
+          >
+            {packagesRailItems.map((item, index) => (
               <PackageCard
-                key={item.title}
+                key={`${item.title}-${index}`}
                 item={item}
                 compact
+                featureLimit={3}
                 selected={selectedPackage?.title === item.title}
                 onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
                 onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
@@ -2193,13 +2205,33 @@ function RailAutoScroller({ selector, speed = 0.35 }) {
   useEffect(() => {
     const rail = document.querySelector(selector);
     if (!rail) return undefined;
+
     let frameId;
+    let paused = false;
     const loop = rail.dataset.loop === 'true';
     const step = Math.abs(speed);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const pause = () => {
+      paused = true;
+    };
+    const resume = () => {
+      window.setTimeout(() => {
+        paused = false;
+      }, 1200);
+    };
+
+    rail.addEventListener('pointerdown', pause);
+    rail.addEventListener('touchstart', pause, { passive: true });
+    rail.addEventListener('wheel', pause, { passive: true });
+    rail.addEventListener('pointerup', resume);
+    rail.addEventListener('touchend', resume, { passive: true });
+    rail.addEventListener('mouseenter', pause);
+    rail.addEventListener('mouseleave', resume);
 
     const tick = () => {
       const maxScroll = rail.scrollWidth - rail.clientWidth;
-      if (maxScroll > 0) {
+      if (!paused && !reducedMotion && maxScroll > 0) {
         rail.scrollLeft += step;
         if (loop) {
           const loopPoint = rail.scrollWidth / 2;
@@ -2214,7 +2246,16 @@ function RailAutoScroller({ selector, speed = 0.35 }) {
     };
 
     frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      cancelAnimationFrame(frameId);
+      rail.removeEventListener('pointerdown', pause);
+      rail.removeEventListener('touchstart', pause);
+      rail.removeEventListener('wheel', pause);
+      rail.removeEventListener('pointerup', resume);
+      rail.removeEventListener('touchend', resume);
+      rail.removeEventListener('mouseenter', pause);
+      rail.removeEventListener('mouseleave', resume);
+    };
   }, [selector, speed]);
 
   return null;
