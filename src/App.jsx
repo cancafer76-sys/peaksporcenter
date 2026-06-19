@@ -30,6 +30,7 @@ import {
   SunMedium,
   Users,
   Video,
+  ArrowRight,
   X
 } from 'lucide-react';
 import './mobile.css';
@@ -436,20 +437,23 @@ function HeroCarousel({ slides, mobile = false }) {
 }
 
 function Ticker({ items }) {
-  const text = resolveAnnouncementText(items);
+  const list = Array.isArray(items) && items.length ? items : defaultAnnouncements;
+  const headline = list[0] || 'YAZ KAMPANYASI %30 İNDİRİM!';
   return (
     <div className="ticker">
-      <div className="ticker-label">
-        <Megaphone size={14} />
-        Duyurular
-      </div>
-      <div className="ticker-track" aria-label="Duyuru metni">
-        <div className="ticker-marquee">
-          <span className="ticker-message">{text}</span>
-          <span className="ticker-gap" aria-hidden="true">•</span>
-          <span className="ticker-message" aria-hidden="true">{text}</span>
+      <div className="ticker-info">
+        <div className="ticker-badge">
+          <Megaphone size={13} />
+          <span>YENİ</span>
+        </div>
+        <div className="ticker-text">
+          <div className="ticker-headline">{headline}</div>
+          <div className="ticker-desc">Tüm paketlerde geçerli sınırlı süre fırsatını kaçırma.</div>
         </div>
       </div>
+      <button className="ticker-cta" aria-label="Detaylar">
+        <ArrowRight size={20} />
+      </button>
     </div>
   );
 }
