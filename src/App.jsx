@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   Megaphone,
   Image,
-  Menu,
   MessageCircle,
   Medal,
   Moon,
@@ -29,6 +28,7 @@ import {
   Settings2,
   Sparkles,
   SunMedium,
+  Send,
   Users,
   Video,
   ArrowRight,
@@ -187,31 +187,384 @@ function resolveAnnouncementText(items) {
     .join(' • ');
 }
 
+const LOGO_CIRCLE = '/logo-circle.png';
+
+function CircleLogo({ className = '', size = 'md' }) {
+  return (
+    <span className={`circle-logo circle-logo-${size} ${className}`.trim()}>
+      <span className="circle-logo-orbit" aria-hidden="true" />
+      <img src={LOGO_CIRCLE} alt="" className="circle-logo-img" />
+    </span>
+  );
+}
+
 function Brand({ compact = false }) {
   return (
-    <div className={`brand ${compact ? 'brand-compact' : ''}`}>
-      <span className="brand-mark">▲</span>
-      <span className="brand-text">
+    <div className={`brand brand-circle ${compact ? 'brand-compact' : ''}`} aria-label="PEAK SPOR CENTER">
+      <CircleLogo size={compact ? 'md' : 'lg'} />
+      <span className="brand-caption">
         <strong>
-          <span className="brand-gradient">PEAKSPOR</span>
+          <span className="brand-caption-peak">PEAK</span>
+          <span className="brand-caption-spor"> SPOR</span>
         </strong>
-        <small>Premium Fitness</small>
+        <small className="brand-center" aria-label="CENTER">
+          <span className="brand-center-track">
+            {'CENTER'.split('').map((letter, index) => (
+              <span key={`${letter}-${index}`} className="brand-center-letter" style={{ '--i': index }}>
+                {letter}
+              </span>
+            ))}
+          </span>
+        </small>
       </span>
     </div>
   );
 }
 
-function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin }) {
+function AssistantLogo({ size = 'md' }) {
+  return <CircleLogo size={size === 'sm' ? 'sm' : 'md'} className="assistant-logo-mark" />;
+}
+
+function openWhatsAppChat(number, text) {
+  const cleanNumber = (number || '+905555555555').replace(/\D/g, '');
+  const message = text || 'Merhaba, PEAKSPOR hakkında bilgi almak istiyorum.';
+  window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+}
+
+function generateAssistantReply(text, { packages, announcements }) {
+  const q = text.toLowerCase().trim();
+
+  if (/whatsapp|insan|temsilci|arama|telefon|konuş|konus|gorus|görüş|canlı|canli/.test(q)) {
+    return {
+      text: 'Sizi WhatsApp destek hattımıza yönlendirebilirim. Aşağıdaki WhatsApp butonuna tıklayın, ekibimiz hemen yardımcı olsun.',
+      suggestWhatsApp: true
+    };
+  }
+  if (/üyelik|uye|üye ol|kayıt|kayit|kaydol/.test(q)) {
+    return {
+      text: 'PEAKSPOR üyeliği ile fitness alanı, grup dersleri, ölçüm ve danışmanlık desteğine erişirsiniz. İletişim sekmesinden formu doldurabilir veya WhatsApp üzerinden başvurabilirsiniz.'
+    };
+  }
+  if (/paket|fiyat|ücret|ucret|plan|starter|premium|professional/.test(q)) {
+    const list = (packages || defaultPackages)
+      .slice(0, 3)
+      .map(item => `• ${item.title}: ₺${formatPrice(item.price)} ${item.period}`)
+      .join('\n');
+    return {
+      text: `Öne çıkan paketlerimiz:\n${list}\n\nSize en uygun planı birlikte seçmek için WhatsApp hattımıza yazabilirsiniz.`
+    };
+  }
+  if (/ders|program|pilates|yoga|crossfit|antrenman|saat/.test(q)) {
+    return {
+      text: 'Grup derslerimiz hafta içi ve hafta sonu farklı saatlerde planlanır. Güncel program için WhatsApp üzerinden danışmanlarımıza yazmanız yeterli.'
+    };
+  }
+  if (/kampanya|indirim|fırsat|firsat|promosyon/.test(q)) {
+    const notes = (announcements || defaultAnnouncements)
+      .slice(0, 3)
+      .map(item => `• ${typeof item === 'string' ? item : item.message}`)
+      .join('\n');
+    return {
+      text: `Güncel fırsatlar:\n${notes}\n\nKampanya detayları için WhatsApp destek hattımızı kullanabilirsiniz.`
+    };
+  }
+  if (/merhaba|selam|hey|günaydın|gunaydin|iyi günler/.test(q)) {
+    return {
+      text: 'Merhaba! PEAKSPOR AI Asistan burada. Üyelik, paketler, ders programı veya kampanyalar hakkında sorabilirsiniz.'
+    };
+  }
+
+  return {
+    text: 'Sorunuzu aldım. Üyelik, paket, ders programı ve kampanyalar hakkında yardımcı olabilirim. Dilerseniz sizi WhatsApp ekibimize de aktarabilirim.',
+    suggestWhatsApp: true
+  };
+}
+
+function AssistantChat({ mobile, content, packages, announcements }) {
+  const assistant = content?.assistant || defaultContent.assistant;
+  const whatsappNumber = content?.whatsapp?.number || defaultContent.whatsapp.number;
+  const whatsappText = content?.whatsapp?.text || defaultContent.whatsapp.text;
+  const [open, setOpen] = useState(false);
+  const [teaserVisible, setTeaserVisible] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [typing, setTyping] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem('peakspor-assistant-teaser');
+    if (dismissed) return undefined;
+    const timer = window.setTimeout(() => setTeaserVisible(true), 2200);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!open || messages.length) return;
+    setMessages([{ id: 'welcome', role: 'assistant', text: assistant.message }]);
+  }, [open, assistant.message, messages.length]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, typing, open]);
+
+  const dismissTeaser = () => {
+    setTeaserVisible(false);
+    sessionStorage.setItem('peakspor-assistant-teaser', '1');
+  };
+
+  const openChat = () => {
+    dismissTeaser();
+    setOpen(true);
+  };
+
+  const pushAssistantReply = (text, suggestWhatsApp = false) => {
+    setTyping(true);
+    window.setTimeout(() => {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          text,
+          suggestWhatsApp
+        }
+      ]);
+      setTyping(false);
+    }, 650);
+  };
+
+  const handleQuickReply = label => {
+    if (/whatsapp/i.test(label)) {
+      openWhatsAppChat(whatsappNumber, whatsappText);
+      return;
+    }
+    setMessages(prev => [...prev, { id: `user-${Date.now()}`, role: 'user', text: label }]);
+    const reply = generateAssistantReply(label, { packages, announcements });
+    pushAssistantReply(reply.text, reply.suggestWhatsApp);
+  };
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    setMessages(prev => [...prev, { id: `user-${Date.now()}`, role: 'user', text }]);
+    const reply = generateAssistantReply(text, { packages, announcements });
+    pushAssistantReply(reply.text, reply.suggestWhatsApp);
+  };
+
+  return (
+    <div className={`assistant-chat ${mobile ? 'assistant-chat-mobile' : 'assistant-chat-desktop'}`}>
+      {teaserVisible && !open ? (
+        <div className="assistant-teaser" role="status">
+          <button type="button" className="assistant-teaser-close" onClick={dismissTeaser} aria-label="Kapat">
+            <X size={12} />
+          </button>
+          <div className="assistant-teaser-top">
+            <span className="assistant-teaser-avatar" aria-hidden="true">
+              <AssistantLogo size="md" />
+              <span className="assistant-online-dot" />
+            </span>
+            <div>
+              <strong>{assistant.welcome}</strong>
+              <span className="assistant-teaser-status">Çevrimiçi • AI Destek</span>
+            </div>
+          </div>
+          <p>Merhaba, size nasıl yardımcı olabilirim? Üyelik ve paketler hakkında hemen bilgi verebilirim.</p>
+          <button type="button" className="assistant-teaser-action" onClick={openChat}>
+            <Sparkles size={13} />
+            Sohbete Başla
+          </button>
+        </div>
+      ) : null}
+
+      {open ? (
+        <div className="assistant-panel" role="dialog" aria-label="PEAKSPOR AI Asistan">
+          <div className="assistant-panel-head">
+            <div className="assistant-panel-brand">
+              <span className="assistant-panel-avatar" aria-hidden="true">
+                <AssistantLogo size="md" />
+                <span className="assistant-online-dot" />
+              </span>
+              <div>
+                <strong>{assistant.welcome}</strong>
+                <span>Size yardımcı olmaya hazırım</span>
+              </div>
+            </div>
+            <button type="button" className="assistant-panel-close" onClick={() => setOpen(false)} aria-label="Sohbeti kapat">
+              <X size={14} />
+            </button>
+          </div>
+          <div className="assistant-messages">
+            {messages.map(message => (
+              <div key={message.id} className={`assistant-message ${message.role}`}>
+                {message.role === 'assistant' ? (
+                  <span className="assistant-message-avatar" aria-hidden="true">
+                    <AssistantLogo size="sm" />
+                  </span>
+                ) : null}
+                <div className="assistant-message-bubble">
+                  <p>{message.text}</p>
+                  {message.suggestWhatsApp ? (
+                    <button
+                      type="button"
+                      className="assistant-whatsapp-inline"
+                      onClick={() => openWhatsAppChat(whatsappNumber, whatsappText)}
+                    >
+                      <MessageCircle size={12} />
+                      WhatsApp
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+            {typing ? (
+              <div className="assistant-message assistant">
+                <span className="assistant-message-avatar" aria-hidden="true">
+                  <AssistantLogo size="sm" />
+                </span>
+                <div className="assistant-message-bubble assistant-typing">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </div>
+            ) : null}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="assistant-quick-replies">
+            {(assistant.buttons || defaultContent.assistant.buttons).slice(0, 4).map(label => (
+              <button key={label} type="button" onClick={() => handleQuickReply(label)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <form className="assistant-input-row" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={input}
+              onChange={event => setInput(event.target.value)}
+              placeholder="Bir şey sorun..."
+              aria-label="Asistan mesajı"
+            />
+            <button type="submit" aria-label="Gönder">
+              <Send size={14} />
+            </button>
+          </form>
+          <button
+            type="button"
+            className="assistant-whatsapp-cta"
+            onClick={() => openWhatsAppChat(whatsappNumber, whatsappText)}
+          >
+            <MessageCircle size={14} />
+            WhatsApp
+          </button>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        className={`assistant-fab ${open ? 'open' : ''} ${teaserVisible ? 'has-teaser' : ''}`}
+        onClick={() => (open ? setOpen(false) : openChat())}
+        aria-label={open ? 'Asistanı kapat' : 'PEAKSPOR AI Asistan'}
+      >
+        <span className="assistant-fab-glow" aria-hidden="true" />
+        {open ? <X size={18} /> : <CircleLogo size="fab" className="assistant-fab-logo" />}
+      </button>
+    </div>
+  );
+}
+
+function ThemeSwitch({ darkMode, onToggle, mobile = false }) {
+  return (
+    <button
+      type="button"
+      className={`theme-switch ${mobile ? 'theme-switch-mobile' : ''} ${darkMode ? 'is-dark' : 'is-light'}`}
+      onClick={onToggle}
+      aria-label={darkMode ? 'Gündüz moduna geç' : 'Gece moduna geç'}
+      aria-pressed={!darkMode}
+    >
+      <span className="theme-switch-track" aria-hidden="true">
+        <Moon size={13} className="theme-switch-icon theme-switch-icon-moon" />
+        <SunMedium size={13} className="theme-switch-icon theme-switch-icon-sun" />
+        <span className="theme-switch-thumb">{darkMode ? <Moon size={14} /> : <SunMedium size={14} />}</span>
+      </span>
+      <span className="theme-switch-label">{darkMode ? 'Gece' : 'Gündüz'}</span>
+    </button>
+  );
+}
+
+function MenuToggle({ open, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`menu-toggle ${open ? 'is-open' : ''}`}
+      onClick={onClick}
+      aria-label={open ? 'Menüyü kapat' : 'Menüyü aç'}
+      aria-expanded={open}
+    >
+      <span className="menu-toggle-lines" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </span>
+    </button>
+  );
+}
+
+function AppDrawer({ open, onClose, pathname }) {
+  if (!open) return null;
+
+  const handleNavigate = item => {
+    if (item.route) {
+      navigateToPath(item.route);
+    } else {
+      scrollToSection(item.id);
+    }
+    onClose();
+  };
+
+  return (
+    <>
+      <button type="button" className="drawer-backdrop drawer-backdrop-visible" aria-label="Menüyü kapat" onClick={onClose} />
+      <aside className="side-drawer mobile-drawer is-open" aria-label="Ana menü">
+        <div className="drawer-head">
+          <Brand compact />
+          <button type="button" className="drawer-close" onClick={onClose} aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="drawer-kicker">Keşfet</p>
+        <nav className="drawer-links">
+          {mobileNav.map((item, index) => {
+            const Icon = item.icon;
+            const active = item.route ? pathname === item.route : false;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`drawer-link ${active ? 'active' : ''}`}
+                style={{ '--i': index }}
+                onClick={() => handleNavigate(item)}
+              >
+                <span className="drawer-link-icon">
+                  <Icon size={18} />
+                </span>
+                <span className="drawer-link-text">{item.label}</span>
+                <ChevronRight size={16} />
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
+  );
+}
+
+function HeaderActions({ darkMode, onToggleTheme, onOpenAdmin, mobile = false }) {
   return (
     <div className="header-actions">
-      <button className="theme-switch" type="button" onClick={onToggleTheme} aria-label="Tema değiştir">
-        <span className={darkMode ? 'active' : ''}>
-          <Moon size={14} />
-        </span>
-        <span className={!darkMode ? 'active' : ''}>
-          <SunMedium size={14} />
-        </span>
-      </button>
+      <ThemeSwitch darkMode={darkMode} onToggle={onToggleTheme} mobile={mobile} />
       {onOpenAdmin ? (
         <button className="admin-entry-button admin-entry-button-header" type="button" onClick={onOpenAdmin} aria-label="Yetkili giriş">
           <LayoutDashboard size={16} />
@@ -233,14 +586,10 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
         <header className={mobile ? 'mobile-header' : 'desktop-header'}>
           <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
             <div className="header-left-group">
-              <button
-                className="icon-button mobile-menu-button"
-                type="button"
+              <MenuToggle
+                open={state.drawerOpen}
                 onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-                aria-label="Menü"
-              >
-                <Menu size={18} />
-              </button>
+              />
               <Brand compact={mobile} />
             </div>
             {!mobile ? <div className="page-heading-inline"><span>{title}</span></div> : null}
@@ -248,6 +597,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
               darkMode={state.darkMode}
               onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
               onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+              mobile={mobile}
             />
           </div>
         </header>
@@ -299,48 +649,18 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
         </nav>
       ) : null}
 
-      <a
-        className={`whatsapp-bubble ${mobile ? 'whatsapp-bubble-mobile' : 'whatsapp-bubble-desktop'}`}
-        href={`https://wa.me/${(state.settings.content?.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="WhatsApp"
-      >
-        <MessageCircle size={18} />
-      </a>
+      <AssistantChat
+        mobile={mobile}
+        content={state.settings.content}
+        packages={state.settings.packages}
+        announcements={state.settings.announcements}
+      />
 
-      {state.drawerOpen ? (
-        <button
-          type="button"
-          className="drawer-backdrop"
-          aria-label="Menüyü kapat"
-          onClick={() => setState(prev => ({ ...prev, drawerOpen: false }))}
-        />
-      ) : null}
-
-      {state.drawerOpen ? (
-        <div className="side-drawer mobile-drawer">
-          <button
-            type="button"
-            className="drawer-close"
-            onClick={() => setState(prev => ({ ...prev, drawerOpen: false }))}
-          >
-            <X size={18} />
-          </button>
-          <Brand compact />
-          <div className="drawer-links">
-            {mobileNav.map(item => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <AppDrawer
+        open={state.drawerOpen && mobile}
+        onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
+        pathname={pathname}
+      />
 
       {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
     </div>
@@ -350,11 +670,11 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
 function HeroButtons({ compact = false, onPrimary, onSecondary }) {
   return (
     <div className={`hero-actions ${compact ? 'hero-actions-compact' : ''}`}>
-      <button className="primary-button" type="button" onClick={onPrimary}>
-        ÜYE OL
+      <button className="primary-button hero-cta-primary" type="button" onClick={onPrimary}>
+        <span>ÜYE OL</span>
       </button>
-      <button className="secondary-button" type="button" onClick={onSecondary}>
-        SALONU KEŞFET
+      <button className="secondary-button hero-cta-secondary" type="button" onClick={onSecondary}>
+        <span>SALONU KEŞFET</span>
       </button>
     </div>
   );
@@ -766,14 +1086,10 @@ function DesktopShell({ state, setState }) {
         <header className="desktop-header">
           <div className="shell-width desktop-header-inner">
             <div className="header-left-group">
-              <button
-                className="icon-button"
-                type="button"
+              <MenuToggle
+                open={state.drawerOpen}
                 onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-                aria-label="Menü"
-              >
-                <Menu size={18} />
-              </button>
+              />
               <Brand />
             </div>
             <nav className="desktop-nav" aria-label="Ana menü">
@@ -967,15 +1283,12 @@ function DesktopShell({ state, setState }) {
         </section>
       </main>
 
-      <a
-        className="whatsapp-bubble whatsapp-bubble-desktop"
-        href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="WhatsApp"
-      >
-        <MessageCircle size={18} />
-      </a>
+      <AssistantChat
+        mobile={false}
+        content={content}
+        packages={packages}
+        announcements={state.settings.announcements}
+      />
 
       {state.drawerOpen ? (
         <div className="side-drawer">
@@ -1023,40 +1336,18 @@ function MobileShell({ state, setState }) {
         <header className="mobile-header">
           <div className="mobile-header-inner shell-width">
             <div className="header-left-group">
-              <button
-                className="icon-button mobile-menu-button"
-                type="button"
+              <MenuToggle
+                open={state.drawerOpen}
                 onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-                aria-label="Menü"
-              >
-                <Menu size={18} />
-              </button>
+              />
               <Brand compact />
             </div>
-            <div className="header-actions">
-              <button
-                className="theme-switch theme-switch-mobile"
-                type="button"
-                onClick={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-                aria-label="Tema değiştir"
-              >
-                <span className={state.darkMode ? 'active' : ''}>
-                  <Moon size={14} />
-                </span>
-                <span className={!state.darkMode ? 'active' : ''}>
-                  <SunMedium size={14} />
-                </span>
-              </button>
-              <button
-                className="admin-entry-button admin-entry-button-header"
-                type="button"
-                onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
-                aria-label="Yetkili giriş"
-              >
-                <LayoutDashboard size={16} />
-                <span>Yetkili Giriş</span>
-              </button>
-            </div>
+            <HeaderActions
+              darkMode={state.darkMode}
+              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+              mobile
+            />
           </div>
         </header>
         <div className="ticker-shell shell-width">
@@ -1070,10 +1361,9 @@ function MobileShell({ state, setState }) {
           <div className="mobile-hero-cta-row">
             <HeroButtons
               compact
-              onPrimary={() => scrollToSection('packages')}
+              onPrimary={() => navigateToPath('/contact')}
               onSecondary={() => scrollToSection('services')}
             />
-            <AdminEntryButton compact onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
           </div>
         </section>
 
@@ -1224,48 +1514,18 @@ function MobileShell({ state, setState }) {
         </button>
       </nav>
 
-      <a
-        className="whatsapp-bubble whatsapp-bubble-mobile"
-        href={`https://wa.me/${(content.whatsapp?.number || '+905555555555').replace(/\D/g, '')}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="WhatsApp"
-      >
-        <MessageCircle size={18} />
-      </a>
+      <AssistantChat
+        mobile
+        content={content}
+        packages={packages}
+        announcements={state.settings.announcements}
+      />
 
-      {state.drawerOpen ? (
-        <button
-          type="button"
-          className="drawer-backdrop"
-          aria-label="Menüyü kapat"
-          onClick={() => setState(prev => ({ ...prev, drawerOpen: false }))}
-        />
-      ) : null}
-
-      {state.drawerOpen ? (
-        <div className="side-drawer mobile-drawer">
-          <button
-            type="button"
-            className="drawer-close"
-            onClick={() => setState(prev => ({ ...prev, drawerOpen: false }))}
-          >
-            <X size={18} />
-          </button>
-          <Brand compact />
-          <div className="drawer-links">
-            {mobileNav.map(item => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <AppDrawer
+        open={state.drawerOpen}
+        onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
+        pathname={pathname}
+      />
 
       {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
     </div>
@@ -1913,11 +2173,13 @@ export default function App() {
   }, [pathname]);
 
   useEffect(() => {
-    document.documentElement.style.background = '#050505';
+    const isLight = !state.darkMode;
+    document.documentElement.classList.toggle('theme-light', isLight);
+    document.documentElement.style.background = isLight ? '#f5f7fa' : '#050505';
     document.documentElement.style.minHeight = '100dvh';
     document.documentElement.style.width = '100%';
     document.documentElement.style.overflowX = 'hidden';
-    document.body.style.background = '#050505';
+    document.body.style.background = isLight ? '#f5f7fa' : '#050505';
     document.body.style.minHeight = '100dvh';
     document.body.style.width = '100%';
     document.body.style.overflowX = 'hidden';
@@ -1925,19 +2187,8 @@ export default function App() {
     document.body.style.padding = '0';
     document.body.style.overscrollBehaviorY = 'auto';
     document.body.style.touchAction = 'pan-y';
-    return () => {
-      document.documentElement.style.minHeight = '';
-      document.documentElement.style.width = '';
-      document.documentElement.style.overflowX = '';
-      document.body.style.minHeight = '';
-      document.body.style.width = '';
-      document.body.style.overflowX = '';
-      document.body.style.margin = '';
-      document.body.style.padding = '';
-      document.body.style.overscrollBehaviorY = '';
-      document.body.style.touchAction = '';
-    };
-  }, []);
+    document.body.style.color = isLight ? '#0f172a' : '#ffffff';
+  }, [state.darkMode]);
 
   if (state.loading) {
     return (
