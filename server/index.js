@@ -32,20 +32,20 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
+const isRailway = Boolean(
+  process.env.RAILWAY_ENVIRONMENT ||
+  process.env.RAILWAY_PROJECT_ID ||
+  process.env.RAILWAY_SERVICE_ID
+);
+const isProduction = process.env.NODE_ENV === 'production' || isRailway;
 const envPath = path.join(rootDir, '.env');
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath, override: true });
-} else {
-  dotenv.config();
-}
 
-const localSqlitePath = path.join(rootDir, 'prisma', 'dev.db');
-if (
-  fs.existsSync(localSqlitePath) &&
-  (!process.env.DATABASE_URL || /^postgres(ql)?:\/\//i.test(process.env.DATABASE_URL))
-) {
-  process.env.DATABASE_URL = 'file:./dev.db';
-  console.log('Using local SQLite database:', localSqlitePath);
+if (!isProduction) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath, override: true });
+  } else {
+    dotenv.config();
+  }
 }
 
 const prisma = new PrismaClient();
@@ -58,7 +58,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const port = process.env.PORT || 3001;
+const port = Number(process.env.PORT) || 8080;
 const jwtSecret = process.env.JWT_SECRET || 'peakspor-secret';
 
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -936,7 +936,11 @@ async function start() {
   }
 
   app.listen(port, '0.0.0.0', () => {
-    console.log(`PEAKSPOR server listening on ${port}`);
+    const dbHint = process.env.DATABASE_URL
+      ? `${process.env.DATABASE_URL.split(':')[0]}://***`
+      : 'not set';
+    console.log(`PEAKSPOR server listening on ${port} (0.0.0.0)`);
+    console.log(`Environment: ${isProduction ? 'production' : 'development'}, DATABASE_URL: ${dbHint}`);
   });
 }
 
