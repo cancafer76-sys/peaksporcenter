@@ -441,6 +441,7 @@ function Ticker({ items }) {
       <div className="ticker-track" aria-label="Duyuru metni">
         <div className="ticker-marquee">
           <span className="ticker-message">{text}</span>
+          <span className="ticker-gap" aria-hidden="true">•</span>
           <span className="ticker-message" aria-hidden="true">{text}</span>
         </div>
       </div>
@@ -1763,7 +1764,8 @@ export default function App() {
     document.body.style.overflowX = 'hidden';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
-    document.body.style.overscrollBehaviorY = 'none';
+    document.body.style.overscrollBehaviorY = 'auto';
+    document.body.style.touchAction = 'pan-y';
     return () => {
       document.documentElement.style.minHeight = '';
       document.documentElement.style.width = '';
@@ -1774,6 +1776,7 @@ export default function App() {
       document.body.style.margin = '';
       document.body.style.padding = '';
       document.body.style.overscrollBehaviorY = '';
+      document.body.style.touchAction = '';
     };
   }, []);
 

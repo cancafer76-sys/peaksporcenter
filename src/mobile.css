@@ -57,6 +57,7 @@ img { display: block; width: 100%; }
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  touch-action: pan-y;
 }
 
 .desktop-header,
@@ -310,6 +311,7 @@ img { display: block; width: 100%; }
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+  touch-action: pan-y;
 }
 
 .ticker-label {
@@ -338,18 +340,31 @@ img { display: block; width: 100%; }
 .ticker-marquee {
   display: flex;
   width: max-content;
-  min-width: 100%;
-  animation: ticker 34s linear infinite;
+  min-width: 0;
+  align-items: center;
+  gap: 18px;
+  animation: ticker 38s linear infinite;
+  will-change: transform;
 }
 
 .ticker-message {
   display: inline-flex;
+  align-items: center;
   width: max-content;
-  min-width: 100%;
   color: var(--text);
   font-size: 12px;
   letter-spacing: 0.02em;
-  padding-right: 32px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.ticker-gap {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 10px;
+  line-height: 1;
+  user-select: none;
 }
 
 .ticker-track::before {
@@ -377,8 +392,8 @@ img { display: block; width: 100%; }
 }
 
 @keyframes ticker {
-  from { transform: translateX(100%); }
-  to { transform: translateX(-100%); }
+  from { transform: translateX(14%); }
+  to { transform: translateX(-28%); }
 }
 
 .desktop-hero {
@@ -554,6 +569,10 @@ img { display: block; width: 100%; }
 
   .ticker-message {
     font-size: 11px;
+  }
+
+  .ticker-marquee {
+    gap: 14px;
   }
 
   .hero-admin-inline {
