@@ -149,6 +149,7 @@ function resolveThemePalette(theme, darkMode) {
 
 export function applySiteTheme(themeInput = {}, options = {}) {
   const { darkMode = true } = options;
+  const merged = mergeTheme(themeInput);
   const palette = resolveThemePalette(themeInput, darkMode);
   const root = document.documentElement;
   const body = document.body;
