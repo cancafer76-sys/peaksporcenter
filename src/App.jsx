@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { api } from './api';
 import {
   defaultAnnouncements,
+  defaultFacilityAreas,
   defaultContent,
   defaultGallery,
   defaultPackages,
@@ -935,6 +936,162 @@ function PackagesPage({ state, setState }) {
   );
 }
 
+function MembershipModal({ open, onClose, whatsappNumber }) {
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    setError('');
+  }, [open]);
+
+  if (!open) return null;
+
+  const updateField = field => event => {
+    setForm(prev => ({ ...prev, [field]: event.target.value }));
+    if (error) setError('');
+  };
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    const firstName = form.firstName.trim();
+    const lastName = form.lastName.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+
+    if (!firstName || !lastName || !email || !phone) {
+      setError('Lütfen ad, soyad, e-posta ve telefon bilgilerini doldurun.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Geçerli bir e-posta adresi girin.');
+      return;
+    }
+
+    const whatsappUrl = buildMembershipWhatsAppUrl(whatsappNumber, { firstName, lastName, email, phone });
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    onClose();
+  };
+
+  return (
+    <div className="modal-backdrop membership-modal-backdrop" onClick={onClose}>
+      <div className="membership-modal" role="dialog" aria-label="Üyelik formu" onClick={event => event.stopPropagation()}>
+        <div className="membership-modal-head">
+          <div>
+            <span>Üyelik</span>
+            <strong>Üye Ol</strong>
+          </div>
+          <button type="button" className="membership-modal-close" onClick={onClose} aria-label="Kapat">
+            <X size={16} />
+          </button>
+        </div>
+        <p className="membership-modal-note">Bilgilerinizi girin, WhatsApp üzerinden üyelik için yönlendirileceksiniz.</p>
+        <form className="contact-form membership-modal-form" onSubmit={handleSubmit}>
+          <div className="contact-form-grid">
+            <label>
+              Ad
+              <input type="text" placeholder="Adınız" value={form.firstName} onChange={updateField('firstName')} />
+            </label>
+            <label>
+              Soyad
+              <input type="text" placeholder="Soyadınız" value={form.lastName} onChange={updateField('lastName')} />
+            </label>
+          </div>
+          <label>
+            E-posta
+            <input type="email" placeholder="ornek@mail.com" value={form.email} onChange={updateField('email')} />
+          </label>
+          <label>
+            Telefon
+            <input type="tel" placeholder="05XX XXX XX XX" value={form.phone} onChange={updateField('phone')} />
+          </label>
+          {error ? <p className="contact-form-error">{error}</p> : null}
+          <button className="primary-button contact-submit" type="submit">
+            WhatsApp&apos;a Gönder
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ExplorePage({ state, setState }) {
+  const facilities = defaultFacilityAreas;
+  const [activeVideo, setActiveVideo] = useState(null);
+
+  return (
+    <RouteChrome
+      state={state}
+      setState={setState}
+      title="SALONU KEŞFET"
+      subtitle="Tesisimizi alan alan keşfedin. Görseller ve videolar yakında güncellenecek."
+      content={
+        <>
+          <div className="explore-toolbar">
+            <button type="button" className="explore-home-btn" onClick={() => navigateToPath('/')}>
+              <Home size={16} />
+              Ana Sayfa
+            </button>
+          </div>
+          <div className="explore-grid">
+            {facilities.map(area => (
+              <article key={area.title} className="explore-card">
+                <div className="explore-media">
+                  <img src={area.image} alt={area.title} loading="lazy" />
+                  <div className="card-overlay" />
+                  <span className="explore-tag">{area.tag}</span>
+                  {area.video ? (
+                    <button type="button" className="explore-play-btn" onClick={() => setActiveVideo(area)}>
+                      <Play size={14} />
+                      Videoyu İzle
+                    </button>
+                  ) : area.tag === 'Video Yakında' ? (
+                    <span className="explore-media-badge explore-media-badge-soon">
+                      <Video size={13} />
+                      Video Yakında
+                    </span>
+                  ) : (
+                    <span className="explore-media-badge">
+                      <Image size={13} />
+                      Görsel
+                    </span>
+                  )}
+                </div>
+                <div className="explore-body">
+                  <h3>{area.title}</h3>
+                  <p>{area.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+          {activeVideo ? (
+            <div className="explore-video-modal" role="dialog" aria-label="Video önizleme">
+              <div className="explore-video-card">
+                <div className="explore-video-head">
+                  <strong>{activeVideo.title}</strong>
+                  <button type="button" onClick={() => setActiveVideo(null)} aria-label="Kapat">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="explore-video-frame">
+                  <iframe
+                    src={activeVideo.video}
+                    title={activeVideo.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </>
+      }
+      backTo="/"
+    />
+  );
+}
+
 function ContactPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
@@ -1129,8 +1286,8 @@ function DesktopShell({ state, setState }) {
             </h1>
             <p>{content.hero?.subtitle || defaultContent.hero.subtitle}</p>
             <HeroButtons
-              onPrimary={() => scrollToSection('packages')}
-              onSecondary={() => scrollToSection('services')}
+              onPrimary={() => navigateToPath('/contact')}
+              onSecondary={() => navigateToPath('/explore')}
             />
             <AdminEntryButton onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))} />
           </div>
@@ -1317,6 +1474,7 @@ function DesktopShell({ state, setState }) {
 
 function MobileShell({ state, setState }) {
   const pathname = usePathname();
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
@@ -1361,8 +1519,8 @@ function MobileShell({ state, setState }) {
           <div className="mobile-hero-cta-row">
             <HeroButtons
               compact
-              onPrimary={() => navigateToPath('/contact')}
-              onSecondary={() => scrollToSection('services')}
+              onPrimary={() => setJoinModalOpen(true)}
+              onSecondary={() => navigateToPath('/explore')}
             />
           </div>
         </section>
@@ -1525,6 +1683,12 @@ function MobileShell({ state, setState }) {
         open={state.drawerOpen}
         onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
         pathname={pathname}
+      />
+
+      <MembershipModal
+        open={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        whatsappNumber={content.whatsapp?.number}
       />
 
       {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
@@ -2159,7 +2323,8 @@ function useSectionPath(pathname) {
   const isPackages = pathname === '/packages';
   const isGallery = pathname === '/gallery';
   const isContact = pathname === '/contact';
-  return { isServices, isPackages, isGallery, isContact };
+  const isExplore = pathname === '/explore';
+  return { isServices, isPackages, isGallery, isContact, isExplore };
 }
 
 export default function App() {
@@ -2213,6 +2378,10 @@ export default function App() {
 
   if (sectionPath.isContact) {
     return <ContactPage state={state} setState={setState} />;
+  }
+
+  if (sectionPath.isExplore) {
+    return <ExplorePage state={state} setState={setState} />;
   }
 
   return isMobile ? <MobileShell state={state} setState={setState} /> : <DesktopShell state={state} setState={setState} />;

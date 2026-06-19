@@ -51,9 +51,9 @@ export const defaultContent = {
     muted: '#9CA3AF'
   },
   assistant: {
-    welcome: 'PEAKSPOR Asistan',
-    message: 'Merhaba! Size nasıl yardımcı olabiliriz?',
-    buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Ders Programları', 'Kampanyalar', 'Destek']
+    welcome: 'PEAKSPOR AI Asistan',
+    message: 'Merhaba, ben PEAKSPOR yapay zeka asistanıyım. Size nasıl yardımcı olabilirim?',
+    buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Ders Programları', 'Kampanyalar', 'WhatsApp Destek']
   },
   stats: [
     { label: 'Aktif Üye', value: '5.000+', icon: 'users' },
@@ -198,6 +198,51 @@ export const defaultTrainers = [
     role: 'Crossfit Coach',
     specialty: 'High Intensity',
     image: 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=900&q=80'
+  }
+];
+
+export const defaultFacilityAreas = [
+  {
+    title: 'Fitness Alanı',
+    description: 'Geniş ağırlık, kardiyo ve fonksiyonel antrenman bölümü.',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80',
+    video: null,
+    tag: 'Video Yakında'
+  },
+  {
+    title: 'Havuz',
+    description: 'Serinleme, toparlanma ve su içi egzersiz alanı.',
+    image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&w=1200&q=80',
+    video: null,
+    tag: 'Görsel'
+  },
+  {
+    title: 'Buhar Odası',
+    description: 'Kas gevşetme ve detoks için premium buhar deneyimi.',
+    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80',
+    video: null,
+    tag: 'Görsel'
+  },
+  {
+    title: 'Masa Tenisi',
+    description: 'Eğlenceli rekabet ve refleks antrenmanı için özel alan.',
+    image: 'https://images.unsplash.com/photo-1554068865-9cebb4c4e08a?auto=format&fit=crop&w=1200&q=80',
+    video: null,
+    tag: 'Görsel'
+  },
+  {
+    title: 'Sauna',
+    description: 'Toparlanma ve rahatlama için sıcak sauna bölümü.',
+    image: 'https://images.unsplash.com/photo-1519823551278-64b92733cd8f?auto=format&fit=crop&w=1200&q=80',
+    video: null,
+    tag: 'Görsel'
+  },
+  {
+    title: 'Grup Stüdyosu',
+    description: 'Pilates, yoga ve grup dersleri için modern stüdyo.',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
+    video: null,
+    tag: 'Görsel'
   }
 ];
 
