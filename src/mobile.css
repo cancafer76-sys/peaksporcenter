@@ -1460,7 +1460,7 @@ img { display: block; width: 100%; }
 }
 
 .whatsapp-bubble-desktop { bottom: 18px; }
-.whatsapp-bubble-mobile { bottom: calc(138px + env(safe-area-inset-bottom)); }
+.whatsapp-bubble-mobile { bottom: calc(88px + env(safe-area-inset-bottom)); }
 
 @keyframes bubble-pulse {
   0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.42); }
