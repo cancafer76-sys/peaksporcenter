@@ -13,7 +13,8 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeContact, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeContact, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { fallbackSettings, normalizeSettings } from '../shared/settings.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
 import {
@@ -48,20 +49,6 @@ import {
 import './mobile.css';
 import AdminDashboard from './admin/AdminDashboard.jsx';
 
-const fallbackSettings = {
-  content: defaultContent,
-  services: defaultServices,
-  packages: defaultPackages,
-  gallery: defaultGallery,
-  posts: defaultPosts,
-  trainers: defaultTrainers,
-  about: defaultAbout,
-  testimonials: defaultTestimonials,
-  announcements: defaultAnnouncements,
-  facilityAreas: defaultFacilityAreas,
-  galleryCategories: defaultGalleryCategories
-};
-
 const drawerNav = [
   { id: 'home', label: 'Ana Sayfa', icon: Home, route: '/' },
   { id: 'services', label: 'Hizmetler', icon: Dumbbell, route: '/services' },
@@ -82,9 +69,9 @@ const desktopNav = [
   { id: 'contact', label: 'İletişim', route: '/contact' }
 ];
 
-function AnimatedHomeRail({ className = '', loop = false, duration = 48, children }) {
+function AnimatedHomeRail({ className = '', loop = true, duration = 48, children }) {
   const items = React.Children.toArray(children);
-  const shouldLoop = loop && items.length > 1;
+  const shouldLoop = loop && items.length > 0;
   const trackItems = shouldLoop ? [...items, ...items] : items;
 
   return (
@@ -532,39 +519,6 @@ function HeroFloatingStat({ stats, config }) {
   );
 }
 
-function normalizeSettings(payload) {
-  const source = payload && typeof payload === 'object' ? payload : {};
-  const services = Array.isArray(source.services) && source.services.length ? source.services.map(normalizeService) : defaultServices.map(normalizeService);
-  const packages = Array.isArray(source.packages) && source.packages.length ? source.packages.map(normalizePackage) : defaultPackages.map(normalizePackage);
-  const gallery = Array.isArray(source.gallery) && source.gallery.length
-    ? source.gallery.map((item, index) => normalizeGalleryItem(item, index))
-    : defaultGallery.map((item, index) => normalizeGalleryItem(item, index));
-  return {
-    content: source.content && typeof source.content === 'object' ? source.content : defaultContent,
-    services,
-    packages,
-    gallery,
-    galleryCategories:
-      Array.isArray(source.galleryCategories) && source.galleryCategories.length
-        ? source.galleryCategories
-        : defaultGalleryCategories,
-    posts: Array.isArray(source.posts) && source.posts.length ? source.posts : defaultPosts,
-    trainers: normalizeTrainers(Array.isArray(source.trainers) && source.trainers.length ? source.trainers : defaultTrainers),
-    about: normalizeAbout(source.about && typeof source.about === 'object' ? source.about : defaultAbout),
-    testimonials: normalizeTestimonials(
-      Array.isArray(source.testimonials) && source.testimonials.length ? source.testimonials : defaultTestimonials
-    ),
-    facilityAreas:
-      Array.isArray(source.facilityAreas) && source.facilityAreas.length
-        ? source.facilityAreas
-        : defaultFacilityAreas,
-    announcements:
-      Array.isArray(source.announcements) && source.announcements.length
-        ? source.announcements
-        : defaultAnnouncements
-  };
-}
-
 function useAnalytics(pathname) {
   useEffect(() => {
     let visitorId = '';
@@ -768,6 +722,8 @@ function MediaLightbox({ item, onClose }) {
 
   if (!data) return null;
 
+  const videoSource = data.type === 'video' && data.videoUrl ? getGalleryVideoSource(data.videoUrl) : null;
+
   return (
     <div className="media-lightbox" role="dialog" aria-modal="true" aria-label={data.title} onClick={onClose}>
       <button type="button" className="media-lightbox-close" onClick={onClose} aria-label="Kapat">
@@ -775,9 +731,13 @@ function MediaLightbox({ item, onClose }) {
         <span>Kapat</span>
       </button>
       <div className="media-lightbox-body" onClick={event => event.stopPropagation()}>
-        {data.type === 'video' && data.videoUrl ? (
+        {videoSource ? (
           <div className="media-lightbox-frame">
-            <iframe src={getYoutubeEmbedUrl(data.videoUrl)} title={data.title} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+            {videoSource.kind === 'file' ? (
+              <video src={videoSource.src} controls autoPlay playsInline className="media-lightbox-video" />
+            ) : (
+              <iframe src={videoSource.src} title={data.title} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+            )}
           </div>
         ) : (
           <img src={data.image} alt={data.title} className="media-lightbox-image" />
@@ -2002,7 +1962,7 @@ function DesktopShell({ state, setState }) {
   const allServices = services.map(normalizeService);
   const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
   const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
-  const homePackages = featuredOrAll(packages, 8);
+  const homePackages = packages.map(normalizePackage);
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
@@ -2068,7 +2028,7 @@ function DesktopShell({ state, setState }) {
             subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-services-rail" loop={allServices.length > 1} duration={52}>
+          <AnimatedHomeRail className="home-services-rail" loop duration={52}>
             {allServices.map(service => (
               <ServiceCardButton
                 key={service.title}
@@ -2098,7 +2058,7 @@ function DesktopShell({ state, setState }) {
             subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-packages-rail" loop={homePackages.length > 1} duration={46}>
+          <AnimatedHomeRail className="home-packages-rail" loop duration={46}>
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
@@ -2121,7 +2081,7 @@ function DesktopShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-coaches-rail" loop={allCoaches.length > 1} duration={50}>
+          <AnimatedHomeRail className="home-coaches-rail" loop duration={50}>
             {allCoaches.map(coach => (
               <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
             ))}
@@ -2134,7 +2094,7 @@ function DesktopShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-gallery-rail" loop={allGallery.length > 1} duration={54}>
+          <AnimatedHomeRail className="home-gallery-rail" loop duration={54}>
             {allGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}
@@ -2196,7 +2156,7 @@ function MobileShell({ state, setState }) {
   const allServices = services.map(normalizeService);
   const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
   const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
-  const homePackages = featuredOrAll(packages, 6);
+  const homePackages = packages.map(normalizePackage);
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
@@ -2249,7 +2209,7 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-services-rail" loop={allServices.length > 1} duration={52}>
+          <AnimatedHomeRail className="home-services-rail" loop duration={52}>
             {allServices.map(service => (
               <ServiceCardButton
                 key={service.title}
@@ -2274,7 +2234,7 @@ function MobileShell({ state, setState }) {
             title="PAKETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-packages-rail" loop={homePackages.length > 1} duration={46}>
+          <AnimatedHomeRail className="home-packages-rail" loop duration={46}>
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
@@ -2296,7 +2256,7 @@ function MobileShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-coaches-rail" loop={allCoaches.length > 1} duration={50}>
+          <AnimatedHomeRail className="home-coaches-rail" loop duration={50}>
             {allCoaches.map(coach => (
               <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
             ))}
@@ -2309,7 +2269,7 @@ function MobileShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-gallery-rail" loop={allGallery.length > 1} duration={54}>
+          <AnimatedHomeRail className="home-gallery-rail" loop duration={54}>
             {allGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}

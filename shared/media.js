@@ -298,6 +298,19 @@ export function buildMapSearchUrl(query) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
+export function isDirectMediaVideoUrl(url) {
+  const value = String(url || '');
+  return value.startsWith('/uploads/') || /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(value);
+}
+
+export function getGalleryVideoSource(url) {
+  if (!url) return null;
+  if (isDirectMediaVideoUrl(url)) return { kind: 'file', src: url };
+  const embed = getYoutubeEmbedUrl(url);
+  if (embed.includes('/embed/')) return { kind: 'youtube', src: embed };
+  return null;
+}
+
 export function normalizeTestimonials(items) {
   const list = Array.isArray(items) && items.length ? items : [];
   return list.map((item, index) => normalizeTestimonial(item, index));

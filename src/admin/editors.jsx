@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { Eye, Plus, Star, Trash2, Video, Image as ImageIcon } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Eye, Plus, Star, Trash2, Video, Image as ImageIcon, UserCog } from 'lucide-react';
 import {
   getYoutubeEmbedUrl,
   getYoutubeThumbnail,
+  getGalleryVideoSource,
   normalizeAbout,
   normalizeGalleryItem,
   normalizePackage,
@@ -22,6 +23,7 @@ import {
   STAT_ICON_OPTIONS
 } from '../../shared/media.js';
 import { defaultContent, defaultGalleryCategories, defaultAbout, defaultBannerSlides } from '../../shared/defaults.js';
+import { api } from '../api';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -42,6 +44,44 @@ function ColorField({ label, value, onChange }) {
       {label}
       <input type="color" value={value || '#FFFFFF'} onChange={e => onChange(e.target.value)} />
     </label>
+  );
+}
+
+function MediaUploadField({ label, value, onChange, accept = 'image/*', hint = 'URL yapıştırın veya dosya yükleyin' }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFile = async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const result = await api.upload(file);
+      onChange(result.url);
+    } catch (uploadError) {
+      setError(uploadError.message || 'Yükleme başarısız');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const isImage = value && !/\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(value);
+
+  return (
+    <div className="admin-field admin-media-upload" style={{ gridColumn: '1 / -1' }}>
+      <span>{label}</span>
+      <div className="admin-media-upload-row">
+        <input value={value || ''} onChange={e => onChange(e.target.value)} placeholder={hint} />
+        <label className="admin-upload-btn">
+          {uploading ? 'Yükleniyor...' : 'Dosya Yükle'}
+          <input type="file" accept={accept} onChange={handleFile} hidden disabled={uploading} />
+        </label>
+      </div>
+      {isImage ? <img src={value} alt="" className="admin-upload-preview" /> : null}
+      {error ? <span className="admin-hint admin-upload-error">{error}</span> : null}
+    </div>
   );
 }
 
@@ -195,7 +235,7 @@ export function ServicesEditor({ items, onChange }) {
             <label className="admin-field">Başlık<input value={current.title} onChange={e => update('title', e.target.value)} /></label>
             <label className="admin-field">Kategori<input value={current.category} onChange={e => update('category', e.target.value)} /></label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Açıklama<textarea rows={2} value={current.description} onChange={e => update('description', e.target.value)} /></label>
-            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Görsel URL<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
+            <MediaUploadField label="Görsel" value={current.image} onChange={v => update('image', v)} accept="image/*" />
             <ColorField label="Kenarlık / Vurgu" value={current.accent} onChange={v => update('accent', v)} />
             <ColorField label="Başlık Rengi" value={current.titleColor} onChange={v => update('titleColor', v)} />
             <ColorField label="Yazı Rengi" value={current.textColor} onChange={v => update('textColor', v)} />
@@ -310,13 +350,33 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
     onChange(list.map(item => (item.category === cat ? { ...item, category: cats[0] || 'Salon' } : item)));
   };
 
+  const uploadVideoFile = async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await api.upload(file);
+      const next = clone(list);
+      next[active] = {
+        ...next[active],
+        type: 'video',
+        videoUrl: result.url,
+        image: next[active].image || result.url
+      };
+      onChange(next);
+    } catch (uploadError) {
+      window.alert(uploadError.message || 'Video yüklenemedi');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   return (
     <div className="admin-editor-layout">
       <div className="admin-editor-main">
         <div className="admin-toolbar">
           <div>
             <h2 className="admin-page-title">Galeri</h2>
-            <p className="admin-page-sub">Görsel, YouTube video ve bölüm yönetimi.</p>
+            <p className="admin-page-sub">Görsel, video dosyası, YouTube ve bölüm yönetimi.</p>
           </div>
           <button type="button" className="admin-mini-btn primary" onClick={() => { onChange([...list, normalizeGalleryItem({ id: `g-${Date.now()}`, category: cats[0] }, list.length)]); setActive(list.length); }}><Plus size={14} /> İçerik Ekle</button>
         </div>
@@ -353,15 +413,22 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
             <label className="admin-field">Tür
               <select value={current.type} onChange={e => update('type', e.target.value)}>
                 <option value="image">Görsel</option>
-                <option value="video">YouTube Video</option>
+                <option value="video">Video / YouTube</option>
               </select>
             </label>
             {current.type === 'image' ? (
-              <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Görsel URL<input value={current.image} onChange={e => update('image', e.target.value)} /></label>
+              <MediaUploadField label="Görsel" value={current.image} onChange={v => update('image', v)} accept="image/*" />
             ) : (
               <>
                 <label className="admin-field" style={{ gridColumn: '1 / -1' }}>YouTube URL<input value={current.videoUrl} onChange={e => update('videoUrl', e.target.value)} placeholder="https://youtube.com/watch?v=..." /></label>
-                <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Kapak Görseli (opsiyonel)<input value={current.image} onChange={e => update('image', e.target.value)} /></label>
+                <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                  <span>Video Dosyası Yükle</span>
+                  <label className="admin-upload-btn" style={{ marginTop: 8 }}>
+                    Bilgisayardan video seç
+                    <input type="file" accept="video/*" onChange={uploadVideoFile} hidden />
+                  </label>
+                </div>
+                <MediaUploadField label="Kapak Görseli (opsiyonel)" value={current.image} onChange={v => update('image', v)} accept="image/*" />
               </>
             )}
           </div>
@@ -374,7 +441,14 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
         <GalleryPreviewCard item={current} />
         {current.type === 'video' && current.videoUrl ? (
           <div className="preview-video-frame">
-            <iframe src={getYoutubeEmbedUrl(current.videoUrl)} title={current.title} allowFullScreen />
+            {(() => {
+              const source = getGalleryVideoSource(current.videoUrl);
+              if (!source) return null;
+              if (source.kind === 'file') {
+                return <video src={source.src} controls className="media-lightbox-video" />;
+              }
+              return <iframe src={source.src} title={current.title} allowFullScreen />;
+            })()}
           </div>
         ) : null}
       </aside>
@@ -582,10 +656,7 @@ export function BannerEditor({ content, onChange }) {
           <div className="admin-form-grid">
             <label className="admin-field">Başlık<input value={current.title} onChange={e => update('title', e.target.value)} /></label>
             <label className="admin-field">Alt Başlık<input value={current.subtitle} onChange={e => update('subtitle', e.target.value)} /></label>
-            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>
-              Görsel URL
-              <input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." />
-            </label>
+            <MediaUploadField label="Banner Görseli" value={current.image} onChange={v => update('image', v)} accept="image/*" />
           </div>
           <button
             type="button"
@@ -646,7 +717,7 @@ export function TrainersEditor({ items, onChange }) {
             <label className="admin-field">Hoca Adı<input value={current.name} onChange={e => update('name', e.target.value)} /></label>
             <label className="admin-field">Uzmanlık Alanı<input value={current.specialty} onChange={e => update('specialty', e.target.value)} placeholder="Crossfit, Pilates..." /></label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Deneyim Açıklaması<textarea rows={3} value={current.experience} onChange={e => update('experience', e.target.value)} placeholder="Yıllık deneyim ve uzmanlık detayı..." /></label>
-            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Fotoğraf URL<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
+            <MediaUploadField label="Fotoğraf" value={current.image} onChange={v => update('image', v)} accept="image/*" />
           </div>
           <Toggle checked={current.featured} onChange={v => update('featured', v)} label="Ana sayfada göster" />
           <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
@@ -695,7 +766,7 @@ export function AboutEditor({ data, onChange }) {
         <div className="admin-form-grid">
           <label className="admin-field">Başlık<input value={about.title} onChange={e => patch({ title: e.target.value })} /></label>
           <label className="admin-field">Alt Başlık<input value={about.subtitle} onChange={e => patch({ subtitle: e.target.value })} /></label>
-          <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Kapak Görseli URL<input value={about.heroImage} onChange={e => patch({ heroImage: e.target.value })} /></label>
+          <MediaUploadField label="Kapak Görseli" value={about.heroImage} onChange={v => patch({ heroImage: v })} accept="image/*" />
         </div>
       </div>
       <div className="admin-form-card">
@@ -764,7 +835,7 @@ export function TestimonialsEditor({ items, onChange }) {
               </select>
             </label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Yorum<textarea rows={3} value={current.text} onChange={e => update('text', e.target.value)} /></label>
-            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Fotoğraf URL<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
+            <MediaUploadField label="Fotoğraf" value={current.image} onChange={v => update('image', v)} accept="image/*" />
           </div>
           <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
         </div>
@@ -854,6 +925,283 @@ export function DashboardStats({ analytics, settings }) {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export function AccountEditor({ user, onUpdated }) {
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    username: user?.username || '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    setForm(prev => ({
+      ...prev,
+      name: user?.name || '',
+      email: user?.email || '',
+      username: user?.username || ''
+    }));
+  }, [user]);
+
+  const handleSubmit = async event => {
+    event.preventDefault();
+    setMessage('');
+    if (form.newPassword && form.newPassword !== form.confirmPassword) {
+      setMessage('Yeni şifreler eşleşmiyor.');
+      return;
+    }
+    setPending(true);
+    try {
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        username: form.username.trim() || null
+      };
+      if (form.newPassword) {
+        payload.currentPassword = form.currentPassword;
+        payload.newPassword = form.newPassword;
+      }
+      const result = await api.updateProfile(payload);
+      onUpdated?.({ ...result.user, passwordPlain: form.newPassword || user?.passwordPlain });
+      setForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+      setMessage('Hesap bilgileri güncellendi.');
+    } catch (error) {
+      setMessage(error.message || 'Güncelleme başarısız');
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <>
+      <h2 className="admin-page-title">Hesabım</h2>
+      <p className="admin-page-sub">Ad, e-posta, kullanıcı adı ve şifrenizi güncelleyin.</p>
+      {user?.passwordPlain ? (
+        <p className="admin-hint">Mevcut şifreniz: <code>{user.passwordPlain}</code></p>
+      ) : null}
+      <form className="admin-form-card" onSubmit={handleSubmit}>
+        <div className="admin-form-grid single">
+          <label className="admin-field">
+            Ad Soyad
+            <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
+          </label>
+          <label className="admin-field">
+            E-posta
+            <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
+          </label>
+          <label className="admin-field">
+            Kullanıcı Adı
+            <input value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="Giriş için kullanılır" />
+          </label>
+        </div>
+        <h4 style={{ marginTop: 20 }}>Şifre Değiştir</h4>
+        <p className="admin-hint">Şifrenizi değiştirmek istemiyorsanız bu alanları boş bırakın.</p>
+        <div className="admin-form-grid single">
+          <label className="admin-field">
+            Mevcut Şifre
+            <input type="password" value={form.currentPassword} onChange={e => setForm(p => ({ ...p, currentPassword: e.target.value }))} />
+          </label>
+          <label className="admin-field">
+            Yeni Şifre
+            <input type="password" value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} />
+          </label>
+          <label className="admin-field">
+            Yeni Şifre (Tekrar)
+            <input type="password" value={form.confirmPassword} onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))} />
+          </label>
+        </div>
+        {message ? <p className="admin-hint">{message}</p> : null}
+        <button className="admin-save-btn" type="submit" disabled={pending} style={{ marginTop: 16 }}>
+          {pending ? 'Kaydediliyor...' : 'Hesabı Güncelle'}
+        </button>
+      </form>
+    </>
+  );
+}
+
+export function UsersEditor() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    username: '',
+    password: '',
+    role: 'MODERATOR'
+  });
+  const [editId, setEditId] = useState('');
+  const [editForm, setEditForm] = useState({ name: '', email: '', username: '', password: '', role: 'MODERATOR' });
+
+  const loadUsers = () => {
+    setLoading(true);
+    api.staffUsers()
+      .then(result => setUsers(result.data || []))
+      .catch(() => setUsers([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleCreate = async event => {
+    event.preventDefault();
+    setMessage('');
+    try {
+      await api.createStaffUser({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        username: form.username.trim() || null,
+        password: form.password,
+        role: form.role
+      });
+      setForm({ name: '', email: '', username: '', password: '', role: 'MODERATOR' });
+      setMessage('Kullanıcı oluşturuldu.');
+      loadUsers();
+    } catch (error) {
+      setMessage(error.message || 'Oluşturma başarısız');
+    }
+  };
+
+  const startEdit = user => {
+    setEditId(user.id);
+    setEditForm({
+      name: user.name || '',
+      email: user.email || '',
+      username: user.username || '',
+      password: user.passwordPlain || '',
+      role: user.role || 'MODERATOR'
+    });
+  };
+
+  const handleUpdate = async event => {
+    event.preventDefault();
+    if (!editId) return;
+    setMessage('');
+    try {
+      const payload = {
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        username: editForm.username.trim() || null,
+        role: editForm.role,
+        password: editForm.password
+      };
+      await api.updateStaffUser(editId, payload);
+      setEditId('');
+      setMessage('Kullanıcı güncellendi.');
+      loadUsers();
+    } catch (error) {
+      setMessage(error.message || 'Güncelleme başarısız');
+    }
+  };
+
+  const handleDelete = async id => {
+    if (!window.confirm('Bu kullanıcı silinsin mi?')) return;
+    setMessage('');
+    try {
+      await api.deleteStaffUser(id);
+      setMessage('Kullanıcı silindi.');
+      loadUsers();
+    } catch (error) {
+      setMessage(error.message || 'Silme başarısız');
+    }
+  };
+
+  return (
+    <>
+      <h2 className="admin-page-title">Kullanıcılar</h2>
+      <p className="admin-page-sub">Admin ve moderatör hesapları oluşturun, yetki verin veya düzenleyin.</p>
+      {message ? <p className="admin-hint">{message}</p> : null}
+
+      <div className="admin-form-card">
+        <h4>Yeni Kullanıcı</h4>
+        <form onSubmit={handleCreate}>
+          <div className="admin-form-grid">
+            <label className="admin-field">Ad Soyad<input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></label>
+            <label className="admin-field">E-posta<input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required /></label>
+            <label className="admin-field">Kullanıcı Adı<input value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} /></label>
+            <label className="admin-field">Şifre<input type="text" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required /></label>
+            <label className="admin-field">
+              Yetki
+              <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
+                <option value="MODERATOR">Moderatör</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </label>
+          </div>
+          <button className="admin-save-btn" type="submit" style={{ marginTop: 12 }}><Plus size={16} />Kullanıcı Ekle</button>
+        </form>
+      </div>
+
+      <div className="admin-form-card">
+        <h4>Mevcut Kullanıcılar</h4>
+        {loading ? <p className="admin-hint">Yükleniyor...</p> : null}
+        <div className="admin-users-table-wrap">
+          <table className="admin-users-table">
+            <thead>
+              <tr>
+                <th>Ad</th>
+                <th>E-posta</th>
+                <th>Kullanıcı Adı</th>
+                <th>Şifre</th>
+                <th>Yetki</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id}>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td>{user.username || '—'}</td>
+                  <td><code>{user.passwordPlain || '—'}</code></td>
+                  <td>{user.role === 'ADMIN' ? 'Admin' : 'Moderatör'}</td>
+                  <td>
+                    <div className="admin-inline-actions">
+                      <button type="button" className="admin-icon-btn" onClick={() => startEdit(user)} aria-label="Düzenle"><UserCog size={14} /></button>
+                      <button type="button" className="admin-icon-btn" onClick={() => handleDelete(user.id)} aria-label="Sil"><Trash2 size={14} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!loading && !users.length ? <p className="admin-hint">Henüz kullanıcı yok.</p> : null}
+        </div>
+      </div>
+
+      {editId ? (
+        <div className="admin-form-card">
+          <h4>Kullanıcıyı Düzenle</h4>
+          <form onSubmit={handleUpdate}>
+            <div className="admin-form-grid">
+              <label className="admin-field">Ad Soyad<input value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} required /></label>
+              <label className="admin-field">E-posta<input type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} required /></label>
+              <label className="admin-field">Kullanıcı Adı<input value={editForm.username} onChange={e => setEditForm(p => ({ ...p, username: e.target.value }))} /></label>
+              <label className="admin-field">Şifre<input type="text" value={editForm.password} onChange={e => setEditForm(p => ({ ...p, password: e.target.value }))} /></label>
+              <label className="admin-field">
+                Yetki
+                <select value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))}>
+                  <option value="MODERATOR">Moderatör</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button className="admin-save-btn" type="submit">Kaydet</button>
+              <button className="admin-icon-btn" type="button" onClick={() => setEditId('')}>İptal</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </>
   );
 }

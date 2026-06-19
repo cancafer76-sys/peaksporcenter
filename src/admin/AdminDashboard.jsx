@@ -17,6 +17,7 @@ import {
   Save,
   Settings2,
   Star,
+  UserCog,
   Users,
   X
 } from 'lucide-react';
@@ -28,8 +29,11 @@ import {
   defaultGalleryCategories,
   defaultTestimonials
 } from '../../shared/defaults.js';
+import { normalizeContact, buildMapEmbedUrl } from '../../shared/media.js';
+import { normalizeSettings } from '../../shared/settings.js';
 import { applySiteTheme, hexToRgbString, themePresets } from '../../shared/theme.js';
 import {
+  AccountEditor,
   AnnouncementsEditor,
   AboutEditor,
   BannerEditor,
@@ -39,7 +43,8 @@ import {
   PackagesEditor,
   ServicesEditor,
   TestimonialsEditor,
-  TrainersEditor
+  TrainersEditor,
+  UsersEditor
 } from './editors.jsx';
 import './admin.css';
 
@@ -54,7 +59,9 @@ const NAV = [
   { id: 'announcements', label: 'Duyurular', icon: Megaphone },
   { id: 'banner', label: 'Banner', icon: Images },
   { id: 'cards', label: 'Kartlar', icon: LayoutGrid },
-  { id: 'settings', label: 'Ayarlar', icon: Settings2 }
+  { id: 'settings', label: 'Ayarlar', icon: Settings2 },
+  { id: 'users', label: 'Kullanıcılar', icon: Users, adminOnly: true },
+  { id: 'account', label: 'Hesabım', icon: UserCog }
 ];
 
 const TITLES = {
@@ -68,7 +75,9 @@ const TITLES = {
   announcements: 'Duyurular',
   banner: 'Ana Sayfa Banner',
   cards: 'Kartlar',
-  settings: 'Ayarlar'
+  settings: 'Ayarlar',
+  users: 'Kullanıcılar',
+  account: 'Hesabım'
 };
 
 function AdminLogin({ onSuccess, onClose }) {
@@ -84,7 +93,7 @@ function AdminLogin({ onSuccess, onClose }) {
     try {
       const email = loginMode === 'email' ? form.email.trim() : form.username.trim();
       const result = await api.login({ email, password: form.password });
-      if (result.user?.role !== 'ADMIN') throw new Error('Bu hesap yönetici yetkisine sahip değil.');
+      if (!['ADMIN', 'MODERATOR'].includes(result.user?.role)) throw new Error('Bu hesap yönetici yetkisine sahip değil.');
       onSuccess(result.user);
     } catch (loginError) {
       const message = loginError.message || 'Giriş başarısız';
@@ -111,7 +120,7 @@ function AdminLogin({ onSuccess, onClose }) {
               <button type="button" className={loginMode === 'username' ? 'active' : ''} onClick={() => setLoginMode('username')}>Kullanıcı Adı</button>
             </div>
             {loginMode === 'email' ? (
-              <label>E-posta<input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required /></label>
+              <label>E-posta<input type="text" autoComplete="username" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required /></label>
             ) : (
               <label>Kullanıcı adı<input type="text" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} required /></label>
             )}
@@ -131,7 +140,7 @@ function SettingsSection({ content, onChange }) {
   const whatsapp = { ...defaultContent.whatsapp, ...(data.whatsapp || {}) };
   const seo = { ...defaultContent.seo, ...(data.seo || {}) };
   const onlineCounter = { ...defaultContent.onlineCounter, ...(data.onlineCounter || {}) };
-  const contact = { ...defaultContent.contact, ...(data.contact || {}) };
+  const contact = normalizeContact(data.contact, defaultContent.contact);
 
   const patch = next => onChange({ ...data, ...next });
   const patchTheme = next => {
@@ -259,6 +268,19 @@ function SettingsSection({ content, onChange }) {
             Şehir
             <input value={contact.city || 'Kocaeli'} onChange={e => patch({ contact: { ...contact, city: e.target.value } })} />
           </label>
+          <label className="admin-field">
+            Harita Arama (Google Maps)
+            <input
+              value={contact.mapQuery || ''}
+              placeholder="Adres, şehir veya konum adı"
+              onChange={e => patch({ contact: { ...contact, mapQuery: e.target.value } })}
+            />
+          </label>
+          {contact.mapQuery ? (
+            <div className="admin-map-preview">
+              <iframe title="Harita önizleme" src={buildMapEmbedUrl(contact.mapQuery)} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="admin-form-card">
@@ -295,13 +317,11 @@ function SaveBar({ onSave, saving, message }) {
 export default function AdminDashboard({ state, setState, onClose }) {
   const [section, setSection] = useState('dashboard');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState(state.user?.role === 'ADMIN' ? state.user : null);
+  const [user, setUser] = useState(['ADMIN', 'MODERATOR'].includes(state.user?.role) ? state.user : null);
   const [draft, setDraft] = useState(state.settings);
   const [analytics, setAnalytics] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-
-  useEffect(() => { setDraft(state.settings); }, [state.settings]);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -322,14 +342,20 @@ export default function AdminDashboard({ state, setState, onClose }) {
     setMessage('');
   };
 
+  const refreshSettings = async () => {
+    const payload = await api.content();
+    const settings = normalizeSettings(payload);
+    setDraft(settings);
+    setState(prev => ({ ...prev, settings }));
+    return settings;
+  };
+
   const persist = async (key, value, label) => {
     setSaving(true);
     setMessage('');
     try {
       await api.saveSetting(key, value);
-      const next = { ...draft, [key]: value };
-      setDraft(next);
-      setState(prev => ({ ...prev, settings: next }));
+      await refreshSettings();
       setMessage(`${label} kaydedildi.`);
     } catch (error) {
       setMessage(error.message || 'Kaydetme başarısız');
@@ -345,15 +371,9 @@ export default function AdminDashboard({ state, setState, onClose }) {
       setSaving(true);
       setMessage('');
       try {
-        await api.saveSetting('gallery', draft.gallery);
+        await api.saveSetting('gallery', draft.gallery || []);
         await api.saveSetting('galleryCategories', draft.galleryCategories || defaultGalleryCategories);
-        const next = {
-          ...draft,
-          gallery: draft.gallery,
-          galleryCategories: draft.galleryCategories || defaultGalleryCategories
-        };
-        setDraft(next);
-        setState(prev => ({ ...prev, settings: next }));
+        await refreshSettings();
         setMessage('Galeri kaydedildi.');
       } catch (error) {
         setMessage(error.message || 'Kaydetme başarısız');
@@ -376,7 +396,8 @@ export default function AdminDashboard({ state, setState, onClose }) {
     return <AdminLogin onClose={onClose} onSuccess={u => { setUser(u); setState(prev => ({ ...prev, user: u })); }} />;
   }
 
-  const showSave = section !== 'dashboard';
+  const showSave = !['dashboard', 'users', 'account'].includes(section);
+  const visibleNav = NAV.filter(item => !item.adminOnly || user?.role === 'ADMIN');
 
   return (
     <div className="admin-overlay">
@@ -398,7 +419,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
               <X size={18} />
             </button>
           </div>
-          {NAV.map(item => (
+          {visibleNav.map(item => (
             <button key={item.id} type="button" className={`admin-nav-item ${section === item.id ? 'active' : ''}`} onClick={() => selectSection(item.id)}>
               <item.icon size={16} />{item.label}
             </button>
@@ -445,6 +466,16 @@ export default function AdminDashboard({ state, setState, onClose }) {
             {section === 'banner' ? <BannerEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
+            {section === 'users' && user.role === 'ADMIN' ? <UsersEditor /> : null}
+            {section === 'account' ? (
+              <AccountEditor
+                user={user}
+                onUpdated={nextUser => {
+                  setUser(nextUser);
+                  setState(prev => ({ ...prev, user: nextUser }));
+                }}
+              />
+            ) : null}
           </main>
           {showSave ? <SaveBar onSave={handleSave} saving={saving} message={message} /> : null}
         </div>

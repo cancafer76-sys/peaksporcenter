@@ -82,5 +82,16 @@ export const api = {
   message: (payload) => request('/api/messages', { method: 'POST', body: JSON.stringify(payload) }),
   trackVisit: payload => request('/api/analytics/visit', { method: 'POST', body: JSON.stringify(payload) }),
   trackClick: payload => request('/api/analytics/click', { method: 'POST', body: JSON.stringify(payload) }),
-  analytics: () => request('/api/admin/analytics')
+  analytics: () => request('/api/admin/analytics'),
+  staffUsers: () => request('/api/admin/staff-users'),
+  createStaffUser: payload =>
+    request('/api/admin/staff-users', { method: 'POST', body: JSON.stringify(payload) }),
+  updateStaffUser: (id, payload) =>
+    request(`/api/admin/staff-users/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  deleteStaffUser: id => request(`/api/admin/staff-users/${id}`, { method: 'DELETE' }),
+  updateProfile: async payload => {
+    const result = await request('/api/auth/profile', { method: 'PATCH', body: JSON.stringify(payload) });
+    if (result.token) setAuthToken(result.token);
+    return result;
+  }
 };

@@ -1647,11 +1647,6 @@ img { display: block; width: 100%; }
   animation: home-rail-marquee var(--rail-duration, 48s) linear infinite;
 }
 
-.home-rail-viewport:hover .home-rail-track.is-loop,
-.home-rail-viewport:active .home-rail-track.is-loop {
-  animation-play-state: paused;
-}
-
 @keyframes home-rail-marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
