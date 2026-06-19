@@ -15,6 +15,7 @@ import { PrismaClient } from '@prisma/client';
 import {
   defaultAnnouncements,
   defaultContent,
+  defaultFacilityAreas,
   defaultGallery,
   defaultPackages,
   defaultPosts,
@@ -124,7 +125,8 @@ async function ensureSeedData() {
     ['packages', defaultPackages],
     ['gallery', defaultGallery],
     ['announcements', defaultAnnouncements],
-    ['trainers', defaultTrainers]
+    ['trainers', defaultTrainers],
+    ['facilityAreas', defaultFacilityAreas]
   ];
 
   for (const [key, value] of settings) {

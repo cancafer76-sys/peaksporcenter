@@ -36,14 +36,17 @@ import {
   X
 } from 'lucide-react';
 import './mobile.css';
+import AdminDashboard from './admin/AdminDashboard.jsx';
 
 const fallbackSettings = {
   content: defaultContent,
   services: defaultServices,
   packages: defaultPackages,
+  gallery: defaultGallery,
   posts: defaultPosts,
   trainers: defaultTrainers,
-  announcements: defaultAnnouncements
+  announcements: defaultAnnouncements,
+  facilityAreas: defaultFacilityAreas
 };
 
 const desktopNav = [
@@ -70,28 +73,17 @@ function normalizeSettings(payload) {
     content: source.content && typeof source.content === 'object' ? source.content : defaultContent,
     services: Array.isArray(source.services) && source.services.length ? source.services : defaultServices,
     packages: Array.isArray(source.packages) && source.packages.length ? source.packages : defaultPackages,
+    gallery: Array.isArray(source.gallery) && source.gallery.length ? source.gallery : defaultGallery,
     posts: Array.isArray(source.posts) && source.posts.length ? source.posts : defaultPosts,
     trainers: Array.isArray(source.trainers) && source.trainers.length ? source.trainers : defaultTrainers,
+    facilityAreas:
+      Array.isArray(source.facilityAreas) && source.facilityAreas.length
+        ? source.facilityAreas
+        : defaultFacilityAreas,
     announcements:
       Array.isArray(source.announcements) && source.announcements.length
         ? source.announcements
         : defaultAnnouncements
-  };
-}
-
-function createDrafts(settings) {
-  const content = settings.content || defaultContent;
-  return {
-    content: {
-      brandName: content.brand?.name || defaultContent.brand.name,
-      brandSlogan: content.brand?.slogan || defaultContent.brand.slogan,
-      heroTitle: content.hero?.title || defaultContent.hero.title,
-      heroSubtitle: content.hero?.subtitle || defaultContent.hero.subtitle,
-      heroImage: content.hero?.image || defaultContent.hero.image
-    },
-    services: JSON.stringify(settings.services || defaultServices, null, 2),
-    packages: JSON.stringify(settings.packages || defaultPackages, null, 2),
-    announcements: JSON.stringify(settings.announcements || defaultAnnouncements, null, 2)
   };
 }
 
@@ -102,12 +94,10 @@ function useAppData() {
     darkMode: true,
     drawerOpen: false,
     adminOpen: false,
-    adminTab: 'content',
     user: null,
     selectedService: null,
     selectedPackage: null,
-    viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1400,
-    adminDrafts: createDrafts(fallbackSettings)
+    viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1400
   });
 
   useEffect(() => {
@@ -121,7 +111,6 @@ function useAppData() {
         ...prev,
         settings,
         user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
-        adminDrafts: createDrafts(settings),
         loading: false
       }));
     });
@@ -672,7 +661,13 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
         pathname={pathname}
       />
 
-      {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
+      {state.adminOpen ? (
+        <AdminDashboard
+          state={state}
+          setState={setState}
+          onClose={() => setState(prev => ({ ...prev, adminOpen: false }))}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1039,7 +1034,7 @@ function MembershipModal({ open, onClose, whatsappNumber }) {
 }
 
 function ExplorePage({ state, setState }) {
-  const facilities = defaultFacilityAreas;
+  const facilities = state.settings.facilityAreas || defaultFacilityAreas;
   const [activeVideo, setActiveVideo] = useState(null);
 
   return (
@@ -1489,7 +1484,13 @@ function DesktopShell({ state, setState }) {
         </div>
       ) : null}
 
-      {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
+      {state.adminOpen ? (
+        <AdminDashboard
+          state={state}
+          setState={setState}
+          onClose={() => setState(prev => ({ ...prev, adminOpen: false }))}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1713,7 +1714,13 @@ function MobileShell({ state, setState }) {
         whatsappNumber={content.whatsapp?.number}
       />
 
-      {state.adminOpen ? <AdminModal state={state} setState={setState} /> : null}
+      {state.adminOpen ? (
+        <AdminDashboard
+          state={state}
+          setState={setState}
+          onClose={() => setState(prev => ({ ...prev, adminOpen: false }))}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1816,530 +1823,6 @@ function GalleryAutoScroller() {
   return null;
 }
 
-function AdminModal({ state, setState }) {
-  const content = state.settings.content || defaultContent;
-  const drafts = state.adminDrafts;
-  const [loginMode, setLoginMode] = useState('email');
-  const [loginForm, setLoginForm] = useState({ email: '', username: '', password: '' });
-  const [loginError, setLoginError] = useState('');
-  const [loginPending, setLoginPending] = useState(false);
-  const [unlocked, setUnlocked] = useState(false);
-  const adminEmail = 'admin@peakspor.com';
-  const adminUsername = 'admin';
-  const adminPassword = 'peakspor123';
-
-  const updateDraft = (section, key, value) => {
-    setState(prev => ({
-      ...prev,
-      adminDrafts: {
-        ...prev.adminDrafts,
-        [section]: {
-          ...prev.adminDrafts[section],
-          [key]: value
-        }
-      }
-    }));
-  };
-
-  const saveSection = async section => {
-    try {
-      if (section === 'content') {
-        const nextContent = {
-          ...content,
-          brand: {
-            ...(content.brand || defaultContent.brand),
-            name: drafts.content.brandName,
-            slogan: drafts.content.brandSlogan
-          },
-          hero: {
-            ...(content.hero || defaultContent.hero),
-            title: drafts.content.heroTitle,
-            subtitle: drafts.content.heroSubtitle,
-            image: drafts.content.heroImage
-          }
-        };
-        await api.saveSetting('content', nextContent);
-        setState(prev => ({
-          ...prev,
-          settings: { ...prev.settings, content: nextContent }
-        }));
-        return;
-      }
-
-      const value = JSON.parse(drafts[section]);
-      await api.saveSetting(section, value);
-      setState(prev => ({
-        ...prev,
-        settings: { ...prev.settings, [section]: value }
-      }));
-    } catch (error) {
-      window.alert(error.message || 'Kaydetme başarısız');
-    }
-  };
-
-  const handleLogin = event => {
-    event.preventDefault();
-    setLoginPending(true);
-    setLoginError('');
-
-    const emailMatch = loginForm.email.trim().toLowerCase() === adminEmail;
-    const usernameMatch = loginForm.username.trim().toLowerCase() === adminUsername;
-    const passwordMatch = loginForm.password === adminPassword;
-    const canLogin = passwordMatch && (emailMatch || usernameMatch);
-
-    window.setTimeout(() => {
-      setLoginPending(false);
-      if (!canLogin) {
-        setLoginError('E-posta, kullanıcı adı veya şifre hatalı.');
-        return;
-      }
-
-      setUnlocked(true);
-    }, 350);
-  };
-
-  if (!unlocked) {
-    return (
-      <div className="modal-backdrop">
-        <div className="admin-login-shell">
-          <div className="admin-login-shell-top">
-            <div>
-              <span>Yetkili Giriş</span>
-              <h3>PEAKSPOR Kontrol Merkezi</h3>
-              <p>Yönetim paneline erişmek için kimlik bilgilerinizi girin.</p>
-            </div>
-            <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: false }))}>
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="admin-login-card">
-            <div className="admin-login-card-header">
-              <button
-                type="button"
-                className={loginMode === 'email' ? 'active' : ''}
-                onClick={() => setLoginMode('email')}
-              >
-                E-Posta
-              </button>
-              <button
-                type="button"
-                className={loginMode === 'username' ? 'active' : ''}
-                onClick={() => setLoginMode('username')}
-              >
-                Kullanıcı Adı
-              </button>
-            </div>
-            <form className="admin-login-form" onSubmit={handleLogin}>
-              {loginMode === 'email' ? (
-                <label>
-                  E-posta
-                  <input
-                    type="email"
-                    value={loginForm.email}
-                    onChange={e => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="admin@peakspor.com"
-                  />
-                </label>
-              ) : (
-                <label>
-                  Kullanıcı adı
-                  <input
-                    type="text"
-                    value={loginForm.username}
-                    onChange={e => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
-                    placeholder="admin"
-                  />
-                </label>
-              )}
-              <label>
-                Şifre
-                <input
-                  type="password"
-                  value={loginForm.password}
-                  onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="••••••••"
-                />
-              </label>
-              {loginError ? <div className="admin-login-error">{loginError}</div> : null}
-              <button className="save-button" type="submit" disabled={loginPending}>
-                <LayoutDashboard size={16} />
-                {loginPending ? 'Giriş yapılıyor...' : 'Yetkili Giriş'}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (state.adminOpen && unlocked) {
-    return (
-      <div className="modal-backdrop">
-        <div className="admin-panel">
-          <div className="admin-header">
-            <div>
-              <h3>PEAKSPOR Kontrol Merkezi</h3>
-            </div>
-            <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: false }))}>
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="admin-summary">
-            <article>
-              <BadgeInfo size={18} />
-              <strong>{state.user ? state.user.email : 'admin@peakspor.com'}</strong>
-              <span>Yönetici erişimi</span>
-            </article>
-            <article>
-              <Settings2 size={18} />
-              <strong>{state.settings.services.length} Hizmet</strong>
-              <span>Aktif içerik</span>
-            </article>
-            <article>
-              <FileText size={18} />
-              <strong>{state.settings.packages.length} Paket</strong>
-              <span>Yönetilebilir</span>
-            </article>
-            <article>
-              <Palette size={18} />
-              <strong>{state.settings.announcements.length} Duyuru</strong>
-              <span>Tek satır ticker</span>
-            </article>
-          </div>
-
-          <div className="admin-tabs">
-            {['content', 'services', 'packages', 'announcements'].map(tab => (
-              <button
-                key={tab}
-                type="button"
-                className={state.adminTab === tab ? 'active' : ''}
-                onClick={() => setState(prev => ({ ...prev, adminTab: tab }))}
-              >
-                {tab === 'content' ? 'İçerik' : tab === 'services' ? 'Hizmetler' : tab === 'packages' ? 'Paketler' : 'Duyurular'}
-              </button>
-            ))}
-          </div>
-
-          {state.adminTab === 'content' ? (
-            <div className="admin-form">
-              <label>
-                Marka Adı
-                <input
-                  value={drafts.content.brandName}
-                  onChange={e => updateDraft('content', 'brandName', e.target.value)}
-                />
-              </label>
-              <label>
-                Marka Sloganı
-                <input
-                  value={drafts.content.brandSlogan}
-                  onChange={e => updateDraft('content', 'brandSlogan', e.target.value)}
-                />
-              </label>
-              <label>
-                Hero Başlık
-                <textarea
-                  rows={3}
-                  value={drafts.content.heroTitle}
-                  onChange={e => updateDraft('content', 'heroTitle', e.target.value)}
-                />
-              </label>
-              <label>
-                Hero Açıklama
-                <textarea
-                  rows={3}
-                  value={drafts.content.heroSubtitle}
-                  onChange={e => updateDraft('content', 'heroSubtitle', e.target.value)}
-                />
-              </label>
-              <label>
-                Hero Görsel URL
-                <input
-                  value={drafts.content.heroImage}
-                  onChange={e => updateDraft('content', 'heroImage', e.target.value)}
-                />
-              </label>
-              <button className="save-button" type="button" onClick={() => saveSection('content')}>
-                <Save size={16} />
-                İçeriği Kaydet
-              </button>
-            </div>
-          ) : null}
-
-          {state.adminTab === 'services' ? (
-            <div className="admin-form">
-              <label>
-                Hizmetler JSON
-                <textarea
-                  rows={18}
-                  value={drafts.services}
-                  onChange={e =>
-                    setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, services: e.target.value } }))
-                  }
-                />
-              </label>
-              <button className="save-button" type="button" onClick={() => saveSection('services')}>
-                <Save size={16} />
-                Hizmetleri Kaydet
-              </button>
-            </div>
-          ) : null}
-
-          {state.adminTab === 'packages' ? (
-            <div className="admin-form">
-              <label>
-                Paketler JSON
-                <textarea
-                  rows={18}
-                  value={drafts.packages}
-                  onChange={e =>
-                    setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, packages: e.target.value } }))
-                  }
-                />
-              </label>
-              <button className="save-button" type="button" onClick={() => saveSection('packages')}>
-                <Save size={16} />
-                Paketleri Kaydet
-              </button>
-            </div>
-          ) : null}
-
-          {state.adminTab === 'announcements' ? (
-            <div className="admin-form">
-              <label>
-                Duyurular JSON
-                <textarea
-                  rows={18}
-                  value={drafts.announcements}
-                  onChange={e =>
-                    setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, announcements: e.target.value } }))
-                  }
-                />
-              </label>
-              <button className="save-button" type="button" onClick={() => saveSection('announcements')}>
-                <Save size={16} />
-                Duyuruları Kaydet
-              </button>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="modal-backdrop">
-      <div className="admin-panel">
-        <div className="admin-header">
-          <div>
-            <h3>PEAKSPOR Kontrol Merkezi</h3>
-          </div>
-          <button className="icon-button" type="button" onClick={() => setState(prev => ({ ...prev, adminOpen: false }))}>
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="admin-login-card">
-          <div className="admin-login-card-header">
-            <button
-              type="button"
-              className={loginMode === 'email' ? 'active' : ''}
-              onClick={() => setLoginMode('email')}
-            >
-              E-Posta
-            </button>
-            <button
-              type="button"
-              className={loginMode === 'username' ? 'active' : ''}
-              onClick={() => setLoginMode('username')}
-            >
-              Kullanıcı Adı
-            </button>
-          </div>
-          <form className="admin-login-form" onSubmit={handleLogin}>
-            {loginMode === 'email' ? (
-              <label>
-                E-posta
-                <input
-                  type="email"
-                  value={loginForm.email}
-                  onChange={e => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="admin@peakspor.com"
-                />
-              </label>
-            ) : (
-              <label>
-                Kullanıcı adı
-                <input
-                  type="text"
-                  value={loginForm.username}
-                  onChange={e => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
-                  placeholder="admin"
-                />
-              </label>
-            )}
-            <label>
-              Şifre
-              <input
-                type="password"
-                value={loginForm.password}
-                onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="••••••••"
-              />
-            </label>
-            {loginError ? <div className="admin-login-error">{loginError}</div> : null}
-            <button className="save-button" type="submit" disabled={loginPending}>
-              <LayoutDashboard size={16} />
-              {loginPending ? 'Giriş yapılıyor...' : 'Yetkili Giriş'}
-            </button>
-          </form>
-        </div>
-
-        <div className="admin-summary">
-          <article>
-            <BadgeInfo size={18} />
-            <strong>{state.user ? state.user.email : 'admin@peakspor.com'}</strong>
-            <span>Yönetici erişimi</span>
-          </article>
-          <article>
-            <Settings2 size={18} />
-            <strong>{state.settings.services.length} Hizmet</strong>
-            <span>Aktif içerik</span>
-          </article>
-          <article>
-            <FileText size={18} />
-            <strong>{state.settings.packages.length} Paket</strong>
-            <span>Yönetilebilir</span>
-          </article>
-          <article>
-            <Palette size={18} />
-            <strong>{state.settings.announcements.length} Duyuru</strong>
-            <span>Tek satır ticker</span>
-          </article>
-        </div>
-
-        <div className="admin-tabs">
-          {['content', 'services', 'packages', 'announcements'].map(tab => (
-            <button
-              key={tab}
-              type="button"
-              className={state.adminTab === tab ? 'active' : ''}
-              onClick={() => setState(prev => ({ ...prev, adminTab: tab }))}
-            >
-              {tab === 'content' ? 'İçerik' : tab === 'services' ? 'Hizmetler' : tab === 'packages' ? 'Paketler' : 'Duyurular'}
-            </button>
-          ))}
-        </div>
-
-        {state.adminTab === 'content' ? (
-          <div className="admin-form">
-            <label>
-              Marka Adı
-              <input
-                value={drafts.content.brandName}
-                onChange={e => updateDraft('content', 'brandName', e.target.value)}
-              />
-            </label>
-            <label>
-              Marka Sloganı
-              <input
-                value={drafts.content.brandSlogan}
-                onChange={e => updateDraft('content', 'brandSlogan', e.target.value)}
-              />
-            </label>
-            <label>
-              Hero Başlık
-              <textarea
-                rows={3}
-                value={drafts.content.heroTitle}
-                onChange={e => updateDraft('content', 'heroTitle', e.target.value)}
-              />
-            </label>
-            <label>
-              Hero Açıklama
-              <textarea
-                rows={3}
-                value={drafts.content.heroSubtitle}
-                onChange={e => updateDraft('content', 'heroSubtitle', e.target.value)}
-              />
-            </label>
-            <label>
-              Hero Görsel URL
-              <input
-                value={drafts.content.heroImage}
-                onChange={e => updateDraft('content', 'heroImage', e.target.value)}
-              />
-            </label>
-            <button className="save-button" type="button" onClick={() => saveSection('content')}>
-              <Save size={16} />
-              İçeriği Kaydet
-            </button>
-          </div>
-        ) : null}
-
-        {state.adminTab === 'services' ? (
-          <div className="admin-form">
-            <label>
-              Hizmetler JSON
-              <textarea
-                rows={18}
-                value={drafts.services}
-                onChange={e =>
-                  setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, services: e.target.value } }))
-                }
-              />
-            </label>
-            <button className="save-button" type="button" onClick={() => saveSection('services')}>
-              <Save size={16} />
-              Hizmetleri Kaydet
-            </button>
-          </div>
-        ) : null}
-
-        {state.adminTab === 'packages' ? (
-          <div className="admin-form">
-            <label>
-              Paketler JSON
-              <textarea
-                rows={18}
-                value={drafts.packages}
-                onChange={e =>
-                  setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, packages: e.target.value } }))
-                }
-              />
-            </label>
-            <button className="save-button" type="button" onClick={() => saveSection('packages')}>
-              <Save size={16} />
-              Paketleri Kaydet
-            </button>
-          </div>
-        ) : null}
-
-        {state.adminTab === 'announcements' ? (
-          <div className="admin-form">
-            <label>
-              Duyurular JSON
-              <textarea
-                rows={18}
-                value={drafts.announcements}
-                onChange={e =>
-                  setState(prev => ({ ...prev, adminDrafts: { ...prev.adminDrafts, announcements: e.target.value } }))
-                }
-              />
-            </label>
-            <button className="save-button" type="button" onClick={() => saveSection('announcements')}>
-              <Save size={16} />
-              Duyuruları Kaydet
-            </button>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 function useSectionPath(pathname) {
   const isServices = pathname === '/services';
   const isPackages = pathname === '/packages';
@@ -2358,6 +1841,19 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname]);
+
+  useEffect(() => {
+    const theme = state.settings.content?.theme;
+    if (!theme) return;
+    const root = document.documentElement;
+    if (theme.primary) root.style.setProperty('--green', theme.primary);
+    if (theme.secondary) root.style.setProperty('--green-strong', theme.secondary);
+    if (theme.background) root.style.background = theme.background;
+    if (theme.text) root.style.setProperty('--text', theme.text);
+    if (theme.muted) root.style.setProperty('--muted', theme.muted);
+    const seo = state.settings.content?.seo;
+    if (seo?.title) document.title = seo.title;
+  }, [state.settings.content?.theme, state.settings.content?.seo]);
 
   useEffect(() => {
     const isLight = !state.darkMode;
