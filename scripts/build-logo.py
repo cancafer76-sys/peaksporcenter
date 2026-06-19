@@ -1,76 +1,105 @@
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PUBLIC = os.path.join(ROOT, 'public')
-SRC = os.path.join(
-    ROOT,
-    '.cursor',
-    'projects',
-    'c-Users-ALPARSLAN-Desktop-cafer',
-    'assets',
-    'c__Users_ALPARSLAN_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images__FA9EBFA9-E659-4978-8F14-03D6236F0256_-999e146c-028d-42e7-827f-fb0b35284e17.png'
-)
-
-# Fallback: asset path from workspace cursor folder
 ALT_SRC = r'C:\Users\ALPARSLAN\.cursor\projects\c-Users-ALPARSLAN-Desktop-cafer\assets\c__Users_ALPARSLAN_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images__FA9EBFA9-E659-4978-8F14-03D6236F0256_-999e146c-028d-42e7-827f-fb0b35284e17.png'
 
-source = SRC if os.path.exists(SRC) else ALT_SRC
+source = ALT_SRC
 if not os.path.exists(source):
     raise SystemExit(f'Logo source not found: {source}')
 
-img = Image.open(source).convert('RGBA')
-w, h = img.size
-px = img.load()
+SIZE = 1024
 
-min_x, min_y, max_x, max_y = w, h, 0, 0
-for y in range(h):
-    for x in range(w):
-        r, g, b, a = px[x, y]
-        lum = r + g + b
-        if lum > 95 and max(r, g, b) - min(r, g, b) < 40:
+
+def luminance(r, g, b):
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def extract_logo_rgba(img):
+    """Remove dark square background; keep embossed logo pixels only."""
+    img = img.convert('RGBA')
+    w, h = img.size
+    out = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    src = img.load()
+    dst = out.load()
+
+    min_x, min_y, max_x, max_y = w, h, 0, 0
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = src[x, y]
+            lum = luminance(r, g, b)
+            if lum < 52:
+                continue
+            alpha = min(255, int((lum - 52) * 4.2))
+            if alpha < 18:
+                continue
+            dst[x, y] = (r, g, b, alpha)
             min_x = min(min_x, x)
             min_y = min(min_y, y)
             max_x = max(max_x, x)
             max_y = max(max_y, y)
 
-pad = 8
-trimmed = img.crop((
-    max(0, min_x - pad),
-    max(0, min_y - pad),
-    min(w, max_x + pad),
-    min(h, max_y + pad)
-))
+    pad = 6
+    cropped = out.crop((
+        max(0, min_x - pad),
+        max(0, min_y - pad),
+        min(w, max_x + pad),
+        min(h, max_y + pad)
+    ))
+    return cropped
 
-size = 512
-canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-draw = ImageDraw.Draw(canvas)
-draw.ellipse((8, 8, size - 9, size - 9), fill=(8, 8, 8, 255))
-draw.ellipse((8, 8, size - 9, size - 9), outline=(60, 60, 60, 180), width=3)
 
-tw, th = trimmed.size
-scale = (size - 96) / max(tw, th)
-nw, nh = int(tw * scale), int(th * scale)
-logo = trimmed.resize((nw, nh), Image.Resampling.LANCZOS)
-ox = (size - nw) // 2
-oy = (size - nh) // 2
-canvas.paste(logo, (ox, oy), logo)
+def build_circular_logo(logo_rgba, size=SIZE):
+    canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(canvas)
 
-mask = Image.new('L', (size, size), 0)
-ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
-final = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-final.paste(canvas, (0, 0), mask)
+    # Pure circular background — no square
+    draw.ellipse((0, 0, size - 1, size - 1), fill=(6, 6, 6, 255))
+    draw.ellipse((10, 10, size - 11, size - 11), fill=(14, 14, 14, 255))
+    draw.ellipse((18, 18, size - 19, size - 19), fill=(10, 10, 10, 255))
 
-os.makedirs(PUBLIC, exist_ok=True)
-final.save(os.path.join(PUBLIC, 'logo-circle.png'), optimize=True)
+    lw, lh = logo_rgba.size
+    inner = size - 48
+    scale = inner / max(lw, lh)
+    nw, nh = int(lw * scale), int(lh * scale)
+    logo = logo_rgba.resize((nw, nh), Image.Resampling.LANCZOS)
+    logo = logo.filter(ImageFilter.UnsharpMask(radius=1.4, percent=220, threshold=1))
+    logo = ImageEnhance.Contrast(logo).enhance(1.18)
+    logo = ImageEnhance.Sharpness(logo).enhance(1.5)
 
-for out_size, name in [(32, 'favicon-32x32.png'), (180, 'apple-touch-icon.png'), (192, 'favicon-192x192.png'), (512, 'logo-512.png')]:
-    final.resize((out_size, out_size), Image.Resampling.LANCZOS).save(os.path.join(PUBLIC, name), optimize=True)
+    ox = (size - nw) // 2
+    oy = (size - nh) // 2
+    canvas.paste(logo, (ox, oy), logo)
 
-final.resize((32, 32), Image.Resampling.LANCZOS).save(os.path.join(PUBLIC, 'favicon.ico'), sizes=[(32, 32)])
+    # Hard circular clip — corners fully transparent
+    mask = Image.new('L', (size, size), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
+    final = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    final.paste(canvas, (0, 0), mask)
+    return final
 
-og = Image.new('RGBA', (1200, 630), (5, 5, 5, 255))
-logo_og = final.resize((360, 360), Image.Resampling.LANCZOS)
-og.paste(logo_og, ((1200 - 360) // 2, (630 - 360) // 2 - 20), logo_og)
-og.convert('RGB').save(os.path.join(PUBLIC, 'og-image.jpg'), quality=92)
-print('Logo built from', source)
+
+def save_assets(final):
+    os.makedirs(PUBLIC, exist_ok=True)
+    final.save(os.path.join(PUBLIC, 'logo-circle.png'), compress_level=3)
+
+    for out_size, name in [(32, 'favicon-32x32.png'), (180, 'apple-touch-icon.png'), (192, 'favicon-192x192.png'), (512, 'logo-512.png')]:
+        resized = final.resize((out_size, out_size), Image.Resampling.LANCZOS)
+        if out_size >= 180:
+            resized = resized.filter(ImageFilter.UnsharpMask(radius=0.8, percent=140, threshold=2))
+        resized.save(os.path.join(PUBLIC, name), compress_level=3)
+
+    final.resize((32, 32), Image.Resampling.LANCZOS).save(os.path.join(PUBLIC, 'favicon.ico'), sizes=[(32, 32)])
+
+    og = Image.new('RGBA', (1200, 630), (5, 5, 5, 255))
+    logo_og = final.resize((380, 380), Image.Resampling.LANCZOS)
+    og.paste(logo_og, ((1200 - 380) // 2, (630 - 380) // 2 - 20), logo_og)
+    og.convert('RGB').save(os.path.join(PUBLIC, 'og-image.jpg'), quality=95)
+
+
+raw = Image.open(source)
+logo_only = extract_logo_rgba(raw)
+final_logo = build_circular_logo(logo_only)
+save_assets(final_logo)
+print('Circular sharp logo ready:', final_logo.size)

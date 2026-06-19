@@ -325,28 +325,21 @@ img { display: block; width: 100%; }
   justify-content: center;
   border-radius: 50%;
   flex: 0 0 auto;
-  overflow: visible;
+  overflow: hidden;
   isolation: isolate;
   animation: circleLogoPulse 3s ease-in-out infinite;
+  aspect-ratio: 1 / 1;
 }
 
-.circle-logo-xs { width: 30px; height: 30px; }
-.circle-logo-sm { width: 36px; height: 36px; }
-.circle-logo-md { width: 44px; height: 44px; }
-.circle-logo-lg { width: 52px; height: 52px; }
-.circle-logo-xl { width: 62px; height: 62px; }
-.circle-logo-fab { width: 58px; height: 58px; }
+.circle-logo-xs { width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
+.circle-logo-sm { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+.circle-logo-md { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+.circle-logo-lg { width: 52px; height: 52px; min-width: 52px; min-height: 52px; }
+.circle-logo-xl { width: 62px; height: 62px; min-width: 62px; min-height: 62px; }
+.circle-logo-fab { width: 58px; height: 58px; min-width: 58px; min-height: 58px; }
 
 .circle-logo-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 30%, #1c1c1c 0%, #060606 72%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 0 2px rgba(var(--accent-rgb), 0.38),
-    0 6px 18px rgba(0, 0, 0, 0.5);
-  z-index: 1;
+  display: none;
 }
 
 .circle-logo-img {
@@ -355,12 +348,13 @@ img { display: block; width: 100%; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
-  padding: 3px;
+  padding: 0;
   box-sizing: border-box;
   pointer-events: none;
   user-select: none;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .circle-logo-glow {
@@ -383,6 +377,7 @@ img { display: block; width: 100%; }
   animation: circleLogoOrbit 2.4s linear infinite;
   z-index: 4;
   pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.22);
 }
 
 .assistant-teaser-logo {

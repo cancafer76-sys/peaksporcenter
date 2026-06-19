@@ -211,13 +211,12 @@ function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone 
   return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 }
 
-const LOGO_CIRCLE = '/logo-circle.png?v=3';
+const LOGO_CIRCLE = '/logo-circle.png?v=4';
 const LOGO_ALT = 'PEAK SPORTS CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
   return (
     <span className={`circle-logo circle-logo-${size} ${className}`.trim()}>
-      <span className="circle-logo-ring" aria-hidden="true" />
       <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" draggable="false" loading="eager" decoding="async" />
       <span className="circle-logo-orbit" aria-hidden="true" />
       <span className="circle-logo-glow" aria-hidden="true" />

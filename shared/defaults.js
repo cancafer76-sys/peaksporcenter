@@ -22,7 +22,7 @@ export const defaultContent = {
     shortName: 'PEAK',
     slogan: 'Kocaeli Premium Fitness Merkezi',
     logoMark: '▲',
-    logoUrl: '/logo-circle.png?v=3'
+    logoUrl: '/logo-circle.png?v=4'
   },
   hero: {
     title: 'HEDEFİNE ULAŞ\nZİRVEYİ YAŞA!',
