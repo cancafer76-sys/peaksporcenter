@@ -161,7 +161,7 @@ export const defaultServices = [
   }
 ];
 
-export const defaultGalleryCategories = ['Görseller', 'Videolar', 'Etkinlikler'];
+export const defaultGalleryCategories = ['Salon', 'Videolar', 'Etkinlikler'];
 
 export const defaultAnalytics = {
   totalVisits: 0,
@@ -182,6 +182,12 @@ export const defaultPackages = [
     discountLabel: '%30 İndirim',
     period: '/ay',
     accent: '',
+    priceColor: '',
+    textColor: '',
+    titleColor: '',
+    mutedColor: '',
+    bgColor: '',
+    borderColor: '',
     features: ['Fitness kullanımı', '1 grup dersi', 'Vücut analizi', 'Diyet listesi'],
     cta: 'Başla',
     featured: true
@@ -194,6 +200,12 @@ export const defaultPackages = [
     discountLabel: '',
     period: '/ay',
     accent: '',
+    priceColor: '',
+    textColor: '',
+    titleColor: '',
+    mutedColor: '',
+    bgColor: '',
+    borderColor: '',
     features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Personal antrenör'],
     cta: 'Seç',
     featured: true
@@ -206,25 +218,58 @@ export const defaultPackages = [
     discountLabel: 'Popüler',
     period: '/ay',
     accent: '',
+    priceColor: '',
+    textColor: '',
+    titleColor: '',
+    mutedColor: '',
+    bgColor: '',
+    borderColor: '',
     features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Özel program'],
     cta: 'Premium Ol',
-    featured: false
+    featured: true
+  },
+  {
+    title: 'Elite',
+    subtitle: 'Tam kapsamlı paket',
+    price: 1499,
+    originalPrice: null,
+    discountLabel: '',
+    period: '/ay',
+    accent: '',
+    priceColor: '',
+    textColor: '',
+    titleColor: '',
+    mutedColor: '',
+    bgColor: '',
+    borderColor: '',
+    features: ['Sınırsız salon', 'PT desteği', 'Beslenme planı', 'Sauna & buhar'],
+    cta: 'Elite Ol',
+    featured: true
   }
 ];
 
 export const defaultGallery = [
   {
     id: 'gallery-1',
-    title: 'Salon',
-    category: 'Görseller',
+    title: 'Cardio Alanı',
+    category: 'Salon',
     type: 'image',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80',
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80',
     videoUrl: '',
     featured: true
   },
   {
     id: 'gallery-2',
-    title: 'Grup Dersi',
+    title: 'Ağırlık Bölümü',
+    category: 'Salon',
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
+    videoUrl: '',
+    featured: true
+  },
+  {
+    id: 'gallery-3',
+    title: 'Antrenman Videosu',
     category: 'Videolar',
     type: 'video',
     image: '',
@@ -232,20 +277,47 @@ export const defaultGallery = [
     featured: true
   },
   {
-    id: 'gallery-3',
-    title: 'Ekipmanlar',
-    category: 'Görseller',
+    id: 'gallery-4',
+    title: 'Fonksiyonel Alan',
+    category: 'Salon',
     type: 'image',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80',
+    image: 'https://images.unsplash.com/photo-1526401485004-2aa7f3b1b4da?auto=format&fit=crop&w=900&q=80',
     videoUrl: '',
-    featured: false
+    featured: true
   },
   {
-    id: 'gallery-4',
-    title: 'Yaz Etkinliği',
+    id: 'gallery-5',
+    title: 'Pilates Stüdyo',
+    category: 'Salon',
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=900&q=80',
+    videoUrl: '',
+    featured: true
+  },
+  {
+    id: 'gallery-6',
+    title: 'Crossfit Köşesi',
+    category: 'Salon',
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80',
+    videoUrl: '',
+    featured: true
+  },
+  {
+    id: 'gallery-7',
+    title: 'Yaz Maratonu',
     category: 'Etkinlikler',
     type: 'image',
-    image: 'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=1200&q=80',
+    image: 'https://images.unsplash.com/photo-1571902943202-507ec2618d88?auto=format&fit=crop&w=900&q=80',
+    videoUrl: '',
+    featured: true
+  },
+  {
+    id: 'gallery-8',
+    title: 'Üye Buluşması',
+    category: 'Etkinlikler',
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80',
     videoUrl: '',
     featured: true
   }

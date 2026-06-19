@@ -87,6 +87,37 @@ export function normalizeHomeCards(cards = {}) {
   };
 }
 
+export function packageCardVars(pkg = {}) {
+  const style = {};
+  [
+    ['--pkg-accent', pkg.accent],
+    ['--pkg-price-color', pkg.priceColor],
+    ['--pkg-text-color', pkg.textColor],
+    ['--pkg-title-color', pkg.titleColor],
+    ['--pkg-muted-color', pkg.mutedColor],
+    ['--pkg-bg', pkg.bgColor],
+    ['--pkg-border', pkg.borderColor]
+  ].forEach(([key, value]) => {
+    if (value) style[key] = value;
+  });
+  return Object.keys(style).length ? style : undefined;
+}
+
+export function serviceCardVars(service = {}) {
+  const style = {};
+  [
+    ['--service-accent', service.accent],
+    ['--service-title-color', service.titleColor],
+    ['--service-text-color', service.textColor],
+    ['--service-muted-color', service.mutedColor],
+    ['--service-bg', service.bgColor],
+    ['--service-border', service.borderColor]
+  ].forEach(([key, value]) => {
+    if (value) style[key] = value;
+  });
+  return Object.keys(style).length ? style : undefined;
+}
+
 export function normalizeService(item = {}) {
   return {
     title: item.title || 'Yeni Hizmet',
@@ -94,6 +125,11 @@ export function normalizeService(item = {}) {
     description: item.description || '',
     image: item.image || '',
     accent: item.accent || '',
+    titleColor: item.titleColor || '',
+    textColor: item.textColor || '',
+    mutedColor: item.mutedColor || '',
+    bgColor: item.bgColor || '',
+    borderColor: item.borderColor || '',
     imageFit: item.imageFit === 'contain' ? 'contain' : 'cover',
     featured: Boolean(item.featured)
   };
@@ -108,6 +144,12 @@ export function normalizePackage(item = {}) {
     discountLabel: item.discountLabel || '',
     period: item.period || '/ay',
     accent: item.accent || '',
+    priceColor: item.priceColor || '',
+    textColor: item.textColor || '',
+    titleColor: item.titleColor || '',
+    mutedColor: item.mutedColor || '',
+    bgColor: item.bgColor || '',
+    borderColor: item.borderColor || '',
     features: Array.isArray(item.features) ? item.features : [],
     cta: item.cta || 'Seç',
     featured: Boolean(item.featured)

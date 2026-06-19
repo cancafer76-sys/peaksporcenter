@@ -10,6 +10,8 @@ import {
   normalizeStat,
   normalizeStats,
   normalizeHomeCards,
+  packageCardVars,
+  serviceCardVars,
   STAT_ICON_OPTIONS
 } from '../../shared/media.js';
 import { defaultContent, defaultGalleryCategories } from '../../shared/defaults.js';
@@ -39,7 +41,7 @@ function ColorField({ label, value, onChange }) {
 export function ServicePreviewCard({ service }) {
   const data = normalizeService(service);
   return (
-    <article className="preview-service-card" style={{ '--card-accent': data.accent }}>
+    <article className="preview-service-card" style={serviceCardVars(data)}>
       <div className="preview-service-media">
         {data.image ? (
           <img src={data.image} alt={data.title} style={{ objectFit: data.imageFit }} />
@@ -60,7 +62,7 @@ export function ServicePreviewCard({ service }) {
 export function PackagePreviewCard({ pkg }) {
   const data = normalizePackage(pkg);
   return (
-    <article className="preview-package-card" style={{ '--pkg-accent': data.accent }}>
+    <article className="preview-package-card" style={packageCardVars(data)}>
       {data.discountLabel ? <span className="preview-discount">{data.discountLabel}</span> : null}
       {data.featured ? <span className="preview-featured">Ana Sayfa</span> : null}
       <div className="preview-package-top">
@@ -143,7 +145,11 @@ export function ServicesEditor({ items, onChange }) {
             <label className="admin-field">Kategori<input value={current.category} onChange={e => update('category', e.target.value)} /></label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Açıklama<textarea rows={2} value={current.description} onChange={e => update('description', e.target.value)} /></label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Görsel URL<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
-            <ColorField label="Kart Rengi" value={current.accent} onChange={v => update('accent', v)} />
+            <ColorField label="Kenarlık / Vurgu" value={current.accent} onChange={v => update('accent', v)} />
+            <ColorField label="Başlık Rengi" value={current.titleColor} onChange={v => update('titleColor', v)} />
+            <ColorField label="Yazı Rengi" value={current.textColor} onChange={v => update('textColor', v)} />
+            <ColorField label="Alt Yazı Rengi" value={current.mutedColor} onChange={v => update('mutedColor', v)} />
+            <ColorField label="Arka Plan" value={current.bgColor} onChange={v => update('bgColor', v)} />
             <label className="admin-field">Görsel Yerleşimi
               <select value={current.imageFit} onChange={e => update('imageFit', e.target.value)}>
                 <option value="cover">Karta sığdır (cover)</option>
@@ -201,7 +207,13 @@ export function PackagesEditor({ items, onChange }) {
             <label className="admin-field">Eski Fiyat (opsiyonel)<input type="number" value={current.originalPrice || ''} onChange={e => update('originalPrice', e.target.value ? Number(e.target.value) : null)} /></label>
             <label className="admin-field">İndirim Etiketi<input value={current.discountLabel} onChange={e => update('discountLabel', e.target.value)} placeholder="%30 İndirim" /></label>
             <label className="admin-field">Dönem<input value={current.period} onChange={e => update('period', e.target.value)} /></label>
-            <ColorField label="Kart Rengi" value={current.accent} onChange={v => update('accent', v)} />
+            <ColorField label="Kenarlık / Buton" value={current.accent} onChange={v => update('accent', v)} />
+            <ColorField label="Fiyat Rengi" value={current.priceColor} onChange={v => update('priceColor', v)} />
+            <ColorField label="Başlık Rengi" value={current.titleColor} onChange={v => update('titleColor', v)} />
+            <ColorField label="Yazı Rengi" value={current.textColor} onChange={v => update('textColor', v)} />
+            <ColorField label="Alt Yazı Rengi" value={current.mutedColor} onChange={v => update('mutedColor', v)} />
+            <ColorField label="Arka Plan" value={current.bgColor} onChange={v => update('bgColor', v)} />
+            <ColorField label="Kenarlık Rengi" value={current.borderColor} onChange={v => update('borderColor', v)} />
             <label className="admin-field">Buton Metni<input value={current.cta} onChange={e => update('cta', e.target.value)} /></label>
             <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Özellik Listesi (her satır bir madde)<textarea rows={5} value={(current.features || []).join('\n')} onChange={e => updateFeatures(e.target.value)} /></label>
           </div>
@@ -244,7 +256,7 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
   const removeCategory = cat => {
     if (!window.confirm(`"${cat}" bölümünü silmek istiyor musunuz?`)) return;
     onCategoriesChange(cats.filter(c => c !== cat));
-    onChange(list.map(item => (item.category === cat ? { ...item, category: cats[0] || 'Görseller' } : item)));
+    onChange(list.map(item => (item.category === cat ? { ...item, category: cats[0] || 'Salon' } : item)));
   };
 
   return (
