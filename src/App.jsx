@@ -434,12 +434,15 @@ function Ticker({ items }) {
   const text = resolveAnnouncementText(items);
   return (
     <div className="ticker">
-      <div className="ticker-track">
-        <div className="ticker-label">
-          <Megaphone size={14} />
-          Duyurular
+      <div className="ticker-label">
+        <Megaphone size={14} />
+        Duyurular
+      </div>
+      <div className="ticker-track" aria-label="Duyuru metni">
+        <div className="ticker-marquee">
+          <span className="ticker-message">{text}</span>
+          <span className="ticker-message" aria-hidden="true">{text}</span>
         </div>
-        <span className="ticker-message">{text}</span>
       </div>
     </div>
   );
