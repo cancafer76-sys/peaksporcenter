@@ -50,14 +50,17 @@ img { display: block; width: 100%; }
 }
 
 .top-band {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 140;
   background: rgba(5, 5, 5, 0.96);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   touch-action: pan-y;
+  padding-top: env(safe-area-inset-top);
 }
 
 .desktop-header,
@@ -342,8 +345,8 @@ img { display: block; width: 100%; }
   width: max-content;
   min-width: 0;
   align-items: center;
-  gap: 18px;
-  animation: ticker 38s linear infinite;
+  gap: 16px;
+  animation: ticker 42s linear infinite;
   will-change: transform;
 }
 
@@ -351,6 +354,7 @@ img { display: block; width: 100%; }
   display: inline-flex;
   align-items: center;
   width: max-content;
+  flex: 0 0 auto;
   color: var(--text);
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -392,8 +396,8 @@ img { display: block; width: 100%; }
 }
 
 @keyframes ticker {
-  from { transform: translateX(14%); }
-  to { transform: translateX(-28%); }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .desktop-hero {
@@ -573,6 +577,11 @@ img { display: block; width: 100%; }
 
   .ticker-marquee {
     gap: 14px;
+  }
+
+  .desktop-page,
+  .mobile-page {
+    padding-top: 118px;
   }
 
   .hero-admin-inline {

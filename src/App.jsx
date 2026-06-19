@@ -215,27 +215,32 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
 
   return (
     <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
-      <header className={mobile ? 'mobile-header' : 'desktop-header'}>
-        <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
-          <div className="header-left-group">
-            <button
-              className="icon-button mobile-menu-button"
-              type="button"
-              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-              aria-label="Menü"
-            >
-              <Menu size={18} />
-            </button>
-            <Brand compact={mobile} />
+      <div className="top-band">
+        <header className={mobile ? 'mobile-header' : 'desktop-header'}>
+          <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
+            <div className="header-left-group">
+              <button
+                className="icon-button mobile-menu-button"
+                type="button"
+                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                aria-label="Menü"
+              >
+                <Menu size={18} />
+              </button>
+              <Brand compact={mobile} />
+            </div>
+            {!mobile ? <div className="page-heading-inline"><span>{title}</span></div> : null}
+            <HeaderActions
+              darkMode={state.darkMode}
+              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+            />
           </div>
-          {!mobile ? <div className="page-heading-inline"><span>{title}</span></div> : null}
-          <HeaderActions
-            darkMode={state.darkMode}
-            onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-            onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-          />
+        </header>
+        <div className="ticker-shell shell-width">
+          <Ticker items={state.settings.announcements} />
         </div>
-      </header>
+      </div>
 
       <main className={`shell-width ${mobile ? 'mobile-page mobile-main' : 'desktop-page'}`}>
         <section className="section-block">
@@ -614,42 +619,45 @@ function DesktopShell({ state, setState }) {
 
   return (
     <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
-      <header className="desktop-header">
-        <div className="shell-width desktop-header-inner">
-          <div className="header-left-group">
-            <button
-              className="icon-button"
-              type="button"
-              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-              aria-label="Menü"
-            >
-              <Menu size={18} />
-            </button>
-            <Brand />
-          </div>
-          <nav className="desktop-nav" aria-label="Ana menü">
-            {desktopNav.map(item => (
+      <div className="top-band">
+        <header className="desktop-header">
+          <div className="shell-width desktop-header-inner">
+            <div className="header-left-group">
               <button
-                key={item.id}
+                className="icon-button"
                 type="button"
-                className="desktop-nav-link"
-                onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
+                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                aria-label="Menü"
               >
-                {item.label}
+                <Menu size={18} />
               </button>
-            ))}
-          </nav>
-          <HeaderActions
-            darkMode={state.darkMode}
-            onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-            onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-          />
+              <Brand />
+            </div>
+            <nav className="desktop-nav" aria-label="Ana menü">
+              {desktopNav.map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="desktop-nav-link"
+                  onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <HeaderActions
+              darkMode={state.darkMode}
+              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+            />
+          </div>
+        </header>
+        <div className="ticker-shell shell-width">
+          <Ticker items={state.settings.announcements} />
         </div>
-      </header>
+      </div>
 
       <main className="shell-width desktop-page">
-        <Ticker items={state.settings.announcements} />
-
         <section className="desktop-hero" id="home">
           <div className="desktop-hero-copy">
             <div className="hero-badge">
@@ -868,49 +876,52 @@ function MobileShell({ state, setState }) {
 
   return (
     <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
-      <header className="mobile-header">
-        <div className="mobile-header-inner shell-width">
-          <div className="header-left-group">
-            <button
-              className="icon-button mobile-menu-button"
-              type="button"
-              onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
-              aria-label="Menü"
-            >
-              <Menu size={18} />
-            </button>
-            <Brand compact />
+      <div className="top-band">
+        <header className="mobile-header">
+          <div className="mobile-header-inner shell-width">
+            <div className="header-left-group">
+              <button
+                className="icon-button mobile-menu-button"
+                type="button"
+                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                aria-label="Menü"
+              >
+                <Menu size={18} />
+              </button>
+              <Brand compact />
+            </div>
+            <div className="header-actions">
+              <button
+                className="theme-switch theme-switch-mobile"
+                type="button"
+                onClick={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+                aria-label="Tema değiştir"
+              >
+                <span className={state.darkMode ? 'active' : ''}>
+                  <Moon size={14} />
+                </span>
+                <span className={!state.darkMode ? 'active' : ''}>
+                  <SunMedium size={14} />
+                </span>
+              </button>
+              <button
+                className="admin-entry-button admin-entry-button-header"
+                type="button"
+                onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
+                aria-label="Yetkili giriş"
+              >
+                <LayoutDashboard size={16} />
+                <span>Yetkili Giriş</span>
+              </button>
+            </div>
           </div>
-          <div className="header-actions">
-            <button
-              className="theme-switch theme-switch-mobile"
-              type="button"
-              onClick={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-              aria-label="Tema değiştir"
-            >
-              <span className={state.darkMode ? 'active' : ''}>
-                <Moon size={14} />
-              </span>
-              <span className={!state.darkMode ? 'active' : ''}>
-                <SunMedium size={14} />
-              </span>
-            </button>
-            <button
-              className="admin-entry-button admin-entry-button-header"
-              type="button"
-              onClick={() => setState(prev => ({ ...prev, adminOpen: true }))}
-              aria-label="Yetkili giriş"
-            >
-              <LayoutDashboard size={16} />
-              <span>Yetkili Giriş</span>
-            </button>
-          </div>
+        </header>
+        <div className="ticker-shell shell-width">
+          <Ticker items={state.settings.announcements} />
         </div>
-      </header>
+      </div>
 
       <main className="shell-width mobile-page mobile-main">
-        <Ticker items={state.settings.announcements} />
-
         <section className="mobile-hero" id="home">
           <HeroCarousel slides={heroSlides} mobile />
           <div className="mobile-hero-cta-row">
