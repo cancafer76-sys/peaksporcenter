@@ -50,18 +50,23 @@ app.use('/uploads', express.static(uploadDir));
 const authCookieOptions = {
   httpOnly: true,
   sameSite: 'lax',
-  secure: process.env.COOKIE_SECURE === 'true'
+  secure: process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true'
 };
+
+function getConfiguredAdminEmail() {
+  return (process.env.ADMIN_EMAIL || 'admin@peakspor.com').trim().toLowerCase();
+}
 
 function resolveAdminEmail(value) {
   const input = (value || '').trim().toLowerCase();
-  if (!input || input === 'admin') return 'admin@peakspor.com';
+  const configured = getConfiguredAdminEmail();
+  if (!input || input === 'admin') return configured;
   return input;
 }
 
 function getAdminCredentials() {
   return {
-    email: resolveAdminEmail(process.env.ADMIN_EMAIL || 'admin@peakspor.com'),
+    email: getConfiguredAdminEmail(),
     password: process.env.ADMIN_PASSWORD || 'Admin1234!'
   };
 }
@@ -199,9 +204,7 @@ app.post('/api/auth/login', async (req, res) => {
     const lookupEmail = resolveAdminEmail(email);
     const { email: adminEmail, password: adminPassword } = getAdminCredentials();
     const inputPassword = password || '';
-    const isKnownAdminLogin =
-      lookupEmail === adminEmail &&
-      (inputPassword === adminPassword || inputPassword === 'peakspor123' || inputPassword === 'Admin1234!');
+    const isKnownAdminLogin = lookupEmail === adminEmail && inputPassword === adminPassword;
 
     let user;
     if (isKnownAdminLogin) {
@@ -337,8 +340,15 @@ app.use((req, res) => {
 });
 
 async function start() {
-  await ensureSeedData();
-  app.listen(port, () => {
+  try {
+    await ensureSeedData();
+    console.log('Database seeded successfully');
+  } catch (error) {
+    console.error('Database seed failed:', error);
+    throw error;
+  }
+
+  app.listen(port, '0.0.0.0', () => {
     console.log(`PEAKSPOR server listening on ${port}`);
   });
 }

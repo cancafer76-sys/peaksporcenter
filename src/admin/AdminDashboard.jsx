@@ -103,7 +103,7 @@ function clone(value) {
 
 function AdminLogin({ onSuccess, onClose }) {
   const [loginMode, setLoginMode] = useState('email');
-  const [form, setForm] = useState({ email: 'admin@peakspor.com', username: 'admin', password: '' });
+  const [form, setForm] = useState({ email: '', username: 'admin', password: '' });
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
 
@@ -193,11 +193,9 @@ function AdminLogin({ onSuccess, onClose }) {
             </button>
           </form>
           <div className="admin-login-tip-v2">
-            Giriş: <strong>admin@peakspor.com</strong> veya kullanıcı adı <strong>admin</strong>
+            Railway&apos;de tanımladığınız <strong>ADMIN_EMAIL</strong> ve <strong>ADMIN_PASSWORD</strong> ile giriş yapın.
             <br />
-            Şifre: <strong>Admin1234!</strong>
-            <br />
-            Önce terminalde <strong>npm start</strong> çalıştırın, sonra http://localhost:3001 adresinden girin.
+            Kullanıcı adı olarak <strong>admin</strong> yazarsanız ADMIN_EMAIL kullanılır.
           </div>
         </div>
       </div>
