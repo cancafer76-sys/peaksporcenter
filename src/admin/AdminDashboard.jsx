@@ -119,7 +119,12 @@ function AdminLogin({ onSuccess, onClose }) {
       }
       onSuccess(result.user);
     } catch (loginError) {
-      setError(loginError.message || 'Giriş başarısız');
+      const message = loginError.message || 'Giriş başarısız';
+      if (/failed|fetch|network|bağlan/i.test(message)) {
+        setError('Sunucuya bağlanılamadı. Terminalde npm start çalıştırın (port 3001).');
+      } else {
+        setError(message);
+      }
     } finally {
       setPending(false);
     }
@@ -188,9 +193,11 @@ function AdminLogin({ onSuccess, onClose }) {
             </button>
           </form>
           <div className="admin-login-tip-v2">
-            Giriş: admin@peakspor.com veya kullanıcı adı <strong>admin</strong> — şifre <strong>Admin1234!</strong>
+            Giriş: <strong>admin@peakspor.com</strong> veya kullanıcı adı <strong>admin</strong>
             <br />
-            Sunucuyu yeniden başlattıktan sonra tekrar deneyin.
+            Şifre: <strong>Admin1234!</strong>
+            <br />
+            Önce terminalde <strong>npm start</strong> çalıştırın, sonra http://localhost:3001 adresinden girin.
           </div>
         </div>
       </div>
