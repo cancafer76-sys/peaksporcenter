@@ -6,6 +6,14 @@ import './styles.css';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        if (registration.active?.scriptURL.includes('/sw.js')) {
+          registration.update().catch(() => undefined);
+        }
+      });
+    });
+
     navigator.serviceWorker.register('/sw.js').catch(() => undefined);
   });
 }

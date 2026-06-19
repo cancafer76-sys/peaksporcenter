@@ -1,5 +1,21 @@
-const CACHE_NAME = 'peak-sports-v3';
-const PRECACHE = ['/', '/index.html', '/site.webmanifest', '/pwa-icon.png', '/favicon.png', '/favicon-192x192.png', '/apple-touch-icon.png'];
+const CACHE_NAME = 'peak-sports-v5';
+
+const PRECACHE = [
+  '/site.webmanifest',
+  '/pwa-icon.png',
+  '/favicon.png',
+  '/favicon-192x192.png',
+  '/apple-touch-icon.png'
+];
+
+function isAppShellRequest(url, request) {
+  return (
+    request.mode === 'navigate' ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.startsWith('/assets/')
+  );
+}
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -19,10 +35,19 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET') return;
+
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
     event.respondWith(fetch(event.request));
     return;
   }
+
+  if (isAppShellRequest(url, event.request)) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;

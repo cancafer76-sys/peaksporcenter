@@ -558,18 +558,31 @@ function useAppData() {
 
   useEffect(() => {
     let mounted = true;
+    const loadingTimeout = window.setTimeout(() => {
+      if (mounted) {
+        setState(prev => (prev.loading ? { ...prev, loading: false } : prev));
+      }
+    }, 8000);
 
-    Promise.allSettled([api.content(), api.me()]).then(([contentResult, meResult]) => {
-      if (!mounted) return;
-      const settings =
-        contentResult.status === 'fulfilled' ? normalizeSettings(contentResult.value) : fallbackSettings;
-      setState(prev => ({
-        ...prev,
-        settings,
-        user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
-        loading: false
-      }));
-    });
+    Promise.allSettled([api.content(), api.me()])
+      .then(([contentResult, meResult]) => {
+        if (!mounted) return;
+        try {
+          const settings =
+            contentResult.status === 'fulfilled' ? normalizeSettings(contentResult.value) : fallbackSettings;
+          setState(prev => ({
+            ...prev,
+            settings,
+            user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
+            loading: false
+          }));
+        } catch {
+          setState(prev => ({ ...prev, loading: false }));
+        }
+      })
+      .finally(() => {
+        window.clearTimeout(loadingTimeout);
+      });
 
     const updateViewport = () => setState(prev => ({ ...prev, viewportWidth: window.innerWidth }));
     updateViewport();
@@ -577,6 +590,7 @@ function useAppData() {
 
     return () => {
       mounted = false;
+      window.clearTimeout(loadingTimeout);
       window.removeEventListener('resize', updateViewport);
     };
   }, []);
@@ -2401,12 +2415,21 @@ export default function App() {
       .then(response => (response.ok ? response.json() : {}))
       .then(config => {
         if (!active) return;
-        applySiteSeo(content?.seo, content?.brand, content?.contact, {
-          googleSiteVerification: config.googleSiteVerification || ''
-        });
+        try {
+          applySiteSeo(content?.seo, content?.brand, content?.contact, {
+            googleSiteVerification: config.googleSiteVerification || ''
+          });
+        } catch {
+          // SEO updates must never break rendering.
+        }
       })
       .catch(() => {
-        if (active) applySiteSeo(content?.seo, content?.brand, content?.contact);
+        if (!active) return;
+        try {
+          applySiteSeo(content?.seo, content?.brand, content?.contact);
+        } catch {
+          // ignore SEO failures
+        }
       });
 
     return () => {

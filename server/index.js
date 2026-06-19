@@ -951,6 +951,10 @@ app.patch('/api/auth/profile', staffRequired, async (req, res) => {
   }
 });
 
+app.use('/assets', express.static(path.join(rootDir, 'dist', 'assets'), {
+  immutable: true,
+  maxAge: '1y'
+}));
 app.use(express.static(path.join(rootDir, 'dist')));
 
 function getSeoHeadInjection() {
@@ -959,7 +963,18 @@ function getSeoHeadInjection() {
   return `<meta name="google-site-verification" content="${token.replace(/"/g, '')}" />`;
 }
 
+function isStaticAssetPath(requestPath) {
+  return (
+    requestPath.startsWith('/assets/') ||
+    /\.(js|mjs|css|map|png|jpe?g|webp|svg|ico|woff2?|txt|xml|webmanifest)$/i.test(requestPath)
+  );
+}
+
 app.use((req, res) => {
+  if (isStaticAssetPath(req.path)) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
+
   const indexPath = path.join(rootDir, 'dist', 'index.html');
   if (fs.existsSync(indexPath)) {
     let html = fs.readFileSync(indexPath, 'utf8');

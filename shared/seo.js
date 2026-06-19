@@ -117,12 +117,16 @@ export function applySiteSeo(seoInput = {}, brandInput = {}, contactInput = {}, 
   applyFaviconLinks();
   applyGoogleSiteVerification(options.googleSiteVerification);
 
-  upsertJsonLd('peakspor-local-graph', buildLocalBusinessGraph({
-    brand,
-    seo,
-    contact,
-    siteUrl
-  }));
+  try {
+    upsertJsonLd('peakspor-local-graph', buildLocalBusinessGraph({
+      brand,
+      seo,
+      contact,
+      siteUrl
+    }));
+  } catch {
+    // SEO schema must never block the app shell.
+  }
 }
 
 export function applyPageSeo({ title, description, canonicalPath, breadcrumbs = [], regionalPage = null }) {

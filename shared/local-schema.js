@@ -77,30 +77,6 @@ export function buildLocalBusinessGraph({ brand = {}, seo = {}, contact = {}, si
     parentOrganization: { '@id': `${pageUrl}#organization` }
   };
 
-  const regionalBusinesses = ALL_SERVICE_AREAS.map(city => {
-    const region = getAreaRegion(city);
-    const regionalUrl = `${siteUrl}${cityToRegionalPath(city)}`;
-    return {
-      '@type': ['LocalBusiness', 'ExerciseGym'],
-      '@id': `${regionalUrl}#localbusiness`,
-      name: `${businessName} | ${city} Spor Salonu`,
-      alternateName: `${city} Fitness Merkezi`,
-      description: `${city} ve çevresinde fitness, pilates, crossfit ve spor salonu hizmeti sunan ${businessName}.`,
-      url: regionalUrl,
-      image: imageUrl,
-      logo: logoUrl,
-      areaServed: buildAreaServed(city),
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: city,
-        addressRegion: region,
-        addressCountry: 'TR'
-      },
-      isPartOf: { '@id': `${pageUrl}#fitnesscenter` },
-      parentOrganization: { '@id': `${pageUrl}#organization` }
-    };
-  });
-
   const serviceCatalog = {
     '@type': 'ItemList',
     '@id': `${pageUrl}#service-areas`,
@@ -139,7 +115,7 @@ export function buildLocalBusinessGraph({ brand = {}, seo = {}, contact = {}, si
 
   return {
     '@context': 'https://schema.org',
-    '@graph': [organization, website, mainBusiness, serviceCatalog, kocaeliList, istanbulList, ...regionalBusinesses]
+    '@graph': [organization, website, mainBusiness, serviceCatalog, kocaeliList, istanbulList]
   };
 }
 
