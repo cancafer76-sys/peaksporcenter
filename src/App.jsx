@@ -144,9 +144,14 @@ function scrollToSection(id) {
   if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+const ROUTE_CHANGE_EVENT = 'peakspor:routechange';
+
 function navigateToPath(pathname) {
-  window.history.pushState({}, '', pathname);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  const nextPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  if (window.location.pathname !== nextPath) {
+    window.history.pushState({}, '', nextPath);
+  }
+  window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 }
 
@@ -154,9 +159,13 @@ function usePathname() {
   const [pathname, setPathname] = useState(() => (typeof window !== 'undefined' ? window.location.pathname : '/'));
 
   useEffect(() => {
-    const handlePopState = () => setPathname(window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const syncPathname = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', syncPathname);
+    window.addEventListener(ROUTE_CHANGE_EVENT, syncPathname);
+    return () => {
+      window.removeEventListener('popstate', syncPathname);
+      window.removeEventListener(ROUTE_CHANGE_EVENT, syncPathname);
+    };
   }, []);
 
   return pathname;
@@ -669,8 +678,21 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
 }
 
 function HeroButtons({ compact = false, onPrimary, onSecondary }) {
+  if (compact) {
+    return (
+      <>
+        <button className="primary-button hero-cta-primary hero-cta-compact" type="button" onClick={onPrimary}>
+          ÜYE OL
+        </button>
+        <button className="secondary-button hero-cta-secondary hero-cta-compact" type="button" onClick={onSecondary}>
+          SALONU KEŞFET
+        </button>
+      </>
+    );
+  }
+
   return (
-    <div className={`hero-actions ${compact ? 'hero-actions-compact' : ''}`}>
+    <div className="hero-actions">
       <button className="primary-button hero-cta-primary" type="button" onClick={onPrimary}>
         <span>ÜYE OL</span>
       </button>

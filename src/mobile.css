@@ -829,10 +829,6 @@ img { display: block; width: 100%; }
   gap: 14px;
 }
 
-.mobile-hero-cta-row {
-  padding-top: 12px;
-}
-
 .hero-carousel-mobile .hero-carousel-viewport {
   border-radius: 24px;
 }
@@ -904,65 +900,56 @@ img { display: block; width: 100%; }
 .mobile-hero-cta-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   align-items: stretch;
   gap: 8px;
   width: 100%;
   padding-top: 12px;
 }
 
-.hero-actions-compact {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  width: 100%;
-}
-
-.hero-actions-compact .hero-cta-primary,
-.hero-actions-compact .hero-cta-secondary {
-  flex: 1;
+.mobile-hero-cta-row > .hero-cta-compact {
+  flex: 1 1 0;
+  min-width: 0;
   width: auto;
-  min-height: 38px;
-  padding: 0 6px;
-  font-size: 9px;
-  letter-spacing: 0.05em;
+  min-height: 40px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   border-radius: 12px;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+  text-align: center;
 }
 
-.hero-actions-compact .hero-cta-primary span,
-.hero-actions-compact .hero-cta-secondary span {
-  display: block;
-  transform: scale(0.96);
-}
-
-.hero-actions-compact .hero-cta-primary {
+.mobile-hero-cta-row > .hero-cta-primary.hero-cta-compact {
   background: linear-gradient(135deg, #7cff4f 0%, #b8ff3b 55%, #7cff4f 100%);
   background-size: 200% auto;
   animation: heroBtnGlow 3s ease-in-out infinite;
   box-shadow: 0 10px 24px rgba(124, 255, 79, 0.24);
+  color: #050505;
+  border: 0;
 }
 
-.hero-actions-compact .hero-cta-primary::after,
-.hero-actions-compact .hero-cta-secondary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.28) 50%, transparent 75%);
-  transform: translateX(-120%);
-  animation: heroBtnShine 3.2s ease-in-out infinite;
-}
-
-.hero-actions-compact .hero-cta-secondary {
+.mobile-hero-cta-row > .hero-cta-secondary.hero-cta-compact {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
   backdrop-filter: blur(8px);
 }
 
-.hero-actions-compact .hero-cta-primary:active,
-.hero-actions-compact .hero-cta-secondary:active {
+.mobile-hero-cta-row > .hero-cta-compact::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.28) 50%, transparent 75%);
+  transform: translateX(-120%);
+  animation: heroBtnShine 3.2s ease-in-out infinite;
+}
+
+.mobile-hero-cta-row > .hero-cta-compact:active {
   transform: scale(0.98);
 }
 
@@ -1043,12 +1030,6 @@ img { display: block; width: 100%; }
     min-width: 38px;
     padding: 0 9px;
   }
-}
-
-.hero-actions-compact .primary-button,
-.hero-actions-compact .secondary-button {
-  min-height: 44px;
-  padding: 0 14px;
 }
 
 .primary-button,
