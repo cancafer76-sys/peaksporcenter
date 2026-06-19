@@ -152,6 +152,20 @@ img { display: block; width: 100%; }
 
 .brand-accent { color: var(--green); }
 
+.brand-gradient {
+  background: linear-gradient(90deg, #ffffff, var(--green), #b8ff3b, var(--green), #ffffff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: brandShine 4s linear infinite;
+}
+
+@keyframes brandShine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -346,7 +360,7 @@ img { display: block; width: 100%; }
   min-width: 0;
   align-items: center;
   gap: 16px;
-  animation: ticker 42s linear infinite;
+  animation: ticker 24s linear infinite;
   will-change: transform;
 }
 

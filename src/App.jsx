@@ -179,8 +179,7 @@ function Brand({ compact = false }) {
       <span className="brand-mark">▲</span>
       <span className="brand-text">
         <strong>
-          <span>PEAK</span>
-          <span className="brand-accent">SPOR</span>
+          <span className="brand-gradient">PEAKSPOR</span>
         </strong>
         <small>Premium Fitness</small>
       </span>
@@ -447,7 +446,11 @@ function Ticker({ items }) {
       <div className="ticker-track" aria-label="Duyuru metni">
         <div className="ticker-marquee">
           <span className="ticker-message">{text}</span>
-          <span className="ticker-gap" aria-hidden="true">•</span>
+          <span className="ticker-gap" aria-hidden="true"> • </span>
+          <span className="ticker-message" aria-hidden="true">{text}</span>
+          <span className="ticker-gap" aria-hidden="true"> • </span>
+          <span className="ticker-message" aria-hidden="true">{text}</span>
+          <span className="ticker-gap" aria-hidden="true"> • </span>
           <span className="ticker-message" aria-hidden="true">{text}</span>
         </div>
       </div>
