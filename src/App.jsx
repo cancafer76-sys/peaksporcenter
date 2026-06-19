@@ -641,7 +641,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
             <X size={12} />
           </button>
           <div className="assistant-teaser-logo">
-            <AssistantLogo size="xl" />
+            <AssistantLogo size={mobile ? 'md' : 'xl'} />
           </div>
           <div className="assistant-teaser-top">
             <div>
