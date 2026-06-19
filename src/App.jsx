@@ -288,7 +288,7 @@ function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone 
   return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 }
 
-const LOGO_CIRCLE = '/logo-circle.png?v=5';
+const LOGO_CIRCLE = '/logo-circle.png?v=6';
 const LOGO_ALT = 'PEAK SPORTS CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
