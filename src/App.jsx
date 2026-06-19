@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api';
 import {
   defaultAnnouncements,
@@ -23,6 +23,7 @@ import {
   Moon,
   Package,
   Pause,
+  Phone,
   Play,
   Save,
   Settings2,
@@ -49,7 +50,7 @@ const desktopNav = [
   { id: 'services', label: 'Hizmetler', route: '/services' },
   { id: 'packages', label: 'Paketler', route: '/packages' },
   { id: 'gallery', label: 'Galeri', route: '/gallery' },
-  { id: 'contact', label: 'İletişim' }
+  { id: 'contact', label: 'İletişim', route: '/contact' }
 ];
 
 const mobileNav = [
@@ -57,7 +58,7 @@ const mobileNav = [
   { id: 'services', label: 'Hizmetler', icon: Dumbbell, route: '/services' },
   { id: 'packages', label: 'Paketler', icon: Package, route: '/packages' },
   { id: 'gallery', label: 'Galeri', icon: Image, route: '/gallery' },
-  { id: 'contact', label: 'İletişim', icon: LayoutDashboard }
+  { id: 'contact', label: 'İletişim', icon: Phone, route: '/contact' }
 ];
 
 const statIcons = [Users, Users, Video, Medal];
@@ -162,6 +163,19 @@ function usePathname() {
 
 function formatPrice(value) {
   return new Intl.NumberFormat('tr-TR').format(value);
+}
+
+function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone }) {
+  const cleanNumber = (number || '+905555555555').replace(/\D/g, '');
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const message = [
+    'Merhaba, PEAKSPOR\'a üye olmak istiyorum.',
+    '',
+    `Ad Soyad: ${fullName}`,
+    `E-posta: ${email}`,
+    `Telefon: ${phone}`
+  ].join('\n');
+  return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 }
 
 function resolveAnnouncementText(items) {
@@ -279,7 +293,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
             <span>Paketler</span>
           </button>
           <button type="button" className={`bottom-nav-item ${isActiveRoute('/contact') ? 'active' : ''}`} onClick={() => navigateToPath('/contact')}>
-            <LayoutDashboard size={18} />
+            <Phone size={18} />
             <span>İletişim</span>
           </button>
         </nav>
@@ -441,6 +455,23 @@ function HeroCarousel({ slides, mobile = false }) {
 
 function Ticker({ items }) {
   const text = resolveAnnouncementText(items);
+  const clipRef = useRef(null);
+  const trackRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const clip = clipRef.current;
+    const track = trackRef.current;
+    if (!clip || !track) return;
+
+    const segment = track.querySelector('.ticker-segment');
+    if (!segment) return;
+
+    const distance = Math.ceil(segment.getBoundingClientRect().width);
+    const seconds = Math.max(14, distance / 42);
+    track.style.setProperty('--ticker-shift', `-${distance}px`);
+    track.style.setProperty('--ticker-duration', `${seconds}s`);
+  }, [text]);
+
   return (
     <div className="ticker" role="region" aria-label="Duyurular">
       <div className="ticker-badge">
@@ -448,11 +479,14 @@ function Ticker({ items }) {
         <Megaphone size={13} aria-hidden="true" />
         <span>Duyuru</span>
       </div>
-      <div className="ticker-track" aria-live="polite">
-        <div className="ticker-marquee">
-          <span className="ticker-message">{text}</span>
-          <span className="ticker-separator" aria-hidden="true" />
-          <span className="ticker-message" aria-hidden="true">{text}</span>
+      <div className="ticker-clip" ref={clipRef}>
+        <div className="ticker-fade ticker-fade-left" aria-hidden="true" />
+        <div className="ticker-fade ticker-fade-right" aria-hidden="true" />
+        <div className="ticker-marquee" ref={trackRef} aria-live="polite">
+          <span className="ticker-segment">{text}</span>
+          <span className="ticker-segment" aria-hidden="true">
+            {text}
+          </span>
         </div>
       </div>
     </div>
@@ -575,6 +609,110 @@ function PackagesPage({ state, setState }) {
             </article>
           ) : null}
         </>
+      }
+      backTo="/"
+    />
+  );
+}
+
+function ContactPage({ state, setState }) {
+  const content = state.settings.content || defaultContent;
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const [error, setError] = useState('');
+
+  const updateField = field => event => {
+    setForm(prev => ({ ...prev, [field]: event.target.value }));
+    if (error) setError('');
+  };
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    const firstName = form.firstName.trim();
+    const lastName = form.lastName.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+
+    if (!firstName || !lastName || !email || !phone) {
+      setError('Lütfen ad, soyad, e-posta ve telefon bilgilerini doldurun.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Geçerli bir e-posta adresi girin.');
+      return;
+    }
+
+    const whatsappUrl = buildMembershipWhatsAppUrl(content.whatsapp?.number, {
+      firstName,
+      lastName,
+      email,
+      phone
+    });
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <RouteChrome
+      state={state}
+      setState={setState}
+      title="İLETİŞİM"
+      subtitle="Bilgilerinizi bırakın, WhatsApp üzerinden üyelik için sizi yönlendirelim."
+      content={
+        <form className="contact-form" onSubmit={handleSubmit}>
+          <div className="contact-form-grid">
+            <label>
+              Ad
+              <input
+                type="text"
+                name="firstName"
+                autoComplete="given-name"
+                placeholder="Adınız"
+                value={form.firstName}
+                onChange={updateField('firstName')}
+              />
+            </label>
+            <label>
+              Soyad
+              <input
+                type="text"
+                name="lastName"
+                autoComplete="family-name"
+                placeholder="Soyadınız"
+                value={form.lastName}
+                onChange={updateField('lastName')}
+              />
+            </label>
+          </div>
+          <label>
+            E-posta
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder="ornek@mail.com"
+              value={form.email}
+              onChange={updateField('email')}
+            />
+          </label>
+          <label>
+            Telefon
+            <input
+              type="tel"
+              name="phone"
+              autoComplete="tel"
+              placeholder="05XX XXX XX XX"
+              value={form.phone}
+              onChange={updateField('phone')}
+            />
+          </label>
+          {error ? <p className="contact-form-error">{error}</p> : null}
+          <button className="primary-button contact-submit" type="submit">
+            ÜYE OL
+          </button>
+          <p className="contact-form-note">
+            Üye Ol butonuna bastığınızda bilgileriniz hazır mesaj olarak WhatsApp&apos;a yönlendirilir.
+          </p>
+        </form>
       }
       backTo="/"
     />
@@ -1079,6 +1217,10 @@ function MobileShell({ state, setState }) {
         <button type="button" className={`bottom-nav-item ${pathname === '/packages' ? 'active' : ''}`} onClick={() => navigateToPath('/packages')}>
           <Package size={18} />
           <span>Paketler</span>
+        </button>
+        <button type="button" className={`bottom-nav-item ${pathname === '/contact' ? 'active' : ''}`} onClick={() => navigateToPath('/contact')}>
+          <Phone size={18} />
+          <span>İletişim</span>
         </button>
       </nav>
 
@@ -1756,7 +1898,8 @@ function useSectionPath(pathname) {
   const isServices = pathname === '/services';
   const isPackages = pathname === '/packages';
   const isGallery = pathname === '/gallery';
-  return { isServices, isPackages, isGallery };
+  const isContact = pathname === '/contact';
+  return { isServices, isPackages, isGallery, isContact };
 }
 
 export default function App() {
@@ -1815,6 +1958,10 @@ export default function App() {
 
   if (sectionPath.isGallery) {
     return <GalleryPage state={state} setState={setState} />;
+  }
+
+  if (sectionPath.isContact) {
+    return <ContactPage state={state} setState={setState} />;
   }
 
   return isMobile ? <MobileShell state={state} setState={setState} /> : <DesktopShell state={state} setState={setState} />;
