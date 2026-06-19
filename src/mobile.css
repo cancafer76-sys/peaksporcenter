@@ -286,18 +286,20 @@ img { display: block; width: 100%; }
 }
 
 .ticker {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  align-items: center;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 6px 0;
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
-  box-shadow: none;
-  max-width: 100%;
-  margin: 0 auto;
+  background: rgba(5, 5, 5, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
 }
 
 .ticker-label {
@@ -316,7 +318,7 @@ img { display: block; width: 100%; }
   position: relative;
   background: transparent;
   border-radius: 0;
-  padding-left: 0;
+  padding: 8px 0;
   width: 100%;
 }
 
