@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Megaphone,
+  Menu,
   Package,
   LayoutGrid,
   Palette,
@@ -220,6 +221,7 @@ function SaveBar({ onSave, saving, message }) {
 
 export default function AdminDashboard({ state, setState, onClose }) {
   const [section, setSection] = useState('dashboard');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(state.user?.role === 'ADMIN' ? state.user : null);
   const [draft, setDraft] = useState(state.settings);
   const [analytics, setAnalytics] = useState(null);
@@ -229,9 +231,23 @@ export default function AdminDashboard({ state, setState, onClose }) {
   useEffect(() => { setDraft(state.settings); }, [state.settings]);
 
   useEffect(() => {
+    if (!user) return undefined;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [user]);
+
+  useEffect(() => {
     if (!user) return;
     api.analytics().then(setAnalytics).catch(() => setAnalytics(null));
   }, [user, section]);
+
+  const selectSection = id => {
+    setSection(id);
+    setMenuOpen(false);
+    setMessage('');
+  };
 
   const persist = async (key, value, label) => {
     setSaving(true);
@@ -291,13 +307,25 @@ export default function AdminDashboard({ state, setState, onClose }) {
   return (
     <div className="admin-overlay">
       <div className="admin-shell admin-shell-modern">
-        <aside className="admin-sidebar-v2">
+        {menuOpen ? (
+          <button
+            type="button"
+            className="admin-mobile-backdrop"
+            aria-label="Menüyü kapat"
+            onClick={() => setMenuOpen(false)}
+          />
+        ) : null}
+
+        <aside className={`admin-sidebar-v2 ${menuOpen ? 'is-open' : ''}`}>
           <div className="admin-brand-row">
             <div className="admin-brand-mark">▲</div>
             <div><strong>PEAKSPOR</strong><span>Admin</span></div>
+            <button type="button" className="admin-sidebar-close" aria-label="Menüyü kapat" onClick={() => setMenuOpen(false)}>
+              <X size={18} />
+            </button>
           </div>
           {NAV.map(item => (
-            <button key={item.id} type="button" className={`admin-nav-item ${section === item.id ? 'active' : ''}`} onClick={() => setSection(item.id)}>
+            <button key={item.id} type="button" className={`admin-nav-item ${section === item.id ? 'active' : ''}`} onClick={() => selectSection(item.id)}>
               <item.icon size={16} />{item.label}
             </button>
           ))}
@@ -308,11 +336,19 @@ export default function AdminDashboard({ state, setState, onClose }) {
 
         <div className="admin-main-v2">
           <header className="admin-topbar-v2 admin-topbar-minimal">
-            <strong>{TITLES[section]}</strong>
+            <div className="admin-topbar-left">
+              <button type="button" className="admin-icon-btn admin-menu-btn" aria-label="Menüyü aç" onClick={() => setMenuOpen(true)}>
+                <Menu size={18} />
+              </button>
+              <strong className="admin-topbar-title">{TITLES[section]}</strong>
+            </div>
             <div className="admin-topbar-actions">
-              <div className="admin-user-chip"><div className="admin-user-avatar">A</div><div><strong>{user.name || 'Admin'}</strong></div></div>
-              <button className="admin-icon-btn" type="button" onClick={async () => { await api.logout(); setUser(null); }}><LogOut size={16} /></button>
-              <button className="admin-icon-btn" type="button" onClick={onClose}><X size={16} /></button>
+              <div className="admin-user-chip">
+                <div className="admin-user-avatar">A</div>
+                <div className="admin-user-chip-text"><strong>{user.name || 'Admin'}</strong></div>
+              </div>
+              <button className="admin-icon-btn" type="button" aria-label="Çıkış yap" onClick={async () => { await api.logout(); setUser(null); }}><LogOut size={16} /></button>
+              <button className="admin-icon-btn" type="button" aria-label="Kapat" onClick={onClose}><X size={16} /></button>
             </div>
           </header>
 

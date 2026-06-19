@@ -195,10 +195,10 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
   );
 }
 
-function CoachCard({ coach, compact = false }) {
+function CoachCard({ coach, compact = false, mini = false }) {
   const data = normalizeTrainer(coach);
   return (
-    <article className={`coach-card ${compact ? 'coach-card-compact' : ''}`}>
+    <article className={`coach-card ${compact ? 'coach-card-compact' : ''} ${mini ? 'coach-card-mini' : ''}`}>
       <div className="coach-card-media">
         {data.image ? (
           <img src={data.image} alt={data.name} loading="lazy" />
@@ -209,24 +209,25 @@ function CoachCard({ coach, compact = false }) {
       <div className="coach-card-body">
         <strong>{data.name}</strong>
         <span className="coach-card-specialty">{data.specialty}</span>
-        <p>{data.experience}</p>
+        <p className={mini ? 'coach-card-mini-text' : undefined}>{data.experience}</p>
       </div>
     </article>
   );
 }
 
-function TestimonialsSection({ items, mobile = false }) {
+function TestimonialsSection({ items, compact = false }) {
   const list = normalizeTestimonials(items);
   if (!list.length) return null;
+  const visible = compact ? list.slice(0, 4) : list;
   return (
-    <section className="section-block" id="testimonials">
+    <section className={`section-block testimonials-section ${compact ? 'testimonials-section-compact' : ''}`} id="testimonials">
       <SectionHeader
         title="MÜŞTERİ YORUMLARI"
-        subtitle="Üyelerimizin deneyimlerinden ilham alın."
+        subtitle={compact ? 'Üyelerimizden kısa notlar.' : 'Üyelerimizin deneyimlerinden ilham alın.'}
       />
-      <div className={`testimonials-grid ${mobile ? 'testimonials-grid-mobile' : ''}`}>
-        {list.map(item => (
-          <article key={item.id} className="testimonial-card">
+      <div className={`testimonials-grid ${compact ? 'testimonials-grid-home' : ''}`}>
+        {visible.map(item => (
+          <article key={item.id} className={`testimonial-card ${compact ? 'testimonial-card-compact' : ''}`}>
             <div className="testimonial-stars" aria-label={`${item.rating} yıldız`}>
               {'★'.repeat(item.rating)}
               {'☆'.repeat(Math.max(0, 5 - item.rating))}
@@ -246,6 +247,20 @@ function TestimonialsSection({ items, mobile = false }) {
           </article>
         ))}
       </div>
+    </section>
+  );
+}
+
+function HomeFeatureBar({ mobile = false }) {
+  const items = ['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'];
+  return (
+    <section className={`feature-bar feature-bar-bottom ${mobile ? 'feature-bar-mobile' : ''}`}>
+      {items.map(item => (
+        <span key={item}>
+          <BadgeInfo size={mobile ? 12 : 14} />
+          {item}
+        </span>
+      ))}
     </section>
   );
 }
@@ -1742,6 +1757,7 @@ function DesktopShell({ state, setState }) {
   const heroSlides = bannerSlides.length
     ? bannerSlides
     : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const serviceLoop = homeServices.length > 1 ? [...homeServices, ...homeServices] : homeServices;
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
@@ -1800,11 +1816,13 @@ function DesktopShell({ state, setState }) {
             subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="service-row card-grid-4">
-            {homeServices.map(service => (
+          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail">
+            {serviceLoop.map((service, index) => (
               <ServiceCardButton
-                key={service.title}
+                key={`${service.title}-${index}`}
                 service={service}
+                compact
+                mini
                 selected={selectedService?.title === service.title}
                 onClick={() => {
                   trackSiteClick(`service:${service.title}`);
@@ -1813,6 +1831,7 @@ function DesktopShell({ state, setState }) {
               />
             ))}
           </div>
+          <ServiceAutoScroller />
 
           <SelectedServiceCard
             service={selectedService}
@@ -1828,17 +1847,19 @@ function DesktopShell({ state, setState }) {
             subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="package-grid card-grid-4">
+          <div className="home-scroll-rail mobile-horizontal-rail home-packages-rail">
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
                 item={item}
+                compact
                 selected={selectedPackage?.title === item.title}
                 onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
                 onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
           </div>
+          <PackageAutoScroller />
 
           <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </section>
@@ -1849,11 +1870,12 @@ function DesktopShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="coach-grid card-grid-4">
+          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail">
             {homeCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
             ))}
           </div>
+          <CoachAutoScroller />
         </section>
 
         <section className="section-block" id="gallery">
@@ -1862,12 +1884,13 @@ function DesktopShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="card-grid-4 card-grid-gallery">
+          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail">
             {homeGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}
                 item={item}
                 interactive
+                compact
                 onClick={() => {
                   trackSiteClick(`gallery-home:${normalizeGalleryItem(item).title}`);
                   setActiveGalleryItem(item);
@@ -1875,20 +1898,14 @@ function DesktopShell({ state, setState }) {
               />
             ))}
           </div>
+          <GalleryAutoScroller />
         </section>
 
         <StatsGrid stats={stats} />
 
-        <section className="feature-bar">
-          {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (
-            <span key={item}>
-              <BadgeInfo size={14} />
-              {item}
-            </span>
-          ))}
-        </section>
+        <TestimonialsSection items={testimonials} compact />
 
-        <TestimonialsSection items={testimonials} />
+        <HomeFeatureBar />
       </main>
 
       <AssistantChat
@@ -2019,21 +2036,17 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="service-carousel">
-            <div className="service-carousel-viewport">
-              <div className="service-carousel-track service-carousel-loop">
-                {serviceLoop.map((service, index) => (
-                  <ServiceCardButton
-                    key={`${service.title}-${index}`}
-                    service={service}
-                    compact
-                    mini
-                    selected={selectedService?.title === service.title}
-                    onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
-                  />
-                ))}
-              </div>
-            </div>
+          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail">
+            {serviceLoop.map((service, index) => (
+              <ServiceCardButton
+                key={`${service.title}-${index}`}
+                service={service}
+                compact
+                mini
+                selected={selectedService?.title === service.title}
+                onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
+              />
+            ))}
           </div>
           <ServiceAutoScroller />
           <SelectedServiceCard
@@ -2049,7 +2062,7 @@ function MobileShell({ state, setState }) {
             title="PAKETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="package-rail-mobile mobile-horizontal-rail package-auto-scroll">
+          <div className="home-scroll-rail mobile-horizontal-rail home-packages-rail">
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
@@ -2071,11 +2084,12 @@ function MobileShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="coach-grid card-grid-4">
+          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail">
             {homeCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
             ))}
           </div>
+          <CoachAutoScroller />
         </section>
 
         <section className="section-block" id="gallery">
@@ -2084,7 +2098,7 @@ function MobileShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="card-grid-4 card-grid-gallery card-grid-gallery-mobile">
+          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail">
             {homeGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}
@@ -2098,20 +2112,14 @@ function MobileShell({ state, setState }) {
               />
             ))}
           </div>
+          <GalleryAutoScroller />
         </section>
 
         <StatsGrid stats={stats} mobile />
 
-        <section className="feature-bar feature-bar-mobile">
-          {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (
-            <span key={item}>
-              <BadgeInfo size={14} />
-              {item}
-            </span>
-          ))}
-        </section>
+        <TestimonialsSection items={testimonials} compact />
 
-        <TestimonialsSection items={testimonials} mobile />
+        <HomeFeatureBar mobile />
       </main>
 
       <nav className="bottom-nav mobile-bottom-nav" aria-label="Alt menü">
@@ -2169,102 +2177,44 @@ function MobileShell({ state, setState }) {
   );
 }
 
-function ServiceAutoScroller() {
+function RailAutoScroller({ selector, speed = 0.35 }) {
   useEffect(() => {
-    const rail = document.querySelector('.service-carousel-viewport');
-    if (!rail) return undefined;
-    const firstCard = rail.querySelector('.service-card-mini');
-    if (!firstCard) return undefined;
-    const stepSize = firstCard.getBoundingClientRect().width + 12;
-    const halfWidth = rail.scrollWidth / 2;
-    const intervalId = window.setInterval(() => {
-      const nextLeft = rail.scrollLeft + stepSize;
-      if (nextLeft >= halfWidth - stepSize) {
-        rail.scrollTo({ left: 0, behavior: 'auto' });
-        return;
-      }
-      rail.scrollTo({ left: nextLeft, behavior: 'smooth' });
-    }, 1800);
-    return () => window.clearInterval(intervalId);
-  }, []);
-
-  return null;
-}
-
-function HeroAutoScroller() {
-  useEffect(() => {
-    const rail = document.querySelector('.hero-banner-track');
+    const rail = document.querySelector(selector);
     if (!rail) return undefined;
     let frameId;
-    let direction = 0.85;
-    let lastTick = 0;
-
-    const tick = timestamp => {
-      if (!lastTick) lastTick = timestamp;
-      const elapsed = timestamp - lastTick;
-      if (elapsed >= 16) {
-        const maxScroll = rail.scrollWidth - rail.clientWidth;
-        if (maxScroll > 0) {
-          rail.scrollLeft += direction;
-          if (rail.scrollLeft <= 0) direction = 0.85;
-          if (rail.scrollLeft >= maxScroll) direction = -0.85;
-        }
-        lastTick = timestamp;
-      }
-      frameId = requestAnimationFrame(tick);
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, []);
-
-  return null;
-}
-
-function PackageAutoScroller() {
-  useEffect(() => {
-    const rail = document.querySelector('.package-auto-scroll');
-    if (!rail) return undefined;
-    let frameId;
-    let direction = -0.4;
+    let direction = -Math.abs(speed);
 
     const tick = () => {
       const maxScroll = rail.scrollWidth - rail.clientWidth;
       if (maxScroll > 0) {
         rail.scrollLeft += direction;
-        if (rail.scrollLeft <= 0) direction = 0.4;
-        if (rail.scrollLeft >= maxScroll) direction = -0.4;
+        if (rail.scrollLeft <= 0) direction = Math.abs(speed);
+        if (rail.scrollLeft >= maxScroll) direction = -Math.abs(speed);
       }
       frameId = requestAnimationFrame(tick);
     };
 
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
-  }, []);
+  }, [selector, speed]);
 
   return null;
 }
 
-function GalleryAutoScroller() {
-  useEffect(() => {
-    const rail = document.querySelector('.gallery-carousel-viewport');
-    if (!rail) return undefined;
-    const firstCard = rail.querySelector('.gallery-card-mini');
-    if (!firstCard) return undefined;
-    const stepSize = firstCard.getBoundingClientRect().width + 12;
-    const halfWidth = rail.scrollWidth / 2;
-    const intervalId = window.setInterval(() => {
-      const nextLeft = rail.scrollLeft + stepSize;
-      if (nextLeft >= halfWidth - stepSize) {
-        rail.scrollTo({ left: 0, behavior: 'auto' });
-        return;
-      }
-      rail.scrollTo({ left: nextLeft, behavior: 'smooth' });
-    }, 1800);
-    return () => window.clearInterval(intervalId);
-  }, []);
+function ServiceAutoScroller() {
+  return <RailAutoScroller selector=".home-services-rail" speed={0.32} />;
+}
 
-  return null;
+function PackageAutoScroller() {
+  return <RailAutoScroller selector=".home-packages-rail" speed={0.28} />;
+}
+
+function CoachAutoScroller() {
+  return <RailAutoScroller selector=".home-coaches-rail" speed={0.3} />;
+}
+
+function GalleryAutoScroller() {
+  return <RailAutoScroller selector=".home-gallery-rail" speed={0.32} />;
 }
 
 function useSectionPath(pathname) {
