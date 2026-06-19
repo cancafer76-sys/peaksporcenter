@@ -303,132 +303,106 @@ img { display: block; width: 100%; }
 }
 
 .ticker {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  max-width: 100%;
   margin: 0;
-  padding: 12px 14px 12px 14px;
-  background: #050505;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 2px solid rgba(124, 255, 79, 0.25);
-  border-radius: 28px;
-  box-shadow:
-    0 0 6px rgba(124, 255, 79, 0.18),
-    0 8px 30px rgba(0, 0, 0, 0.35),
-    inset 0 0 18px rgba(124, 255, 79, 0.06);
+  padding: 8px 0;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
   touch-action: pan-y;
 }
-.ticker::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    radial-gradient(120% 60% at 80% 0%, rgba(124,255,79,0.08), transparent 60%),
-    radial-gradient(100% 50% at 0% 100%, rgba(34,197,94,0.08), transparent 60%);
-}
-.ticker-info {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-.ticker-badge {
+
+.ticker-label {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  background: #111;
+  gap: 6px;
+  font-size: 10px;
   color: var(--green);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(124, 255, 79, 0.35);
-  box-shadow: 0 0 12px rgba(124, 255, 79, 0.15);
+  font-weight: 800;
+  white-space: nowrap;
+  padding-left: 12px;
+  flex: 0 0 auto;
 }
-.ticker-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+
+.ticker-track {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  background: transparent;
+  border-radius: 0;
+  padding: 0 12px 0 0;
+  width: 100%;
   min-width: 0;
 }
-.ticker-headline {
-  color: #FFFFFF;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.01em;
-  line-height: 1.2;
+
+.ticker-marquee {
+  display: flex;
+  width: max-content;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+  animation: ticker 42s linear infinite;
+  will-change: transform;
+}
+
+.ticker-message {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
   white-space: nowrap;
 }
-.ticker-headline > span.green {
-  color: var(--green);
+
+.ticker-gap {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 10px;
+  line-height: 1;
+  user-select: none;
 }
-.ticker-desc {
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: nowrap;
-}
-.ticker-cta {
-  position: relative;
+
+.ticker-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(90deg, rgba(5, 5, 5, 1) 0%, rgba(5, 5, 5, 0) 100%);
+  pointer-events: none;
   z-index: 1;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(124, 255, 79, 0.12);
-  color: var(--green);
-  cursor: pointer;
-  box-shadow: 0 0 14px rgba(124, 255, 79, 0.18), inset 0 0 10px rgba(124, 255, 79, 0.08);
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
-.ticker-cta:hover {
-  transform: scale(1.06);
-  background: rgba(124, 255, 79, 0.22);
-  box-shadow: 0 0 22px rgba(124, 255, 79, 0.28), inset 0 0 14px rgba(124, 255, 79, 0.14);
+
+.ticker-track::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(270deg, rgba(5, 5, 5, 1) 0%, rgba(5, 5, 5, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
 }
-.ticker-cta svg {
-  filter: drop-shadow(0 0 3px rgba(124, 255, 79, 0.4));
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 @media (min-width: 768px) {
-  .ticker-headline {
-    font-size: 16px;
-  }
-  .ticker-desc {
-    font-size: 12px;
-  }
-  .ticker {
-    padding: 14px 16px;
-    gap: 16px;
-  }
-  .ticker-badge {
-    font-size: 11px;
-    padding: 7px 12px;
-  }
-  .ticker-cta {
-    width: 44px;
-    height: 44px;
-  }
-  .ticker-cta svg {
-    width: 22px;
-    height: 22px;
+  .ticker-message {
+    font-size: 13px;
   }
 }
 
