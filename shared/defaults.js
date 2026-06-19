@@ -49,14 +49,15 @@ export const defaultContent = {
     socialLinks: []
   },
   theme: {
-    primary: '#7CFF4F',
-    secondary: '#22C55E',
-    accentLight: '#d7ff8a',
-    background: '#050505',
-    surface: '#0D1117',
-    panel: '#111827',
+    monochrome: true,
+    primary: '#FFFFFF',
+    secondary: '#E5E5E5',
+    accentLight: '#FFFFFF',
+    background: '#000000',
+    surface: '#0A0A0A',
+    panel: '#141414',
     text: '#FFFFFF',
-    muted: '#9CA3AF'
+    muted: '#B3B3B3'
   },
   assistant: {
     welcome: 'PEAKSPOR AI Asistan',
@@ -64,28 +65,28 @@ export const defaultContent = {
     buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Ders Programları', 'Kampanyalar', 'WhatsApp Destek']
   },
   stats: [
-    { id: 'stat-1', label: 'Aktif Üye', value: '5.000+', icon: 'users', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true },
-    { id: 'stat-2', label: 'Uzman Eğitmen', value: '25', icon: 'coach', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true },
-    { id: 'stat-3', label: 'Grup Dersi', value: '100+', icon: 'class', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true },
-    { id: 'stat-4', label: 'Yıllık Deneyim', value: '10+', icon: 'years', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true }
+    { id: 'stat-1', label: 'Aktif Üye', value: '5.000+', icon: 'users', accentColor: '', bgColor: '', valueColor: '', labelColor: '', visible: true },
+    { id: 'stat-2', label: 'Uzman Eğitmen', value: '25', icon: 'coach', accentColor: '', bgColor: '', valueColor: '', labelColor: '', visible: true },
+    { id: 'stat-3', label: 'Grup Dersi', value: '100+', icon: 'class', accentColor: '', bgColor: '', valueColor: '', labelColor: '', visible: true },
+    { id: 'stat-4', label: 'Yıllık Deneyim', value: '10+', icon: 'years', accentColor: '', bgColor: '', valueColor: '', labelColor: '', visible: true }
   ],
   homeCards: {
     selectedService: {
       visible: true,
       label: 'Seçili Hizmet',
       buttonText: 'Paketleri Gör',
-      accent: '#7CFF4F',
-      background: '#111827',
-      text: '#FFFFFF',
-      muted: '#9CA3AF'
+      accent: '',
+      background: '',
+      text: '',
+      muted: ''
     },
     selectedPackage: {
       visible: true,
       label: 'Seçili Paket',
-      accent: '#7CFF4F',
-      background: '#111827',
-      text: '#FFFFFF',
-      muted: '#9CA3AF',
+      accent: '',
+      background: '',
+      text: '',
+      muted: '',
       showPrice: true
     },
     heroFloating: {
@@ -105,7 +106,7 @@ export const defaultServices = [
     category: 'Salon',
     description: 'Kardiyo, ağırlık ve fonksiyonel alanlarla tam kapsamlı çalışma.',
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80',
-    accent: '#7CFF4F',
+    accent: '',
     imageFit: 'cover',
     featured: true
   },
@@ -114,49 +115,49 @@ export const defaultServices = [
     category: 'Güç',
     description: 'Kas gelişimi ve performans hedefleri için profesyonel programlar.',
     image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80',
-    accent: '#22C55E'
+    accent: '',
   },
   {
     title: 'Crossfit',
     category: 'Performans',
     description: 'Yüksek yoğunluklu işlevsel antrenman deneyimi.',
     image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
-    accent: '#2563EB'
+    accent: '',
   },
   {
     title: 'Pilates',
     category: 'Denge',
     description: 'Core, esneklik ve vücut kontrolünü güçlendiren özel dersler.',
     image: 'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=1200&q=80',
-    accent: '#7C3AED'
+    accent: '',
   },
   {
     title: 'Yoga',
     category: 'Rahatlama',
     description: 'Nefes, esneklik ve zihinsel denge için modern yoga seansları.',
     image: 'https://images.unsplash.com/photo-1545389336-cf090694435e?auto=format&fit=crop&w=1200&q=80',
-    accent: '#22C55E'
+    accent: '',
   },
   {
     title: 'Kick Box',
     category: 'Savaşçı',
     description: 'Kondisyon ve teknik odaklı kick box dersleri.',
     image: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=1200&q=80',
-    accent: '#2563EB'
+    accent: '',
   },
   {
     title: 'Personal Trainer',
     category: 'VIP',
     description: 'Size özel planlama, takip ve birebir koçluk desteği.',
     image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80',
-    accent: '#7C3AED'
+    accent: '',
   },
   {
     title: 'Functional Training',
     category: 'Dinamik',
     description: 'Günlük performansı artıran modern fonksiyonel antrenmanlar.',
     image: 'https://images.unsplash.com/photo-1526401485004-2aa7f3b1b4da?auto=format&fit=crop&w=1200&q=80',
-    accent: '#22C55E'
+    accent: '',
   }
 ];
 
@@ -180,7 +181,7 @@ export const defaultPackages = [
     originalPrice: 699,
     discountLabel: '%30 İndirim',
     period: '/ay',
-    accent: '#7CFF4F',
+    accent: '',
     features: ['Fitness kullanımı', '1 grup dersi', 'Vücut analizi', 'Diyet listesi'],
     cta: 'Başla',
     featured: true
@@ -192,7 +193,7 @@ export const defaultPackages = [
     originalPrice: null,
     discountLabel: '',
     period: '/ay',
-    accent: '#2563EB',
+    accent: '',
     features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Personal antrenör'],
     cta: 'Seç',
     featured: true
@@ -204,7 +205,7 @@ export const defaultPackages = [
     originalPrice: null,
     discountLabel: 'Popüler',
     period: '/ay',
-    accent: '#7C3AED',
+    accent: '',
     features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Özel program'],
     cta: 'Premium Ol',
     featured: false
@@ -251,10 +252,10 @@ export const defaultGallery = [
 ];
 
 export const defaultAnnouncements = [
-  { message: 'Yaz Kampanyası %30 İndirim', color: '#7CFF4F', weight: '700' },
-  { message: 'Yeni Pilates Grubu Başlıyor', color: '#FFFFFF', weight: '600' },
-  { message: 'Bayramda 09:00 - 18:00 arası hizmetinizdeyiz.', color: '#FFFFFF', weight: '600' },
-  { message: 'Arkadaşını Getir %25 İndirim Kazan', color: '#7CFF4F', weight: '700' }
+  { message: 'Yaz Kampanyası %30 İndirim', color: '', weight: '700' },
+  { message: 'Yeni Pilates Grubu Başlıyor', color: '', weight: '600' },
+  { message: 'Bayramda 09:00 - 18:00 arası hizmetinizdeyiz.', color: '', weight: '600' },
+  { message: 'Arkadaşını Getir %25 İndirim Kazan', color: '', weight: '700' }
 ];
 
 export const defaultTrainers = [

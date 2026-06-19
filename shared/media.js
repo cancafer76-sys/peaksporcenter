@@ -43,10 +43,10 @@ export function normalizeStat(item = {}, index = 0) {
     label: item.label || 'Yeni Kart',
     value: item.value || '0',
     icon: item.icon || 'users',
-    accentColor: item.accentColor || '#7CFF4F',
-    bgColor: item.bgColor || '#111827',
-    valueColor: item.valueColor || '#FFFFFF',
-    labelColor: item.labelColor || '#9CA3AF',
+    accentColor: item.accentColor || '',
+    bgColor: item.bgColor || '',
+    valueColor: item.valueColor || '',
+    labelColor: item.labelColor || '',
     visible: item.visible !== false
   };
 }
@@ -66,18 +66,18 @@ export function normalizeHomeCards(cards = {}) {
       visible: cards.selectedService?.visible !== false,
       label: cards.selectedService?.label || 'Seçili Hizmet',
       buttonText: cards.selectedService?.buttonText || 'Paketleri Gör',
-      accent: cards.selectedService?.accent || '#7CFF4F',
-      background: cards.selectedService?.background || '#111827',
-      text: cards.selectedService?.text || '#FFFFFF',
-      muted: cards.selectedService?.muted || '#9CA3AF'
+      accent: cards.selectedService?.accent || '',
+      background: cards.selectedService?.background || '',
+      text: cards.selectedService?.text || '',
+      muted: cards.selectedService?.muted || ''
     },
     selectedPackage: {
       visible: cards.selectedPackage?.visible !== false,
       label: cards.selectedPackage?.label || 'Seçili Paket',
-      accent: cards.selectedPackage?.accent || '#7CFF4F',
-      background: cards.selectedPackage?.background || '#111827',
-      text: cards.selectedPackage?.text || '#FFFFFF',
-      muted: cards.selectedPackage?.muted || '#9CA3AF',
+      accent: cards.selectedPackage?.accent || '',
+      background: cards.selectedPackage?.background || '',
+      text: cards.selectedPackage?.text || '',
+      muted: cards.selectedPackage?.muted || '',
       showPrice: cards.selectedPackage?.showPrice !== false
     },
     heroFloating: {
@@ -93,7 +93,7 @@ export function normalizeService(item = {}) {
     category: item.category || 'Salon',
     description: item.description || '',
     image: item.image || '',
-    accent: item.accent || '#7CFF4F',
+    accent: item.accent || '',
     imageFit: item.imageFit === 'contain' ? 'contain' : 'cover',
     featured: Boolean(item.featured)
   };
@@ -107,7 +107,7 @@ export function normalizePackage(item = {}) {
     originalPrice: item.originalPrice ? Number(item.originalPrice) : null,
     discountLabel: item.discountLabel || '',
     period: item.period || '/ay',
-    accent: item.accent || '#7CFF4F',
+    accent: item.accent || '',
     features: Array.isArray(item.features) ? item.features : [],
     cta: item.cta || 'Seç',
     featured: Boolean(item.featured)

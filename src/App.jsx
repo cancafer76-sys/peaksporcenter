@@ -75,14 +75,28 @@ function getStatIcon(name) {
   return map[name] || Users;
 }
 
+function pickStyle(entries) {
+  const style = {};
+  entries.forEach(([key, value]) => {
+    if (value) style[key] = value;
+  });
+  return Object.keys(style).length ? style : undefined;
+}
+
 function StatCard({ item, compact = false }) {
   if (!item.visible) return null;
   const Icon = getStatIcon(item.icon);
   return (
-    <article className="stat-card" style={{ background: item.bgColor, borderColor: `${item.accentColor}40` }}>
-      <Icon size={compact ? 18 : 20} style={{ color: item.accentColor }} />
-      <strong style={{ color: item.valueColor }}>{item.value}</strong>
-      <span style={{ color: item.labelColor }}>{item.label}</span>
+    <article
+      className="stat-card"
+      style={pickStyle([
+        ['background', item.bgColor],
+        ['borderColor', item.accentColor ? `${item.accentColor}40` : '']
+      ])}
+    >
+      <Icon size={compact ? 18 : 20} style={pickStyle([['color', item.accentColor]])} />
+      <strong style={pickStyle([['color', item.valueColor]])}>{item.value}</strong>
+      <span style={pickStyle([['color', item.labelColor]])}>{item.label}</span>
     </article>
   );
 }
@@ -100,14 +114,28 @@ function StatsGrid({ stats, mobile = false }) {
 function SelectedServiceCard({ service, config, showButton = false, onButtonClick }) {
   if (!service || !config.visible) return null;
   return (
-    <article className="detail-card" style={{ background: config.background, borderColor: `${config.accent}40` }}>
+    <article
+      className="detail-card"
+      style={pickStyle([
+        ['background', config.background],
+        ['borderColor', config.accent ? `${config.accent}40` : '']
+      ])}
+    >
       <div>
-        <span style={{ color: config.muted }}>{config.label}</span>
-        <h3 style={{ color: config.text }}>{service.title}</h3>
-        <p style={{ color: config.muted }}>{service.description}</p>
+        <span style={pickStyle([['color', config.muted]])}>{config.label}</span>
+        <h3 style={pickStyle([['color', config.text]])}>{service.title}</h3>
+        <p style={pickStyle([['color', config.muted]])}>{service.description}</p>
       </div>
       {showButton ? (
-        <button className="detail-link" type="button" style={{ color: config.accent, borderColor: `${config.accent}44` }} onClick={onButtonClick}>
+        <button
+          className="detail-link"
+          type="button"
+          style={pickStyle([
+            ['color', config.accent],
+            ['borderColor', config.accent ? `${config.accent}44` : '']
+          ])}
+          onClick={onButtonClick}
+        >
           {config.buttonText} <ChevronRight size={16} />
         </button>
       ) : null}
@@ -119,16 +147,22 @@ function SelectedPackageCard({ pkg, config, compact = false }) {
   const data = normalizePackage(pkg);
   if (!data || !config.visible) return null;
   return (
-    <article className={`detail-card ${compact ? 'detail-card-compact' : ''}`} style={{ background: config.background, borderColor: `${config.accent}40` }}>
+    <article
+      className={`detail-card ${compact ? 'detail-card-compact' : ''}`}
+      style={pickStyle([
+        ['background', config.background],
+        ['borderColor', config.accent ? `${config.accent}40` : '']
+      ])}
+    >
       <div>
-        <span style={{ color: config.muted }}>{config.label}</span>
-        <h3 style={{ color: config.text }}>{data.title}</h3>
-        <p style={{ color: config.muted }}>{data.subtitle}</p>
+        <span style={pickStyle([['color', config.muted]])}>{config.label}</span>
+        <h3 style={pickStyle([['color', config.text]])}>{data.title}</h3>
+        <p style={pickStyle([['color', config.muted]])}>{data.subtitle}</p>
       </div>
       {config.showPrice ? (
-        <div className="detail-price" style={{ color: config.accent }}>
+        <div className="detail-price" style={pickStyle([['color', config.accent]])}>
           ₺{formatPrice(data.price)}
-          <small style={{ color: config.muted }}>{data.period}</small>
+          <small style={pickStyle([['color', config.muted]])}>{data.period}</small>
         </div>
       ) : null}
     </article>
@@ -142,9 +176,15 @@ function HeroFloatingStat({ stats, config }) {
   const resolved = item?.visible !== false ? item : getVisibleStats(stats)[0];
   if (!resolved) return null;
   return (
-    <div className="hero-floating-card" style={{ background: resolved.bgColor, borderColor: `${resolved.accentColor}44` }}>
-      <strong style={{ color: resolved.valueColor }}>{resolved.value}</strong>
-      <span style={{ color: resolved.labelColor }}>{resolved.label}</span>
+    <div
+      className="hero-floating-card"
+      style={pickStyle([
+        ['background', resolved.bgColor],
+        ['borderColor', resolved.accentColor ? `${resolved.accentColor}44` : '']
+      ])}
+    >
+      <strong style={pickStyle([['color', resolved.valueColor]])}>{resolved.value}</strong>
+      <span style={pickStyle([['color', resolved.labelColor]])}>{resolved.label}</span>
     </div>
   );
 }
@@ -1558,7 +1598,7 @@ function DesktopShell({ state, setState }) {
               <article
                 key={item.title}
                 className={`package-card theme-${index} ${selectedPackage?.title === item.title ? 'selected' : ''}`}
-                style={{ '--pkg-accent': pkg.accent }}
+                style={{ '--pkg-accent': pkg.accent || 'var(--accent)' }}
                 onClick={() => setState(prev => ({ ...prev, selectedPackage: item }))}
               >
                 {pkg.discountLabel ? <span className="package-discount-badge">{pkg.discountLabel}</span> : null}
@@ -1774,7 +1814,7 @@ function MobileShell({ state, setState }) {
               <article
                 key={item.title}
                 className={`package-card theme-${index} package-card-mobile ${selectedPackage?.title === item.title ? 'selected' : ''}`}
-                style={{ '--pkg-accent': pkg.accent }}
+                style={{ '--pkg-accent': pkg.accent || 'var(--accent)' }}
                 onClick={() => setState(prev => ({ ...prev, selectedPackage: item }))}
               >
                 {pkg.discountLabel ? <span className="package-discount-badge">{pkg.discountLabel}</span> : null}

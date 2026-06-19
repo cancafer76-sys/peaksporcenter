@@ -1,22 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --accent: #9eff2f;
-  --accent-2: #7fe024;
-  --accent-light: #d7ff8a;
-  --accent-rgb: 124, 255, 79;
-  --bg: #050608;
-  --panel: rgba(12, 15, 20, 0.82);
-  --panel-strong: rgba(10, 12, 16, 0.96);
-  --line: rgba(255, 255, 255, 0.08);
-  --text: #f5f7fa;
-  --muted: #a0a7b3;
+  --accent: #FFFFFF;
+  --accent-2: #E5E5E5;
+  --accent-light: #FFFFFF;
+  --accent-rgb: 255, 255, 255;
+  --bg: #000000;
+  --panel: #141414;
+  --panel-strong: #0A0A0A;
+  --line: rgba(255, 255, 255, 0.12);
+  --text: #FFFFFF;
+  --muted: #B3B3B3;
   --green: var(--accent);
   --green-strong: var(--accent-2);
-  --blue: #2e86ff;
-  --purple: #7a3cff;
-  --orange: #ffb542;
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --blue: #FFFFFF;
+  --purple: #E5E5E5;
+  --orange: #E5E5E5;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
 * { box-sizing: border-box; }

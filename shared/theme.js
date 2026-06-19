@@ -1,13 +1,13 @@
 import { defaultContent } from './defaults.js';
 
-function normalizeHex(hex) {
-  if (!hex) return '#7cff4f';
+function normalizeHex(hex, fallback = '#FFFFFF') {
+  if (!hex) return fallback;
   const value = String(hex).trim();
   if (/^#[0-9a-fA-F]{3}$/.test(value)) {
     return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`;
   }
   if (/^#[0-9a-fA-F]{6}$/.test(value)) return value;
-  return '#7cff4f';
+  return fallback;
 }
 
 export function hexToRgbString(hex) {
@@ -31,14 +31,53 @@ export function lightenHex(hex, ratio = 0.28) {
   return mixHex(hex, '#ffffff', ratio);
 }
 
+export const MONOCHROME_DARK = {
+  monochrome: true,
+  primary: '#FFFFFF',
+  secondary: '#E5E5E5',
+  accentLight: '#FFFFFF',
+  background: '#000000',
+  surface: '#0A0A0A',
+  panel: '#141414',
+  text: '#FFFFFF',
+  muted: '#B3B3B3'
+};
+
+export const MONOCHROME_LIGHT = {
+  monochrome: true,
+  primary: '#000000',
+  secondary: '#262626',
+  accentLight: '#404040',
+  background: '#FFFFFF',
+  surface: '#F5F5F5',
+  panel: '#FFFFFF',
+  text: '#000000',
+  muted: '#525252'
+};
+
 export const themePresets = {
+  monochrome: {
+    label: 'Siyah Beyaz (Varsayılan)',
+    theme: { ...MONOCHROME_DARK }
+  },
   green: {
-    label: 'Yeşil (Varsayılan)',
-    theme: { ...defaultContent.theme }
+    label: 'Yeşil Tema',
+    theme: {
+      monochrome: false,
+      primary: '#7CFF4F',
+      secondary: '#22C55E',
+      accentLight: '#d7ff8a',
+      background: '#050505',
+      surface: '#0D1117',
+      panel: '#111827',
+      text: '#FFFFFF',
+      muted: '#9CA3AF'
+    }
   },
   red: {
     label: 'Kırmızı Tema',
     theme: {
+      monochrome: false,
       primary: '#ef4444',
       secondary: '#dc2626',
       accentLight: '#fca5a5',
@@ -52,6 +91,7 @@ export const themePresets = {
   blue: {
     label: 'Mavi Tema',
     theme: {
+      monochrome: false,
       primary: '#3b82f6',
       secondary: '#2563eb',
       accentLight: '#93c5fd',
@@ -65,6 +105,7 @@ export const themePresets = {
   black: {
     label: 'Siyah + Kırmızı',
     theme: {
+      monochrome: false,
       primary: '#ef4444',
       secondary: '#b91c1c',
       accentLight: '#f87171',
@@ -73,19 +114,6 @@ export const themePresets = {
       panel: '#111111',
       text: '#f5f5f5',
       muted: '#737373'
-    }
-  },
-  gold: {
-    label: 'Altın Tema',
-    theme: {
-      primary: '#f59e0b',
-      secondary: '#d97706',
-      accentLight: '#fcd34d',
-      background: '#0b0b0b',
-      surface: '#141414',
-      panel: '#1c1c1c',
-      text: '#ffffff',
-      muted: '#a3a3a3'
     }
   }
 };
@@ -97,20 +125,43 @@ export function mergeTheme(theme = {}) {
   };
 }
 
+function resolveThemePalette(theme, darkMode) {
+  const merged = mergeTheme(theme);
+  const useMono = merged.monochrome !== false;
+
+  if (useMono) {
+    return darkMode ? { ...MONOCHROME_DARK } : { ...MONOCHROME_LIGHT };
+  }
+
+  if (darkMode) {
+    return merged;
+  }
+
+  return {
+    ...merged,
+    background: '#FFFFFF',
+    surface: '#F5F5F5',
+    panel: '#FFFFFF',
+    text: '#000000',
+    muted: '#525252'
+  };
+}
+
 export function applySiteTheme(themeInput = {}, options = {}) {
-  const theme = mergeTheme(themeInput);
   const { darkMode = true } = options;
+  const palette = resolveThemePalette(themeInput, darkMode);
   const root = document.documentElement;
   const body = document.body;
 
-  const primary = normalizeHex(theme.primary);
-  const secondary = normalizeHex(theme.secondary || theme.primary);
-  const accentLight = normalizeHex(theme.accentLight || lightenHex(primary));
-  const background = theme.background || (darkMode ? '#050505' : '#f5f7fa');
-  const surface = theme.surface || (darkMode ? '#0d1117' : '#ffffff');
-  const panel = theme.panel || (darkMode ? '#111827' : '#ffffff');
-  const text = theme.text || (darkMode ? '#ffffff' : '#0f172a');
-  const muted = theme.muted || (darkMode ? '#9ca3af' : '#64748b');
+  const primary = normalizeHex(palette.primary, darkMode ? '#FFFFFF' : '#000000');
+  const secondary = normalizeHex(palette.secondary || palette.primary, darkMode ? '#E5E5E5' : '#262626');
+  const accentLight = normalizeHex(palette.accentLight || primary);
+  const background = palette.background;
+  const surface = palette.surface;
+  const panel = palette.panel;
+  const text = palette.text;
+  const muted = palette.muted;
+  const line = darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)';
 
   root.style.setProperty('--accent', primary);
   root.style.setProperty('--green', primary);
@@ -126,13 +177,15 @@ export function applySiteTheme(themeInput = {}, options = {}) {
   root.style.setProperty('--panel-2', mixHex(panel, background, 0.35));
   root.style.setProperty('--text', text);
   root.style.setProperty('--muted', muted);
-  root.style.setProperty('--line', darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)');
+  root.style.setProperty('--line', line);
   root.style.setProperty('--animation-accent', primary);
   root.style.setProperty('--animation-accent-light', accentLight);
+  root.style.setProperty('--shadow', darkMode ? '0 20px 60px rgba(0, 0, 0, 0.45)' : '0 20px 40px rgba(0, 0, 0, 0.08)');
 
   root.style.background = background;
   body.style.background = background;
   body.style.color = text;
 
   root.classList.toggle('theme-light', !darkMode);
+  document.querySelector('.app-shell')?.classList.toggle('light', !darkMode);
 }

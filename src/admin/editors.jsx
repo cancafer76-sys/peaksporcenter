@@ -31,7 +31,7 @@ function ColorField({ label, value, onChange }) {
   return (
     <label className="admin-field admin-color-field">
       {label}
-      <input type="color" value={value || '#7CFF4F'} onChange={e => onChange(e.target.value)} />
+      <input type="color" value={value || '#FFFFFF'} onChange={e => onChange(e.target.value)} />
     </label>
   );
 }
@@ -350,7 +350,7 @@ export function AnnouncementsEditor({ items, onChange }) {
       {list.map((item, index) => (
         <div key={item.id || index} className="admin-form-card admin-announce-row">
           <label className="admin-field">Duyuru #{index + 1}<input value={item.message || ''} onChange={e => update(index, { message: e.target.value })} /></label>
-          <ColorField label="Renk" value={item.color || '#7CFF4F'} onChange={value => update(index, { color: value })} />
+          <ColorField label="Renk" value={item.color || '#FFFFFF'} onChange={value => update(index, { color: value })} />
           <label className="admin-field">Kalınlık
             <select value={item.weight || '600'} onChange={e => update(index, { weight: e.target.value })}>
               <option value="500">Normal</option>
