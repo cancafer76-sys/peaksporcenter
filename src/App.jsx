@@ -879,7 +879,27 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
               />
               <Brand compact={mobile} />
             </div>
-            {!mobile ? <div className="page-heading-inline"><span>{title}</span></div> : null}
+            {!mobile ? (
+              <nav className="desktop-nav" aria-label="Ana menü">
+                {desktopNav.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`desktop-nav-link ${item.route && isActiveRoute(item.route) ? 'active' : ''}`}
+                    onClick={() => {
+                      if (item.route) {
+                        navigateToPath(item.route);
+                        return;
+                      }
+                      navigateToPath('/');
+                      window.setTimeout(() => scrollToSection(item.id), 150);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+            ) : null}
             <HeaderActions
               darkMode={state.darkMode}
               onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
@@ -944,7 +964,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
       />
 
       <AppDrawer
-        open={state.drawerOpen && mobile}
+        open={state.drawerOpen}
         onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
         pathname={pathname}
       />
@@ -1687,7 +1707,18 @@ function DesktopShell({ state, setState }) {
           <Brand compact />
           <div className="drawer-links">
             {desktopNav.map(item => (
-              <button key={item.id} type="button" onClick={() => scrollToSection(item.id)}>
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setState(prev => ({ ...prev, drawerOpen: false }));
+                  if (item.route) navigateToPath(item.route);
+                  else {
+                    navigateToPath('/');
+                    window.setTimeout(() => scrollToSection(item.id), 150);
+                  }
+                }}
+              >
                 {item.label}
               </button>
             ))}

@@ -742,6 +742,22 @@ img { display: block; width: 100%; }
   color: rgba(255, 255, 255, 0.75);
   padding: 6px 0;
   font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.desktop-nav-link.active,
+.desktop-nav-link:hover {
+  color: var(--accent);
+}
+
+.app-shell.light .desktop-nav-link {
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.app-shell.light .desktop-nav-link.active,
+.app-shell.light .desktop-nav-link:hover {
+  color: var(--accent);
 }
 
 .desktop-header .icon-button:first-child,
@@ -1609,14 +1625,6 @@ img { display: block; width: 100%; }
   font-size: 9px;
 }
 
-.mobile-horizontal-rail .package-card-mobile {
-  flex: 0 0 42%;
-  min-width: 42%;
-  min-height: 118px;
-  aspect-ratio: 1 / 1;
-  border-radius: 14px;
-}
-
 .mobile-horizontal-rail .service-card-body {
   left: 8px;
   right: 8px;
@@ -1635,18 +1643,93 @@ img { display: block; width: 100%; }
   flex-direction: column;
 }
 
+.mobile-horizontal-rail .package-card-mobile {
+  flex: 0 0 min(210px, 68vw);
+  min-width: min(210px, 68vw);
+  min-height: 132px;
+  padding: 12px;
+  border-radius: 14px;
+  aspect-ratio: auto;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
 .mobile-horizontal-rail .package-card-mobile ul {
-  margin: 12px 0 12px;
-  gap: 6px;
+  margin: 8px 0 10px;
+  gap: 4px;
 }
 
 .mobile-horizontal-rail .package-card-mobile li {
   font-size: 10px;
 }
 
-.mobile-horizontal-rail .package-card-mobile {
-  flex: 0 0 min(280px, 78vw);
-  min-width: min(280px, 78vw);
+.package-card-mobile {
+  min-height: 148px;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.package-card-mobile .package-top h3 {
+  font-size: 14px;
+}
+
+.package-card-mobile .package-top span {
+  font-size: 10px;
+}
+
+.package-card-mobile .package-price {
+  font-size: 15px;
+}
+
+.package-card-mobile ul {
+  margin: 8px 0 10px;
+  gap: 4px;
+}
+
+.package-card-mobile li {
+  font-size: 10px;
+}
+
+.package-card-mobile .package-cta {
+  min-height: 34px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.package-card-mobile .package-shape {
+  width: 100px;
+  height: 100px;
+  opacity: 0.22;
+}
+
+@media (max-width: 980px) {
+  .card-grid-4 .package-card-mobile,
+  .route-card-grid .package-card {
+    min-height: 140px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .card-grid-4 .package-card .package-top h3,
+  .route-card-grid .package-card .package-top h3 {
+    font-size: 14px;
+  }
+
+  .card-grid-4 .package-card .package-price,
+  .route-card-grid .package-card .package-price {
+    font-size: 15px;
+  }
+
+  .card-grid-4 .package-card li,
+  .route-card-grid .package-card li {
+    font-size: 10px;
+  }
+
+  .card-grid-4 .package-card .package-cta,
+  .route-card-grid .package-card .package-cta {
+    min-height: 34px;
+    font-size: 10px;
+  }
 }
 
 .service-card {
@@ -1703,16 +1786,16 @@ img { display: block; width: 100%; }
 }
 
 .service-card-body span {
-  color: var(--service-muted-color, rgba(255, 255, 255, 0.68));
+  color: var(--service-muted-color, rgba(255, 255, 255, 0.72));
   font-size: 11px;
 }
 
-.app-shell.light .service-card-body strong {
-  color: var(--service-title-color, var(--text));
+.app-shell.light .service-card .service-card-body strong {
+  color: var(--service-title-color, #fff);
 }
 
-.app-shell.light .service-card-body span {
-  color: var(--service-muted-color, var(--muted));
+.app-shell.light .service-card .service-card-body span {
+  color: var(--service-muted-color, rgba(255, 255, 255, 0.72));
 }
 
 .service-card.selected,
@@ -2256,7 +2339,40 @@ img { display: block; width: 100%; }
 
 .gallery-card-body strong {
   font-size: 14px;
-  color: var(--text);
+  color: #fff;
+}
+
+.app-shell.light .gallery-card .gallery-card-body strong {
+  color: #fff;
+}
+
+.app-shell.light .gallery-card .gallery-card-body span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.app-shell.light .package-card {
+  background: var(--pkg-bg, #111111);
+  border-color: var(--pkg-border, rgba(255, 255, 255, 0.12));
+}
+
+.app-shell.light .package-card .package-top h3 {
+  color: var(--pkg-title-color, #fff);
+}
+
+.app-shell.light .package-card .package-top span {
+  color: var(--pkg-muted-color, rgba(255, 255, 255, 0.65));
+}
+
+.app-shell.light .package-card li {
+  color: var(--pkg-text-color, rgba(255, 255, 255, 0.88));
+}
+
+.app-shell.light .package-card .package-price {
+  color: var(--pkg-price-color, #fff);
+}
+
+.app-shell.light .package-card .package-price small {
+  color: var(--pkg-muted-color, rgba(255, 255, 255, 0.6));
 }
 
 .route-content-mobile {
