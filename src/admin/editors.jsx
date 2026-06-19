@@ -5,6 +5,7 @@ import {
   getYoutubeThumbnail,
   normalizeGalleryItem,
   normalizePackage,
+  normalizePackageFeature,
   normalizeService,
   normalizeAnnouncement,
   normalizeStat,
@@ -62,27 +63,71 @@ export function ServicePreviewCard({ service }) {
 export function PackagePreviewCard({ pkg }) {
   const data = normalizePackage(pkg);
   return (
-    <article className="preview-package-card" style={packageCardVars(data)}>
-      {data.discountLabel ? <span className="preview-discount">{data.discountLabel}</span> : null}
-      {data.featured ? <span className="preview-featured">Ana Sayfa</span> : null}
-      <div className="preview-package-top">
-        <div>
-          <small>{data.subtitle}</small>
-          <strong>{data.title}</strong>
-        </div>
-        <div className="preview-package-price">
-          {data.originalPrice ? <s>₺{data.originalPrice}</s> : null}
-          <span>₺{data.price}</span>
-          <em>{data.period}</em>
+    <article className="preview-package-card package-card-luxury" style={packageCardVars(data)}>
+      {data.discountLabel ? <span className="package-badge">{data.discountLabel}</span> : null}
+      <div className="package-card-head">
+        <h3 className="package-card-title">{data.title}</h3>
+        {data.subtitle ? <p className="package-card-subtitle">{data.subtitle}</p> : null}
+      </div>
+      <div className="package-card-price-block">
+        {data.originalPrice ? <s className="package-old-price">₺{data.originalPrice}</s> : null}
+        <div className="package-price">
+          <span className="package-price-value">₺{data.price}</span>
+          <small className="package-price-period">{data.period}</small>
         </div>
       </div>
-      <ul>
-        {data.features.slice(0, 4).map(feature => (
-          <li key={feature}>{feature}</li>
+      <ul className="package-feature-list">
+        {data.features.slice(0, 6).map((feature, index) => (
+          <li key={`${feature.text}-${index}`} className={feature.included ? 'is-included' : 'is-excluded'}>
+            <span className="package-feature-icon" aria-hidden="true">{feature.included ? '✓' : '✗'}</span>
+            <span className="package-feature-text">{feature.text}</span>
+          </li>
         ))}
       </ul>
-      <button type="button" className="preview-package-cta">{data.cta}</button>
+      <button type="button" className="package-cta package-cta-luxury preview-package-cta">{data.cta}</button>
     </article>
+  );
+}
+
+function PackageFeaturesEditor({ features, onChange }) {
+  const items = (features || []).map(normalizePackageFeature).filter(Boolean);
+
+  const updateFeature = (index, patch) => {
+    const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
+    onChange(next);
+  };
+
+  const addFeature = () => onChange([...items, { text: 'Yeni madde', included: true }]);
+
+  const removeFeature = index => onChange(items.filter((_, i) => i !== index));
+
+  return (
+    <div className="admin-feature-list">
+      <span className="admin-feature-list-label">Özellik maddeleri (✓ dahil / ✗ hariç)</span>
+      {items.map((feature, index) => (
+        <div key={`${feature.text}-${index}`} className="admin-feature-row">
+          <button
+            type="button"
+            className={`admin-feature-toggle ${feature.included ? 'is-included' : 'is-excluded'}`}
+            onClick={() => updateFeature(index, { included: !feature.included })}
+            title={feature.included ? 'Dahil — tıkla hariç yap' : 'Hariç — tıkla dahil yap'}
+          >
+            {feature.included ? '✓' : '✗'}
+          </button>
+          <input
+            value={feature.text}
+            onChange={e => updateFeature(index, { text: e.target.value })}
+            placeholder="Özellik maddesi"
+          />
+          <button type="button" className="admin-feature-remove" onClick={() => removeFeature(index)} aria-label="Maddeyi sil">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button type="button" className="admin-mini-btn" onClick={addFeature}>
+        <Plus size={14} /> Madde Ekle
+      </button>
+    </div>
   );
 }
 
@@ -180,7 +225,7 @@ export function PackagesEditor({ items, onChange }) {
     onChange(next);
   };
 
-  const updateFeatures = text => update('features', text.split('\n').map(v => v.trim()).filter(Boolean));
+  const updateFeatures = next => update('features', next);
 
   return (
     <div className="admin-editor-layout">
@@ -215,8 +260,8 @@ export function PackagesEditor({ items, onChange }) {
             <ColorField label="Arka Plan" value={current.bgColor} onChange={v => update('bgColor', v)} />
             <ColorField label="Kenarlık Rengi" value={current.borderColor} onChange={v => update('borderColor', v)} />
             <label className="admin-field">Buton Metni<input value={current.cta} onChange={e => update('cta', e.target.value)} /></label>
-            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Özellik Listesi (her satır bir madde)<textarea rows={5} value={(current.features || []).join('\n')} onChange={e => updateFeatures(e.target.value)} /></label>
           </div>
+          <PackageFeaturesEditor features={current.features} onChange={updateFeatures} />
           <Toggle checked={current.featured} onChange={v => update('featured', v)} label="Ana sayfada öne çıkar" />
           <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
         </div>

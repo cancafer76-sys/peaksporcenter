@@ -175,11 +175,11 @@ export const defaultAnalytics = {
 
 export const defaultPackages = [
   {
-    title: 'Starter',
+    title: 'STARTER',
     subtitle: 'Yeni başlayanlar için',
     price: 499,
     originalPrice: 699,
-    discountLabel: '%30 İndirim',
+    discountLabel: 'İndirim',
     period: '/ay',
     accent: '',
     priceColor: '',
@@ -188,32 +188,20 @@ export const defaultPackages = [
     mutedColor: '',
     bgColor: '',
     borderColor: '',
-    features: ['Fitness kullanımı', '1 grup dersi', 'Vücut analizi', 'Diyet listesi'],
+    features: [
+      { text: 'Fitness kullanımı', included: true },
+      { text: '1 grup dersi', included: true },
+      { text: 'Vücut analizi', included: true },
+      { text: 'Diyet listesi', included: true },
+      { text: 'Personal antrenör', included: false }
+    ],
     cta: 'Başla',
     featured: true
   },
   {
-    title: 'Professional',
+    title: 'PRO PLAN',
     subtitle: 'Daha yoğun ilerleme',
     price: 799,
-    originalPrice: null,
-    discountLabel: '',
-    period: '/ay',
-    accent: '',
-    priceColor: '',
-    textColor: '',
-    titleColor: '',
-    mutedColor: '',
-    bgColor: '',
-    borderColor: '',
-    features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Personal antrenör'],
-    cta: 'Seç',
-    featured: true
-  },
-  {
-    title: 'Premium',
-    subtitle: 'VIP deneyim',
-    price: 1199,
     originalPrice: null,
     discountLabel: 'Popüler',
     period: '/ay',
@@ -224,12 +212,42 @@ export const defaultPackages = [
     mutedColor: '',
     bgColor: '',
     borderColor: '',
-    features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Özel program'],
+    features: [
+      { text: 'Sınırsız salon erişimi', included: true },
+      { text: 'Grup dersleri', included: true },
+      { text: 'Kardiyo alanı', included: true },
+      { text: 'Soyunma odası', included: true },
+      { text: 'Ücretsiz otopark', included: true }
+    ],
+    cta: 'Seç',
+    featured: true
+  },
+  {
+    title: 'PREMIUM',
+    subtitle: 'VIP deneyim',
+    price: 1199,
+    originalPrice: null,
+    discountLabel: '',
+    period: '/ay',
+    accent: '',
+    priceColor: '',
+    textColor: '',
+    titleColor: '',
+    mutedColor: '',
+    bgColor: '',
+    borderColor: '',
+    features: [
+      { text: 'Sınırsız salon erişimi', included: true },
+      { text: 'Sınırsız grup dersi', included: true },
+      { text: 'Vücut analizi', included: true },
+      { text: 'Beslenme planı', included: true },
+      { text: 'Personal antrenör', included: true }
+    ],
     cta: 'Premium Ol',
     featured: true
   },
   {
-    title: 'Elite',
+    title: 'ELITE',
     subtitle: 'Tam kapsamlı paket',
     price: 1499,
     originalPrice: null,
@@ -242,7 +260,13 @@ export const defaultPackages = [
     mutedColor: '',
     bgColor: '',
     borderColor: '',
-    features: ['Sınırsız salon', 'PT desteği', 'Beslenme planı', 'Sauna & buhar'],
+    features: [
+      { text: 'Sınırsız salon', included: true },
+      { text: 'PT desteği', included: true },
+      { text: 'Beslenme planı', included: true },
+      { text: 'Sauna & buhar', included: true },
+      { text: 'VIP alan', included: true }
+    ],
     cta: 'Elite Ol',
     featured: true
   }

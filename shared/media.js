@@ -135,6 +135,23 @@ export function normalizeService(item = {}) {
   };
 }
 
+export function normalizePackageFeature(feature) {
+  if (typeof feature === 'string') {
+    const text = feature.trim();
+    if (!text) return null;
+    return { text, included: true };
+  }
+  if (feature && typeof feature === 'object') {
+    const text = String(feature.text || feature.label || '').trim();
+    if (!text) return null;
+    return {
+      text,
+      included: feature.included !== false
+    };
+  }
+  return null;
+}
+
 export function normalizePackage(item = {}) {
   return {
     title: item.title || 'Yeni Paket',
@@ -150,7 +167,9 @@ export function normalizePackage(item = {}) {
     mutedColor: item.mutedColor || '',
     bgColor: item.bgColor || '',
     borderColor: item.borderColor || '',
-    features: Array.isArray(item.features) ? item.features : [],
+    features: (Array.isArray(item.features) ? item.features : [])
+      .map(normalizePackageFeature)
+      .filter(Boolean),
     cta: item.cta || 'Seç',
     featured: Boolean(item.featured)
   };

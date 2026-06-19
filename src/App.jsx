@@ -85,39 +85,49 @@ function pickStyle(entries) {
 
 function PackageCard({ item, selected = false, compact = false, showCta = true, onSelect, onCtaClick }) {
   const pkg = normalizePackage(item);
+  const visibleFeatures = compact ? pkg.features.slice(0, 5) : pkg.features;
+
   return (
     <article
-      className={`package-card ${compact ? 'package-card-mobile' : ''} ${selected ? 'selected' : ''}`}
+      className={`package-card package-card-luxury ${compact ? 'package-card-mobile' : ''} ${selected ? 'selected' : ''}`}
       style={packageCardVars(pkg)}
       onClick={onSelect}
       onKeyDown={onSelect ? event => { if (event.key === 'Enter') onSelect(event); } : undefined}
       role={onSelect ? 'button' : undefined}
       tabIndex={onSelect ? 0 : undefined}
     >
-      {pkg.discountLabel ? <span className="package-discount-badge">{pkg.discountLabel}</span> : null}
-      <div className="package-shape" aria-hidden="true" />
-      <div className="package-top">
-        <div>
-          <span>{pkg.subtitle}</span>
-          <h3>{pkg.title}</h3>
-        </div>
+      {pkg.discountLabel ? <span className="package-badge">{pkg.discountLabel}</span> : null}
+
+      <div className="package-card-head">
+        <h3 className="package-card-title">{pkg.title}</h3>
+        {pkg.subtitle ? <p className="package-card-subtitle">{pkg.subtitle}</p> : null}
+      </div>
+
+      <div className="package-card-price-block">
+        {pkg.originalPrice ? <s className="package-old-price">₺{formatPrice(pkg.originalPrice)}</s> : null}
         <div className="package-price">
-          {pkg.originalPrice ? <s className="package-old-price">₺{formatPrice(pkg.originalPrice)}</s> : null}
-          ₺{formatPrice(pkg.price)}
-          <small>{pkg.period}</small>
+          <span className="package-price-value">₺{formatPrice(pkg.price)}</span>
+          <small className="package-price-period">{pkg.period}</small>
         </div>
       </div>
-      <ul>
-        {pkg.features.slice(0, 4).map(feature => (
-          <li key={feature}>
-            <span className="check">✓</span>
-            {feature}
+
+      <ul className="package-feature-list">
+        {visibleFeatures.map((feature, index) => (
+          <li
+            key={`${feature.text}-${index}`}
+            className={feature.included ? 'is-included' : 'is-excluded'}
+          >
+            <span className="package-feature-icon" aria-hidden="true">
+              {feature.included ? '✓' : '✗'}
+            </span>
+            <span className="package-feature-text">{feature.text}</span>
           </li>
         ))}
       </ul>
+
       {showCta ? (
         <button
-          className="package-cta"
+          className="package-cta package-cta-luxury"
           type="button"
           onClick={event => {
             event.stopPropagation();
