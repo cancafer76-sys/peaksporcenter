@@ -11,7 +11,7 @@ import {
   defaultPosts,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, getYoutubeEmbedUrl, groupGalleryByCategory, normalizeGalleryItem, normalizePackage, normalizeService } from '../shared/media.js';
+import { featuredOrAll, getYoutubeEmbedUrl, getYoutubeThumbnail, groupGalleryByCategory, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizePackage, normalizeService } from '../shared/media.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
 import {
@@ -211,52 +211,88 @@ function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone 
   return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 }
 
-function resolveAnnouncementText(items) {
-  const list = Array.isArray(items) && items.length ? items : defaultAnnouncements;
-  return list
-    .slice(0, 4)
-    .map(item => (typeof item === 'string' ? item : item.message || ''))
-    .filter(Boolean)
-    .join(' • ');
-}
-
 const LOGO_CIRCLE = '/logo-circle.png';
 const LOGO_ALT = 'PEAK SPOR CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
   return (
     <span className={`circle-logo circle-logo-${size} ${className}`.trim()}>
+      <span className="circle-logo-glow" aria-hidden="true" />
+      <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" draggable="false" />
       <span className="circle-logo-orbit" aria-hidden="true" />
-      <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" />
     </span>
   );
 }
 
-function Brand({ compact = false }) {
+function Brand({ compact = false, logoOnly = false }) {
   return (
-    <div className={`brand brand-circle ${compact ? 'brand-compact' : ''}`} aria-label="PEAK SPOR CENTER">
+    <div className={`brand brand-circle ${compact ? 'brand-compact' : ''} ${logoOnly ? 'brand-logo-only' : ''}`} aria-label="PEAK SPOR CENTER">
       <CircleLogo size={compact ? 'md' : 'lg'} />
-      <span className="brand-caption">
-        <strong>
-          <span className="brand-caption-peak">PEAK</span>
-          <span className="brand-caption-spor"> SPOR</span>
-        </strong>
-        <small className="brand-center" aria-label="CENTER">
-          <span className="brand-center-track">
-            {'CENTER'.split('').map((letter, index) => (
-              <span key={`${letter}-${index}`} className="brand-center-letter" style={{ '--i': index }}>
-                {letter}
-              </span>
-            ))}
-          </span>
-        </small>
-      </span>
+      {logoOnly ? null : (
+        <span className="brand-caption">
+          <strong>
+            <span className="brand-caption-peak">PEAK</span>
+            <span className="brand-caption-spor"> SPOR</span>
+          </strong>
+          <small className="brand-center" aria-label="CENTER">
+            <span className="brand-center-track">
+              {'CENTER'.split('').map((letter, index) => (
+                <span key={`${letter}-${index}`} className="brand-center-letter" style={{ '--i': index }}>
+                  {letter}
+                </span>
+              ))}
+            </span>
+          </small>
+        </span>
+      )}
     </div>
   );
 }
 
 function AssistantLogo({ size = 'md' }) {
-  return <CircleLogo size={size === 'sm' ? 'sm' : 'md'} className="assistant-logo-mark" />;
+  const mapped = { xs: 'xs', sm: 'sm', md: 'md', lg: 'lg', fab: 'fab' }[size] || 'md';
+  return <CircleLogo size={mapped} className="assistant-logo-mark" />;
+}
+
+function MediaLightbox({ item, onClose }) {
+  const data = item ? normalizeGalleryItem(item) : null;
+
+  useEffect(() => {
+    if (!data) return undefined;
+    const onKey = event => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [data, onClose]);
+
+  if (!data) return null;
+
+  return (
+    <div className="media-lightbox" role="dialog" aria-modal="true" aria-label={data.title} onClick={onClose}>
+      <button type="button" className="media-lightbox-close" onClick={onClose} aria-label="Kapat">
+        <X size={22} />
+        <span>Kapat</span>
+      </button>
+      <div className="media-lightbox-body" onClick={event => event.stopPropagation()}>
+        {data.type === 'video' && data.videoUrl ? (
+          <div className="media-lightbox-frame">
+            <iframe src={getYoutubeEmbedUrl(data.videoUrl)} title={data.title} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+          </div>
+        ) : (
+          <img src={data.image} alt={data.title} className="media-lightbox-image" />
+        )}
+        <div className="media-lightbox-caption">
+          <span>{data.category}</span>
+          <strong>{data.title}</strong>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function openWhatsAppChat(number, text) {
@@ -294,9 +330,9 @@ function generateAssistantReply(text, { packages, announcements }) {
     };
   }
   if (/kampanya|indirim|fırsat|firsat|promosyon/.test(q)) {
-    const notes = (announcements || defaultAnnouncements)
+    const notes = normalizeAnnouncements(announcements?.length ? announcements : defaultAnnouncements)
       .slice(0, 3)
-      .map(item => `• ${typeof item === 'string' ? item : item.message}`)
+      .map(item => `• ${item.message}`)
       .join('\n');
     return {
       text: `Güncel fırsatlar:\n${notes}\n\nKampanya detayları için WhatsApp destek hattımızı kullanabilirsiniz.`
@@ -394,11 +430,10 @@ function AssistantChat({ mobile, content, packages, announcements }) {
           <button type="button" className="assistant-teaser-close" onClick={dismissTeaser} aria-label="Kapat">
             <X size={12} />
           </button>
+          <div className="assistant-teaser-logo">
+            <AssistantLogo size="lg" />
+          </div>
           <div className="assistant-teaser-top">
-            <span className="assistant-teaser-avatar" aria-hidden="true">
-              <AssistantLogo size="md" />
-              <span className="assistant-online-dot" />
-            </span>
             <div>
               <strong>{assistant.welcome}</strong>
               <span className="assistant-teaser-status">Çevrimiçi • AI Destek</span>
@@ -563,7 +598,16 @@ function AppDrawer({ open, onClose, pathname }) {
       <button type="button" className="drawer-backdrop drawer-backdrop-visible" aria-label="Menüyü kapat" onClick={onClose} />
       <aside className="side-drawer mobile-drawer is-open" aria-label="Ana menü">
         <div className="drawer-head">
-          <Brand compact />
+          <div className="drawer-brand-block">
+            <CircleLogo size="lg" className="drawer-logo-mark" />
+            <div className="drawer-brand-text">
+              <strong>
+                <span className="brand-caption-peak">PEAK</span>
+                <span className="brand-caption-spor"> SPOR</span>
+              </strong>
+              <span>CENTER</span>
+            </div>
+          </div>
           <button type="button" className="drawer-close" onClick={onClose} aria-label="Kapat">
             <X size={18} />
           </button>
@@ -827,9 +871,26 @@ function HeroCarousel({ slides, mobile = false }) {
 }
 
 function Ticker({ items }) {
-  const text = resolveAnnouncementText(items);
+  const announcements = normalizeAnnouncements(Array.isArray(items) && items.length ? items : defaultAnnouncements);
+  const text = announcements.map(item => item.message).filter(Boolean).join(' • ');
   const clipRef = useRef(null);
   const trackRef = useRef(null);
+
+  const renderSegments = () =>
+    announcements.map((item, index) => (
+      <React.Fragment key={item.id || index}>
+        {index > 0 ? <span className="ticker-sep"> • </span> : null}
+        <span
+          className="ticker-item"
+          style={{
+            color: item.color || undefined,
+            fontWeight: item.weight || 600
+          }}
+        >
+          {item.message}
+        </span>
+      </React.Fragment>
+    ));
 
   useLayoutEffect(() => {
     const clip = clipRef.current;
@@ -843,7 +904,7 @@ function Ticker({ items }) {
     const seconds = Math.max(14, distance / 42);
     track.style.setProperty('--ticker-shift', `-${distance}px`);
     track.style.setProperty('--ticker-duration', `${seconds}s`);
-  }, [text]);
+  }, [text, announcements]);
 
   return (
     <div className="ticker" role="region" aria-label="Duyurular">
@@ -856,9 +917,9 @@ function Ticker({ items }) {
         <div className="ticker-fade ticker-fade-left" aria-hidden="true" />
         <div className="ticker-fade ticker-fade-right" aria-hidden="true" />
         <div className="ticker-marquee" ref={trackRef} aria-live="polite">
-          <span className="ticker-segment">{text}</span>
+          <span className="ticker-segment">{renderSegments()}</span>
           <span className="ticker-segment" aria-hidden="true">
-            {text}
+            {renderSegments()}
           </span>
         </div>
       </div>
@@ -1252,7 +1313,13 @@ function GalleryPage({ state, setState }) {
   const gallery = state.settings.gallery || defaultGallery;
   const categories = state.settings.galleryCategories || defaultGalleryCategories;
   const grouped = groupGalleryByCategory(gallery, categories);
-  const [activeVideo, setActiveVideo] = useState(null);
+  const [activeItem, setActiveItem] = useState(null);
+
+  const openItem = item => {
+    const data = normalizeGalleryItem(item);
+    trackSiteClick(`gallery:${data.title}`);
+    setActiveItem(item);
+  };
 
   return (
     <RouteChrome
@@ -1266,21 +1333,20 @@ function GalleryPage({ state, setState }) {
             items.length ? (
               <section key={category} className="gallery-section-block">
                 <h3 className="gallery-section-title">{category}</h3>
-                <div className="route-card-grid route-card-grid-mobile">
+                <div className="route-card-grid route-card-grid-mobile gallery-grid-3">
                   {items.map(item => {
                     const data = normalizeGalleryItem(item);
-                    const thumb = data.type === 'video' ? data.image || '' : data.image;
+                    const thumb = data.type === 'video' ? data.image || getYoutubeThumbnail(data.videoUrl) : data.image;
                     return (
                       <article
                         key={data.id}
                         className="gallery-card route-card gallery-card-interactive"
-                        onClick={() => {
-                          trackSiteClick(`gallery:${data.title}`);
-                          if (data.type === 'video' && data.videoUrl) setActiveVideo(data);
+                        onClick={() => openItem(item)}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter') openItem(item);
                         }}
-                        onKeyDown={() => {}}
-                        role={data.type === 'video' ? 'button' : undefined}
-                        tabIndex={data.type === 'video' ? 0 : undefined}
+                        role="button"
+                        tabIndex={0}
                       >
                         {thumb ? <img src={thumb} alt={data.title} /> : <div className="gallery-card-placeholder" />}
                         <div className="card-overlay" />
@@ -1296,19 +1362,7 @@ function GalleryPage({ state, setState }) {
               </section>
             ) : null
           ))}
-          {activeVideo ? (
-            <div className="explore-video-modal" role="dialog" onClick={() => setActiveVideo(null)}>
-              <div className="explore-video-card" onClick={e => e.stopPropagation()}>
-                <div className="explore-video-head">
-                  <strong>{activeVideo.title}</strong>
-                  <button type="button" onClick={() => setActiveVideo(null)}><X size={16} /></button>
-                </div>
-                <div className="explore-video-frame">
-                  <iframe src={getYoutubeEmbedUrl(activeVideo.videoUrl)} title={activeVideo.title} allowFullScreen />
-                </div>
-              </div>
-            </div>
-          ) : null}
+          <MediaLightbox item={activeItem} onClose={() => setActiveItem(null)} />
         </>
       }
       backTo="/"
@@ -1585,6 +1639,7 @@ function DesktopShell({ state, setState }) {
 function MobileShell({ state, setState }) {
   const pathname = usePathname();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [activeGalleryItem, setActiveGalleryItem] = useState(null);
   const content = state.settings.content || defaultContent;
   const stats = content.stats || defaultContent.stats;
   const services = state.settings.services || defaultServices;
@@ -1721,31 +1776,31 @@ function MobileShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="service-carousel">
-            <div className="service-carousel-viewport gallery-carousel-viewport">
-              <div className="service-carousel-track gallery-carousel-track gallery-carousel-loop">
-                {[...homeGallery, ...homeGallery].map((item, index) => {
-                  const data = normalizeGalleryItem(item);
-                  const thumb = data.image;
-                  return (
-                  <button
-                    key={`${data.id}-${index}`}
-                    type="button"
-                    className="service-card service-card-mobile gallery-card-mini"
-                  >
-                    {thumb ? <img src={thumb} alt={data.title} /> : null}
-                    <div className="card-overlay" />
-                    {data.type === 'video' ? <span className="gallery-video-badge"><Play size={12} /></span> : null}
-                    <div className="gallery-card-body">
-                      <span>{data.category}</span>
-                      <strong>{data.title}</strong>
-                    </div>
-                  </button>
-                );})}
-              </div>
-            </div>
+          <div className="route-card-grid route-card-grid-mobile gallery-grid-3">
+            {homeGallery.map(item => {
+              const data = normalizeGalleryItem(item);
+              const thumb = data.type === 'video' ? data.image || getYoutubeThumbnail(data.videoUrl) : data.image;
+              return (
+                <button
+                  key={data.id}
+                  type="button"
+                  className="gallery-card route-card gallery-card-interactive gallery-card-home"
+                  onClick={() => {
+                    trackSiteClick(`gallery-home:${data.title}`);
+                    setActiveGalleryItem(item);
+                  }}
+                >
+                  {thumb ? <img src={thumb} alt={data.title} /> : <div className="gallery-card-placeholder" />}
+                  <div className="card-overlay" />
+                  {data.type === 'video' ? <span className="gallery-video-badge"><Play size={12} /></span> : null}
+                  <div className="gallery-card-body">
+                    <span>{data.category}</span>
+                    <strong>{data.title}</strong>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          <GalleryAutoScroller />
         </section>
 
         <section className="stats-grid stats-grid-mobile">
@@ -1800,6 +1855,8 @@ function MobileShell({ state, setState }) {
         packages={packages}
         announcements={state.settings.announcements}
       />
+
+      <MediaLightbox item={activeGalleryItem} onClose={() => setActiveGalleryItem(null)} />
 
       <AppDrawer
         open={state.drawerOpen}

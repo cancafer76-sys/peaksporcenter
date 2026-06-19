@@ -10,6 +10,23 @@ export function getYoutubeThumbnail(url) {
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
 }
 
+export function normalizeAnnouncement(item = {}, index = 0) {
+  if (typeof item === 'string') {
+    return { id: `announcement-${index}`, message: item, color: '', weight: '600' };
+  }
+  return {
+    id: item.id || `announcement-${index}`,
+    message: item.message || '',
+    color: item.color || '',
+    weight: item.weight || '600'
+  };
+}
+
+export function normalizeAnnouncements(items) {
+  const list = Array.isArray(items) && items.length ? items : [];
+  return list.map((item, index) => normalizeAnnouncement(item, index));
+}
+
 export function normalizeService(item = {}) {
   return {
     title: item.title || 'Yeni Hizmet',

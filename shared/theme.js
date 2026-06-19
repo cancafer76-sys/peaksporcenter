@@ -127,6 +127,8 @@ export function applySiteTheme(themeInput = {}, options = {}) {
   root.style.setProperty('--text', text);
   root.style.setProperty('--muted', muted);
   root.style.setProperty('--line', darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)');
+  root.style.setProperty('--animation-accent', primary);
+  root.style.setProperty('--animation-accent-light', accentLight);
 
   root.style.background = background;
   body.style.background = background;

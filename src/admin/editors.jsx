@@ -5,7 +5,8 @@ import {
   getYoutubeThumbnail,
   normalizeGalleryItem,
   normalizePackage,
-  normalizeService
+  normalizeService,
+  normalizeAnnouncement
 } from '../../shared/media.js';
 import { defaultGalleryCategories } from '../../shared/defaults.js';
 
@@ -315,11 +316,11 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
 }
 
 export function AnnouncementsEditor({ items, onChange }) {
-  const list = (items || []).map(item => (typeof item === 'string' ? { message: item } : item));
+  const list = (items || []).map((item, index) => normalizeAnnouncement(item, index));
 
-  const update = (index, message) => {
+  const update = (index, patch) => {
     const next = clone(list);
-    next[index] = { message };
+    next[index] = { ...next[index], ...patch };
     onChange(next);
   };
 
@@ -328,17 +329,32 @@ export function AnnouncementsEditor({ items, onChange }) {
       <div className="admin-toolbar">
         <div>
           <h2 className="admin-page-title">Duyuru Bandı</h2>
-          <p className="admin-page-sub">Üstte kayan duyuru yazılarını düzenleyin.</p>
+          <p className="admin-page-sub">Üstte kayan duyuru yazılarını, renklerini ve kalınlığını düzenleyin.</p>
         </div>
-        <button type="button" className="admin-mini-btn primary" onClick={() => onChange([...list, { message: 'Yeni duyuru' }])}><Plus size={14} /> Duyuru Ekle</button>
+        <button type="button" className="admin-mini-btn primary" onClick={() => onChange([...list, normalizeAnnouncement({ message: 'Yeni duyuru' }, list.length)])}><Plus size={14} /> Duyuru Ekle</button>
       </div>
       <div className="admin-ticker-preview">
         <span className="admin-ticker-label">Önizleme</span>
-        <div className="admin-ticker-text">{list.map(i => i.message).filter(Boolean).join(' • ') || 'Duyuru metni ekleyin'}</div>
+        <div className="admin-ticker-text">
+          {list.length ? list.map((item, index) => (
+            <span key={item.id || index} style={{ color: item.color || undefined, fontWeight: item.weight || 600 }}>
+              {index > 0 ? ' • ' : ''}{item.message}
+            </span>
+          )) : 'Duyuru metni ekleyin'}
+        </div>
       </div>
       {list.map((item, index) => (
-        <div key={index} className="admin-form-card admin-announce-row">
-          <label className="admin-field">Duyuru #{index + 1}<input value={item.message || ''} onChange={e => update(index, e.target.value)} /></label>
+        <div key={item.id || index} className="admin-form-card admin-announce-row">
+          <label className="admin-field">Duyuru #{index + 1}<input value={item.message || ''} onChange={e => update(index, { message: e.target.value })} /></label>
+          <ColorField label="Renk" value={item.color || '#7CFF4F'} onChange={value => update(index, { color: value })} />
+          <label className="admin-field">Kalınlık
+            <select value={item.weight || '600'} onChange={e => update(index, { weight: e.target.value })}>
+              <option value="500">Normal</option>
+              <option value="600">Orta</option>
+              <option value="700">Kalın</option>
+              <option value="800">Çok Kalın</option>
+            </select>
+          </label>
           <button type="button" className="admin-mini-btn danger" onClick={() => onChange(list.filter((_, i) => i !== index))}><Trash2 size={14} /></button>
         </div>
       ))}

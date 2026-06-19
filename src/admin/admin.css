@@ -670,7 +670,18 @@
 .admin-ticker-label { display: block; font-size: 11px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
 .admin-ticker-text { font-size: 13px; line-height: 1.5; }
 
-.admin-announce-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.admin-announce-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 140px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .admin-announce-row {
+    grid-template-columns: 1fr;
+  }
+}
 
 .preview-service-card, .preview-package-card, .preview-gallery-card {
   border-radius: 16px;

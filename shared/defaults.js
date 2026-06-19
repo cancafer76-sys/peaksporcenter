@@ -227,10 +227,10 @@ export const defaultGallery = [
 ];
 
 export const defaultAnnouncements = [
-  'Yaz Kampanyası %30 İndirim',
-  'Yeni Pilates Grubu Başlıyor',
-  'Bayramda 09:00 - 18:00 arası hizmetinizdeyiz.',
-  'Arkadaşını Getir %25 İndirim Kazan'
+  { message: 'Yaz Kampanyası %30 İndirim', color: '#7CFF4F', weight: '700' },
+  { message: 'Yeni Pilates Grubu Başlıyor', color: '#FFFFFF', weight: '600' },
+  { message: 'Bayramda 09:00 - 18:00 arası hizmetinizdeyiz.', color: '#FFFFFF', weight: '600' },
+  { message: 'Arkadaşını Getir %25 İndirim Kazan', color: '#7CFF4F', weight: '700' }
 ];
 
 export const defaultTrainers = [
