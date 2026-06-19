@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { api } from './api';
 import {
   defaultAnnouncements,
+  defaultAbout,
   defaultFacilityAreas,
   defaultContent,
   defaultGallery,
@@ -9,15 +10,17 @@ import {
   defaultPackages,
   defaultServices,
   defaultPosts,
+  defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizeHomeCards, normalizePackage, normalizeService, normalizeStats, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizeHomeCards, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
 import {
   BadgeInfo,
   ChevronRight,
   Dumbbell,
+  FileText,
   Home,
   LayoutDashboard,
   Megaphone,
@@ -49,10 +52,17 @@ const fallbackSettings = {
   gallery: defaultGallery,
   posts: defaultPosts,
   trainers: defaultTrainers,
+  about: defaultAbout,
+  testimonials: defaultTestimonials,
   announcements: defaultAnnouncements,
   facilityAreas: defaultFacilityAreas,
   galleryCategories: defaultGalleryCategories
 };
+
+const drawerExtraNav = [
+  { id: 'about', label: 'Hakkımızda', icon: FileText, route: '/about' },
+  { id: 'trainers', label: 'Hocalarımız', icon: Medal, route: '/trainers' }
+];
 
 const desktopNav = [
   { id: 'home', label: 'Ana Sayfa', route: '/' },
@@ -185,6 +195,61 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
   );
 }
 
+function CoachCard({ coach, compact = false }) {
+  const data = normalizeTrainer(coach);
+  return (
+    <article className={`coach-card ${compact ? 'coach-card-compact' : ''}`}>
+      <div className="coach-card-media">
+        {data.image ? (
+          <img src={data.image} alt={data.name} loading="lazy" />
+        ) : (
+          <div className="coach-card-placeholder">{data.name.charAt(0)}</div>
+        )}
+      </div>
+      <div className="coach-card-body">
+        <strong>{data.name}</strong>
+        <span className="coach-card-specialty">{data.specialty}</span>
+        <p>{data.experience}</p>
+      </div>
+    </article>
+  );
+}
+
+function TestimonialsSection({ items, mobile = false }) {
+  const list = normalizeTestimonials(items);
+  if (!list.length) return null;
+  return (
+    <section className="section-block" id="testimonials">
+      <SectionHeader
+        title="MÜŞTERİ YORUMLARI"
+        subtitle="Üyelerimizin deneyimlerinden ilham alın."
+      />
+      <div className={`testimonials-grid ${mobile ? 'testimonials-grid-mobile' : ''}`}>
+        {list.map(item => (
+          <article key={item.id} className="testimonial-card">
+            <div className="testimonial-stars" aria-label={`${item.rating} yıldız`}>
+              {'★'.repeat(item.rating)}
+              {'☆'.repeat(Math.max(0, 5 - item.rating))}
+            </div>
+            <p>{item.text}</p>
+            <div className="testimonial-author">
+              {item.image ? (
+                <img src={item.image} alt={item.name} className="testimonial-photo" loading="lazy" />
+              ) : (
+                <span className="testimonial-avatar">{item.name.charAt(0)}</span>
+              )}
+              <div>
+                <strong>{item.name}</strong>
+                <span>{item.role}</span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function StatCard({ item, compact = false }) {
   if (!item.visible) return null;
   const Icon = getStatIcon(item.icon);
@@ -308,7 +373,11 @@ function normalizeSettings(payload) {
         ? source.galleryCategories
         : defaultGalleryCategories,
     posts: Array.isArray(source.posts) && source.posts.length ? source.posts : defaultPosts,
-    trainers: Array.isArray(source.trainers) && source.trainers.length ? source.trainers : defaultTrainers,
+    trainers: normalizeTrainers(Array.isArray(source.trainers) && source.trainers.length ? source.trainers : defaultTrainers),
+    about: normalizeAbout(source.about && typeof source.about === 'object' ? source.about : defaultAbout),
+    testimonials: normalizeTestimonials(
+      Array.isArray(source.testimonials) && source.testimonials.length ? source.testimonials : defaultTestimonials
+    ),
     facilityAreas:
       Array.isArray(source.facilityAreas) && source.facilityAreas.length
         ? source.facilityAreas
@@ -415,6 +484,37 @@ function usePathname() {
 
 function formatPrice(value) {
   return new Intl.NumberFormat('tr-TR').format(value);
+}
+
+function buildPackageWhatsAppUrl(number, pkg) {
+  const cleanNumber = (number || '+905555555555').replace(/\D/g, '');
+  const data = normalizePackage(pkg);
+  const features = data.features
+    .slice(0, 8)
+    .map(feature => `${feature.included ? '✓' : '✗'} ${feature.text}`)
+    .join('\n');
+  const message = [
+    'Merhaba, PEAKSPOR\'dan bir paket seçmek istiyorum.',
+    '',
+    `Paket: ${data.title}`,
+    data.subtitle ? `Açıklama: ${data.subtitle}` : '',
+    `Fiyat: ₺${formatPrice(data.price)} ${data.period}`,
+    data.originalPrice ? `Eski Fiyat: ₺${formatPrice(data.originalPrice)}` : '',
+    '',
+    'Özellikler:',
+    features || '-',
+    '',
+    'Uygunluk ve üyelik süreci hakkında bilgi alabilir miyim?'
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+}
+
+function openPackageWhatsApp(content, pkg) {
+  const number = content?.whatsapp?.number || defaultContent.whatsapp.number;
+  trackSiteClick(`package-whatsapp:${normalizePackage(pkg).title}`);
+  window.open(buildPackageWhatsAppUrl(number, pkg), '_blank', 'noopener,noreferrer');
 }
 
 function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone }) {
@@ -852,6 +952,26 @@ function AppDrawer({ open, onClose, pathname }) {
               </button>
             );
           })}
+          <div className="drawer-links-divider" aria-hidden="true" />
+          {drawerExtraNav.map((item, index) => {
+            const Icon = item.icon;
+            const active = pathname === item.route;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`drawer-link ${active ? 'active' : ''}`}
+                style={{ '--i': mobileNav.length + index }}
+                onClick={() => handleNavigate(item)}
+              >
+                <span className="drawer-link-icon">
+                  <Icon size={18} />
+                </span>
+                <span className="drawer-link-text">{item.label}</span>
+                <ChevronRight size={16} />
+              </button>
+            );
+          })}
         </nav>
       </aside>
     </>
@@ -1175,6 +1295,64 @@ function SectionHeader({ title, subtitle, action }) {
       </div>
       {action}
     </div>
+  );
+}
+
+function AboutPage({ state, setState }) {
+  const about = normalizeAbout(state.settings.about || defaultAbout);
+  return (
+    <RouteChrome
+      state={state}
+      setState={setState}
+      title={about.title.toUpperCase()}
+      subtitle={about.subtitle}
+      content={
+        <>
+          {about.heroImage ? (
+            <div className="about-hero">
+              <img src={about.heroImage} alt={about.title} loading="lazy" />
+              <div className="about-hero-overlay" />
+            </div>
+          ) : null}
+          <div className="about-copy">
+            {about.paragraphs.map((paragraph, index) => (
+              <p key={`about-p-${index}`}>{paragraph}</p>
+            ))}
+          </div>
+          {about.highlights.length ? (
+            <div className="about-highlights">
+              {about.highlights.map((item, index) => (
+                <article key={`about-h-${index}`} className="about-highlight-card">
+                  <strong>{item.title}</strong>
+                  <p>{item.text}</p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </>
+      }
+      backTo="/"
+    />
+  );
+}
+
+function TrainersPage({ state, setState }) {
+  const trainers = normalizeTrainers(state.settings.trainers || defaultTrainers);
+  return (
+    <RouteChrome
+      state={state}
+      setState={setState}
+      title="HOCALARIMIZ"
+      subtitle="Uzman eğitmen kadromuzla tanışın."
+      content={
+        <div className="route-card-grid card-grid-4 coach-grid">
+          {trainers.map(coach => (
+            <CoachCard key={normalizeTrainer(coach).id} coach={coach} />
+          ))}
+        </div>
+      }
+      backTo="/"
+    />
   );
 }
 
@@ -1558,6 +1736,8 @@ function DesktopShell({ state, setState }) {
   const homeServices = featuredOrAll(services, 8);
   const homePackages = featuredOrAll(packages, 8);
   const homeGallery = featuredOrAll(gallery, 8);
+  const homeCoaches = featuredOrAll(state.settings.trainers || defaultTrainers, 8);
+  const testimonials = state.settings.testimonials || defaultTestimonials;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
@@ -1655,12 +1835,25 @@ function DesktopShell({ state, setState }) {
                 item={item}
                 selected={selectedPackage?.title === item.title}
                 onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
-                onCtaClick={(_, pkg) => trackSiteClick(`package:${pkg.title}`)}
+                onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
           </div>
 
           <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
+        </section>
+
+        <section className="section-block" id="trainers">
+          <SectionHeader
+            title="HOCALARIMIZ"
+            subtitle="Uzman eğitmen kadromuzla tanışın."
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
+          />
+          <div className="coach-grid card-grid-4">
+            {homeCoaches.map(coach => (
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} />
+            ))}
+          </div>
         </section>
 
         <section className="section-block" id="gallery">
@@ -1694,6 +1887,8 @@ function DesktopShell({ state, setState }) {
             </span>
           ))}
         </section>
+
+        <TestimonialsSection items={testimonials} />
       </main>
 
       <AssistantChat
@@ -1732,6 +1927,18 @@ function DesktopShell({ state, setState }) {
                 {item.label}
               </button>
             ))}
+            {drawerExtraNav.map(item => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setState(prev => ({ ...prev, drawerOpen: false }));
+                  navigateToPath(item.route);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
       ) : null}
@@ -1760,6 +1967,8 @@ function MobileShell({ state, setState }) {
   const homeServices = featuredOrAll(services, 8);
   const homePackages = featuredOrAll(packages, 6);
   const homeGallery = featuredOrAll(gallery, 8);
+  const homeCoaches = featuredOrAll(state.settings.trainers || defaultTrainers, 8);
+  const testimonials = state.settings.testimonials || defaultTestimonials;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
@@ -1848,12 +2057,25 @@ function MobileShell({ state, setState }) {
                 compact
                 selected={selectedPackage?.title === item.title}
                 onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
-                onCtaClick={() => trackSiteClick(`package:${normalizePackage(item).title}`)}
+                onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
           </div>
           <PackageAutoScroller />
           <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
+        </section>
+
+        <section className="section-block" id="trainers">
+          <SectionHeader
+            title="HOCALARIMIZ"
+            subtitle="Uzman eğitmen kadromuzla tanışın."
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
+          />
+          <div className="coach-grid card-grid-4">
+            {homeCoaches.map(coach => (
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} />
+            ))}
+          </div>
         </section>
 
         <section className="section-block" id="gallery">
@@ -1888,6 +2110,8 @@ function MobileShell({ state, setState }) {
             </span>
           ))}
         </section>
+
+        <TestimonialsSection items={testimonials} mobile />
       </main>
 
       <nav className="bottom-nav mobile-bottom-nav" aria-label="Alt menü">
@@ -2049,7 +2273,9 @@ function useSectionPath(pathname) {
   const isGallery = pathname === '/gallery';
   const isContact = pathname === '/contact';
   const isExplore = pathname === '/explore';
-  return { isServices, isPackages, isGallery, isContact, isExplore };
+  const isAbout = pathname === '/about';
+  const isTrainers = pathname === '/trainers';
+  return { isServices, isPackages, isGallery, isContact, isExplore, isAbout, isTrainers };
 }
 
 export default function App() {
@@ -2111,6 +2337,14 @@ export default function App() {
 
   if (sectionPath.isContact) {
     return <ContactPage state={state} setState={setState} />;
+  }
+
+  if (sectionPath.isAbout) {
+    return <AboutPage state={state} setState={setState} />;
+  }
+
+  if (sectionPath.isTrainers) {
+    return <TrainersPage state={state} setState={setState} />;
   }
 
   if (sectionPath.isExplore) {

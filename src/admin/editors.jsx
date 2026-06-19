@@ -3,6 +3,7 @@ import { Eye, Plus, Star, Trash2, Video, Image as ImageIcon } from 'lucide-react
 import {
   getYoutubeEmbedUrl,
   getYoutubeThumbnail,
+  normalizeAbout,
   normalizeGalleryItem,
   normalizePackage,
   normalizePackageFeature,
@@ -11,11 +12,13 @@ import {
   normalizeStat,
   normalizeStats,
   normalizeHomeCards,
+  normalizeTestimonial,
+  normalizeTrainer,
   packageCardVars,
   serviceCardVars,
   STAT_ICON_OPTIONS
 } from '../../shared/media.js';
-import { defaultContent, defaultGalleryCategories } from '../../shared/defaults.js';
+import { defaultContent, defaultGalleryCategories, defaultAbout } from '../../shared/defaults.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -521,6 +524,166 @@ export function CardsEditor({ content, onChange }) {
         </label>
       </div>
     </>
+  );
+}
+
+export function TrainersEditor({ items, onChange }) {
+  const [active, setActive] = useState(0);
+  const list = (items || []).map(normalizeTrainer);
+  const current = list[active] || normalizeTrainer({});
+
+  const update = (key, value) => {
+    const next = clone(list);
+    next[active] = { ...next[active], [key]: value };
+    onChange(next);
+  };
+
+  return (
+    <div className="admin-editor-layout">
+      <div className="admin-editor-main">
+        <div className="admin-toolbar">
+          <div>
+            <h2 className="admin-page-title">Hocalarımız</h2>
+            <p className="admin-page-sub">Hoca adı, uzmanlık alanı, deneyim açıklaması ve fotoğraf.</p>
+          </div>
+          <button type="button" className="admin-mini-btn primary" onClick={() => { onChange([...list, normalizeTrainer({ name: 'Yeni Hoca' })]); setActive(list.length); }}><Plus size={14} /> Ekle</button>
+        </div>
+        <div className="admin-chip-row">
+          {list.map((item, index) => (
+            <button key={`${item.id}-${index}`} type="button" className={`admin-chip ${active === index ? 'active' : ''}`} onClick={() => setActive(index)}>{item.name}</button>
+          ))}
+        </div>
+        <div className="admin-form-card">
+          <div className="admin-form-grid">
+            <label className="admin-field">Hoca Adı<input value={current.name} onChange={e => update('name', e.target.value)} /></label>
+            <label className="admin-field">Uzmanlık Alanı<input value={current.specialty} onChange={e => update('specialty', e.target.value)} placeholder="Crossfit, Pilates..." /></label>
+            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Deneyim Açıklaması<textarea rows={3} value={current.experience} onChange={e => update('experience', e.target.value)} placeholder="Yıllık deneyim ve uzmanlık detayı..." /></label>
+            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Fotoğraf URL<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
+          </div>
+          <Toggle checked={current.featured} onChange={v => update('featured', v)} label="Ana sayfada göster" />
+          <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
+        </div>
+      </div>
+      <aside className="admin-editor-preview">
+        <div className="admin-preview-head"><Eye size={16} /> Canlı Önizleme</div>
+        <article className="coach-card preview-coach-card">
+          <div className="coach-card-media">{current.image ? <img src={current.image} alt={current.name} /> : <div className="preview-empty">Fotoğraf ekleyin</div>}</div>
+          <div className="coach-card-body">
+            <strong>{current.name}</strong>
+            <span className="coach-card-specialty">{current.specialty}</span>
+            <p>{current.experience || 'Deneyim açıklaması...'}</p>
+          </div>
+        </article>
+      </aside>
+    </div>
+  );
+}
+
+export function AboutEditor({ data, onChange }) {
+  const about = normalizeAbout(data || defaultAbout);
+
+  const patch = next => onChange({ ...about, ...next });
+
+  const updateParagraph = (index, value) => {
+    const paragraphs = [...about.paragraphs];
+    paragraphs[index] = value;
+    patch({ paragraphs });
+  };
+
+  const updateHighlight = (index, key, value) => {
+    const highlights = about.highlights.map((item, i) => (i === index ? { ...item, [key]: value } : item));
+    patch({ highlights });
+  };
+
+  return (
+    <div className="admin-editor-main">
+      <div className="admin-toolbar">
+        <div>
+          <h2 className="admin-page-title">Hakkımızda</h2>
+          <p className="admin-page-sub">Hakkımızda sayfası metinleri ve görselleri.</p>
+        </div>
+      </div>
+      <div className="admin-form-card">
+        <div className="admin-form-grid">
+          <label className="admin-field">Başlık<input value={about.title} onChange={e => patch({ title: e.target.value })} /></label>
+          <label className="admin-field">Alt Başlık<input value={about.subtitle} onChange={e => patch({ subtitle: e.target.value })} /></label>
+          <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Kapak Görseli URL<input value={about.heroImage} onChange={e => patch({ heroImage: e.target.value })} /></label>
+        </div>
+      </div>
+      <div className="admin-form-card">
+        <h4>Paragraflar</h4>
+        {about.paragraphs.map((paragraph, index) => (
+          <div key={`p-${index}`} className="admin-feature-row" style={{ gridTemplateColumns: '1fr auto', marginBottom: 10 }}>
+            <textarea rows={2} value={paragraph} onChange={e => updateParagraph(index, e.target.value)} />
+            <button type="button" className="admin-feature-remove" onClick={() => patch({ paragraphs: about.paragraphs.filter((_, i) => i !== index) })}><Trash2 size={14} /></button>
+          </div>
+        ))}
+        <button type="button" className="admin-mini-btn" onClick={() => patch({ paragraphs: [...about.paragraphs, 'Yeni paragraf'] })}><Plus size={14} /> Paragraf Ekle</button>
+      </div>
+      <div className="admin-form-card">
+        <h4>Öne Çıkan Maddeler</h4>
+        {about.highlights.map((item, index) => (
+          <div key={`h-${index}`} className="admin-form-grid" style={{ marginBottom: 12 }}>
+            <label className="admin-field">Başlık<input value={item.title} onChange={e => updateHighlight(index, 'title', e.target.value)} /></label>
+            <label className="admin-field">Açıklama<input value={item.text} onChange={e => updateHighlight(index, 'text', e.target.value)} /></label>
+            <button type="button" className="admin-mini-btn danger" onClick={() => patch({ highlights: about.highlights.filter((_, i) => i !== index) })}><Trash2 size={14} /> Sil</button>
+          </div>
+        ))}
+        <button type="button" className="admin-mini-btn" onClick={() => patch({ highlights: [...about.highlights, { title: 'Yeni Madde', text: '' }] })}><Plus size={14} /> Madde Ekle</button>
+      </div>
+    </div>
+  );
+}
+
+export function TestimonialsEditor({ items, onChange }) {
+  const [active, setActive] = useState(0);
+  const list = (items || []).map(normalizeTestimonial);
+  const current = list[active] || normalizeTestimonial({});
+
+  const update = (key, value) => {
+    const next = clone(list);
+    next[active] = { ...next[active], [key]: value };
+    onChange(next);
+  };
+
+  return (
+    <div className="admin-editor-layout">
+      <div className="admin-editor-main">
+        <div className="admin-toolbar">
+          <div>
+            <h2 className="admin-page-title">Müşteri Yorumları</h2>
+            <p className="admin-page-sub">Ana sayfa alt bölümünde görünen üye yorumları.</p>
+          </div>
+          <button type="button" className="admin-mini-btn primary" onClick={() => { onChange([...list, normalizeTestimonial({ name: 'Yeni Üye' })]); setActive(list.length); }}><Plus size={14} /> Ekle</button>
+        </div>
+        <div className="admin-chip-row">
+          {list.map((item, index) => (
+            <button key={`${item.id}-${index}`} type="button" className={`admin-chip ${active === index ? 'active' : ''}`} onClick={() => setActive(index)}>{item.name}</button>
+          ))}
+        </div>
+        <div className="admin-form-card">
+          <div className="admin-form-grid">
+            <label className="admin-field">İsim<input value={current.name} onChange={e => update('name', e.target.value)} /></label>
+            <label className="admin-field">Ünvan / Paket<input value={current.role} onChange={e => update('role', e.target.value)} placeholder="Premium Üye · 6 ay" /></label>
+            <label className="admin-field">Puan (1-5)<input type="number" min={1} max={5} value={current.rating} onChange={e => update('rating', Number(e.target.value))} /></label>
+            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Yorum<textarea rows={3} value={current.text} onChange={e => update('text', e.target.value)} /></label>
+            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>Fotoğraf URL (opsiyonel)<input value={current.image} onChange={e => update('image', e.target.value)} placeholder="https://..." /></label>
+          </div>
+          <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
+        </div>
+      </div>
+      <aside className="admin-editor-preview">
+        <div className="admin-preview-head"><Eye size={16} /> Canlı Önizleme</div>
+        <article className="testimonial-card preview-testimonial-card">
+          <div className="testimonial-stars">{'★'.repeat(current.rating)}{'☆'.repeat(5 - current.rating)}</div>
+          <p>{current.text || 'Yorum metni...'}</p>
+          <div className="testimonial-author">
+            <span className="testimonial-avatar">{current.name.charAt(0)}</span>
+            <div><strong>{current.name}</strong><span>{current.role}</span></div>
+          </div>
+        </article>
+      </aside>
+    </div>
   );
 }
 

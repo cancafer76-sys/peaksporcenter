@@ -16,6 +16,7 @@ import { promisify } from 'util';
 import { PrismaClient } from '@prisma/client';
 import {
   defaultAnnouncements,
+  defaultAbout,
   defaultContent,
   defaultFacilityAreas,
   defaultGallery,
@@ -24,6 +25,7 @@ import {
   defaultPackages,
   defaultPosts,
   defaultServices,
+  defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
 
@@ -192,6 +194,8 @@ async function ensureSeedData() {
     ['gallery', defaultGallery],
     ['announcements', defaultAnnouncements],
     ['trainers', defaultTrainers],
+    ['about', defaultAbout],
+    ['testimonials', defaultTestimonials],
     ['facilityAreas', defaultFacilityAreas],
     ['galleryCategories', defaultGalleryCategories],
     ['analytics', defaultAnalytics]

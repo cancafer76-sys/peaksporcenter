@@ -356,16 +356,87 @@ export const defaultAnnouncements = [
 
 export const defaultTrainers = [
   {
+    id: 'coach-1',
     name: 'Ece Demir',
-    role: 'Kuvvet ve Kondisyon',
-    specialty: 'Functional Training',
-    image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=900&q=80'
+    specialty: 'Kuvvet & Kondisyon',
+    experience: '8 yıllık deneyim. Functional training ve vücut kompozisyonu uzmanı.',
+    image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=900&q=80',
+    featured: true
   },
   {
+    id: 'coach-2',
     name: 'Mert Kaya',
-    role: 'Crossfit Coach',
-    specialty: 'High Intensity',
-    image: 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=900&q=80'
+    specialty: 'Crossfit Coach',
+    experience: '6 yıllık deneyim. HIIT, crossfit ve performans antrenmanları.',
+    image: 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=900&q=80',
+    featured: true
+  },
+  {
+    id: 'coach-3',
+    name: 'Selin Arslan',
+    specialty: 'Pilates & Esneklik',
+    experience: '5 yıllık deneyim. Reformer pilates ve postür düzeltme programları.',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80',
+    featured: true
+  },
+  {
+    id: 'coach-4',
+    name: 'Burak Yıldız',
+    specialty: 'Personal Training',
+    experience: '10 yıllık deneyim. Kişisel hedef odaklı premium antrenman planları.',
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=900&q=80',
+    featured: true
+  }
+];
+
+export const defaultAbout = {
+  title: 'Hakkımızda',
+  subtitle: 'Kocaeli\'nin premium fitness deneyimi',
+  heroImage: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1600&q=80',
+  paragraphs: [
+    'PEAKSPORTS CENTER, modern ekipmanlar, uzman eğitmen kadrosu ve premium tesis konforuyla Kocaeli\'de fark yaratan bir fitness merkezidir.',
+    'Amacımız her üyemizin hedeflerine güvenli, sürdürülebilir ve keyifli bir şekilde ulaşmasını sağlamaktır. Kişisel antrenman, grup dersleri, pilates, crossfit ve daha fazlası tek çatı altında.',
+    'Temiz alanlarımız, profesyonel ekibimiz ve esnek üyelik paketlerimizle sizi zirveye taşımaya hazırız.'
+  ],
+  highlights: [
+    { title: 'Premium Tesis', text: 'Geniş salon, modern ekipman ve konforlu sosyal alanlar.' },
+    { title: 'Uzman Kadro', text: 'Sertifikalı eğitmenlerle kişiye özel program desteği.' },
+    { title: 'Esnek Üyelik', text: 'İhtiyacınıza uygun paketler ve şeffaf fiyatlandırma.' }
+  ]
+};
+
+export const defaultTestimonials = [
+  {
+    id: 'review-1',
+    name: 'Ayşe K.',
+    role: 'Premium Üye · 8 ay',
+    text: 'Ekipman kalitesi ve eğitmen ilgisi gerçekten üst düzey. 3 ayda hedeflediğim forma ulaştım, kesinlikle tavsiye ederim.',
+    rating: 5,
+    image: ''
+  },
+  {
+    id: 'review-2',
+    name: 'Emre T.',
+    role: 'Pro Plan · 1 yıl',
+    text: 'Grup dersleri ve PT desteği sayesinde motivasyonum hiç düşmedi. Temizlik ve ortam kalitesi de çok iyi.',
+    rating: 5,
+    image: ''
+  },
+  {
+    id: 'review-3',
+    name: 'Zeynep M.',
+    role: 'Starter Üye · 4 ay',
+    text: 'İlk kez düzenli spor yapıyorum, eğitmenler her adımda yanımda. Paket fiyatları da gayet makul.',
+    rating: 5,
+    image: ''
+  },
+  {
+    id: 'review-4',
+    name: 'Can D.',
+    role: 'Elite Üye · 6 ay',
+    text: 'VIP alan ve personal antrenör desteği fark yaratıyor. Profesyonel bir kulüp arayanlar için ideal.',
+    rating: 5,
+    image: ''
   }
 ];
 

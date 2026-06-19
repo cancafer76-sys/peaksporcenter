@@ -196,6 +196,55 @@ export function featuredOrAll(items, limit = 6) {
   return source.slice(0, limit);
 }
 
+export function normalizeTrainer(item = {}, index = 0) {
+  const specialty = item.specialty || item.role || 'Fitness';
+  return {
+    id: item.id || `coach-${index}`,
+    name: item.name || 'Yeni Hoca',
+    specialty,
+    experience: item.experience || item.description || '',
+    image: item.image || '',
+    featured: item.featured !== false
+  };
+}
+
+export function normalizeTrainers(items) {
+  const list = Array.isArray(items) && items.length ? items : [];
+  return list.map((item, index) => normalizeTrainer(item, index));
+}
+
+export function normalizeAbout(item = {}) {
+  const base = item && typeof item === 'object' ? item : {};
+  return {
+    title: base.title || 'Hakkımızda',
+    subtitle: base.subtitle || '',
+    heroImage: base.heroImage || '',
+    paragraphs: Array.isArray(base.paragraphs) ? base.paragraphs.filter(Boolean) : [],
+    highlights: Array.isArray(base.highlights)
+      ? base.highlights.map((h, i) => ({
+          title: h?.title || `Madde ${i + 1}`,
+          text: h?.text || ''
+        }))
+      : []
+  };
+}
+
+export function normalizeTestimonial(item = {}, index = 0) {
+  return {
+    id: item.id || `review-${index}`,
+    name: item.name || 'Üye',
+    role: item.role || 'Üye',
+    text: item.text || item.message || '',
+    rating: Math.min(5, Math.max(1, Number(item.rating) || 5)),
+    image: item.image || ''
+  };
+}
+
+export function normalizeTestimonials(items) {
+  const list = Array.isArray(items) && items.length ? items : [];
+  return list.map((item, index) => normalizeTestimonial(item, index));
+}
+
 export function groupGalleryByCategory(items, categories) {
   const groups = {};
   (categories || []).forEach(cat => {
