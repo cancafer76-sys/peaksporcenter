@@ -3183,3 +3183,59 @@ img { display: block; width: 100%; }
     flex-wrap: wrap;
   }
 }
+
+.package-discount-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.package-old-price {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+
+.package-card {
+  position: relative;
+}
+
+.gallery-video-badge {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(124, 255, 79, 0.92);
+  color: #050505;
+}
+
+.gallery-section-block { margin-bottom: 24px; }
+.gallery-section-title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+
+.gallery-card-interactive { cursor: pointer; }
+.gallery-card-placeholder {
+  min-height: 180px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.service-card img { object-fit: cover; }
+.service-card { border-top: 2px solid var(--service-accent, transparent); }

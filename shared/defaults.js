@@ -73,7 +73,9 @@ export const defaultServices = [
     category: 'Salon',
     description: 'Kardiyo, ağırlık ve fonksiyonel alanlarla tam kapsamlı çalışma.',
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80',
-    accent: '#7CFF4F'
+    accent: '#7CFF4F',
+    imageFit: 'cover',
+    featured: true
   },
   {
     title: 'Body Building',
@@ -126,56 +128,93 @@ export const defaultServices = [
   }
 ];
 
+export const defaultGalleryCategories = ['Görseller', 'Videolar', 'Etkinlikler'];
+
+export const defaultAnalytics = {
+  totalVisits: 0,
+  totalClicks: 0,
+  uniqueVisitors: 0,
+  visitorIds: [],
+  visitsByDay: {},
+  clicksByTarget: {},
+  pageViews: {}
+};
+
 export const defaultPackages = [
   {
     title: 'Starter',
     subtitle: 'Yeni başlayanlar için',
     price: 499,
+    originalPrice: 699,
+    discountLabel: '%30 İndirim',
     period: '/ay',
     accent: '#7CFF4F',
     features: ['Fitness kullanımı', '1 grup dersi', 'Vücut analizi', 'Diyet listesi'],
-    cta: 'Başla'
+    cta: 'Başla',
+    featured: true
   },
   {
     title: 'Professional',
     subtitle: 'Daha yoğun ilerleme',
     price: 799,
+    originalPrice: null,
+    discountLabel: '',
     period: '/ay',
     accent: '#2563EB',
     features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Personal antrenör'],
-    cta: 'Seç'
+    cta: 'Seç',
+    featured: true
   },
   {
     title: 'Premium',
     subtitle: 'VIP deneyim',
     price: 1199,
+    originalPrice: null,
+    discountLabel: 'Popüler',
     period: '/ay',
     accent: '#7C3AED',
     features: ['Fitness kullanımı', 'Sınırsız grup dersi', 'Vücut analizi', 'Diyet listesi', 'Özel program'],
-    cta: 'Premium Ol'
+    cta: 'Premium Ol',
+    featured: false
   }
 ];
 
 export const defaultGallery = [
   {
+    id: 'gallery-1',
     title: 'Salon',
-    category: 'Salon',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80'
+    category: 'Görseller',
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80',
+    videoUrl: '',
+    featured: true
   },
   {
-    title: 'Dersler',
-    category: 'Dersler',
-    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80'
+    id: 'gallery-2',
+    title: 'Grup Dersi',
+    category: 'Videolar',
+    type: 'video',
+    image: '',
+    videoUrl: 'https://www.youtube.com/watch?v=dlQ7MzS7Lk8',
+    featured: true
   },
   {
+    id: 'gallery-3',
     title: 'Ekipmanlar',
-    category: 'Ekipmanlar',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80'
+    category: 'Görseller',
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80',
+    videoUrl: '',
+    featured: false
   },
   {
-    title: 'Etkinlikler',
+    id: 'gallery-4',
+    title: 'Yaz Etkinliği',
     category: 'Etkinlikler',
-    image: 'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=1200&q=80'
+    type: 'image',
+    image: 'https://images.unsplash.com/photo-1518611507436-f9221403cca3?auto=format&fit=crop&w=1200&q=80',
+    videoUrl: '',
+    featured: true
   }
 ];
 

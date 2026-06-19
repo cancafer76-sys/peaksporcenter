@@ -79,5 +79,8 @@ export const api = {
     return data;
   },
   reserve: (payload) => request('/api/reservations', { method: 'POST', body: JSON.stringify(payload) }),
-  message: (payload) => request('/api/messages', { method: 'POST', body: JSON.stringify(payload) })
+  message: (payload) => request('/api/messages', { method: 'POST', body: JSON.stringify(payload) }),
+  trackVisit: payload => request('/api/analytics/visit', { method: 'POST', body: JSON.stringify(payload) }),
+  trackClick: payload => request('/api/analytics/click', { method: 'POST', body: JSON.stringify(payload) }),
+  analytics: () => request('/api/admin/analytics')
 };

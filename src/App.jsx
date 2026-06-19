@@ -5,11 +5,13 @@ import {
   defaultFacilityAreas,
   defaultContent,
   defaultGallery,
+  defaultGalleryCategories,
   defaultPackages,
   defaultServices,
   defaultPosts,
   defaultTrainers
 } from '../shared/defaults.js';
+import { featuredOrAll, getYoutubeEmbedUrl, groupGalleryByCategory, normalizeGalleryItem, normalizePackage, normalizeService } from '../shared/media.js';
 import {
   BadgeInfo,
   ChevronRight,
@@ -46,7 +48,8 @@ const fallbackSettings = {
   posts: defaultPosts,
   trainers: defaultTrainers,
   announcements: defaultAnnouncements,
-  facilityAreas: defaultFacilityAreas
+  facilityAreas: defaultFacilityAreas,
+  galleryCategories: defaultGalleryCategories
 };
 
 const desktopNav = [
@@ -69,11 +72,20 @@ const statIcons = [Users, Users, Video, Medal];
 
 function normalizeSettings(payload) {
   const source = payload && typeof payload === 'object' ? payload : {};
+  const services = Array.isArray(source.services) && source.services.length ? source.services.map(normalizeService) : defaultServices.map(normalizeService);
+  const packages = Array.isArray(source.packages) && source.packages.length ? source.packages.map(normalizePackage) : defaultPackages.map(normalizePackage);
+  const gallery = Array.isArray(source.gallery) && source.gallery.length
+    ? source.gallery.map((item, index) => normalizeGalleryItem(item, index))
+    : defaultGallery.map((item, index) => normalizeGalleryItem(item, index));
   return {
     content: source.content && typeof source.content === 'object' ? source.content : defaultContent,
-    services: Array.isArray(source.services) && source.services.length ? source.services : defaultServices,
-    packages: Array.isArray(source.packages) && source.packages.length ? source.packages : defaultPackages,
-    gallery: Array.isArray(source.gallery) && source.gallery.length ? source.gallery : defaultGallery,
+    services,
+    packages,
+    gallery,
+    galleryCategories:
+      Array.isArray(source.galleryCategories) && source.galleryCategories.length
+        ? source.galleryCategories
+        : defaultGalleryCategories,
     posts: Array.isArray(source.posts) && source.posts.length ? source.posts : defaultPosts,
     trainers: Array.isArray(source.trainers) && source.trainers.length ? source.trainers : defaultTrainers,
     facilityAreas:
@@ -85,6 +97,26 @@ function normalizeSettings(payload) {
         ? source.announcements
         : defaultAnnouncements
   };
+}
+
+function useAnalytics(pathname) {
+  useEffect(() => {
+    let visitorId = '';
+    try {
+      visitorId = localStorage.getItem('peakspor_visitor') || '';
+      if (!visitorId) {
+        visitorId = `v-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        localStorage.setItem('peakspor_visitor', visitorId);
+      }
+    } catch {
+      visitorId = 'anonymous';
+    }
+    api.trackVisit({ visitorId, path: pathname }).catch(() => {});
+  }, [pathname]);
+}
+
+function trackSiteClick(target) {
+  api.trackClick({ target }).catch(() => {});
 }
 
 function useAppData() {
@@ -1215,26 +1247,66 @@ function ContactPage({ state, setState }) {
 
 function GalleryPage({ state, setState }) {
   const gallery = state.settings.gallery || defaultGallery;
+  const categories = state.settings.galleryCategories || defaultGalleryCategories;
+  const grouped = groupGalleryByCategory(gallery, categories);
+  const [activeVideo, setActiveVideo] = useState(null);
 
   return (
     <RouteChrome
       state={state}
       setState={setState}
       title="GALERİ"
-      subtitle="Tesis, antrenman ve premium atmosfer kareleri."
+      subtitle="Görseller, videolar ve etkinlikler."
       content={
-        <div className="route-card-grid route-card-grid-mobile">
-          {gallery.map(item => (
-            <article key={item.title} className="gallery-card route-card">
-              <img src={item.image} alt={item.title} />
-              <div className="card-overlay" />
-              <div className="gallery-card-body">
-                <span>{item.category}</span>
-                <strong>{item.title}</strong>
-              </div>
-            </article>
+        <>
+          {Object.entries(grouped).map(([category, items]) => (
+            items.length ? (
+              <section key={category} className="gallery-section-block">
+                <h3 className="gallery-section-title">{category}</h3>
+                <div className="route-card-grid route-card-grid-mobile">
+                  {items.map(item => {
+                    const data = normalizeGalleryItem(item);
+                    const thumb = data.type === 'video' ? data.image || '' : data.image;
+                    return (
+                      <article
+                        key={data.id}
+                        className="gallery-card route-card gallery-card-interactive"
+                        onClick={() => {
+                          trackSiteClick(`gallery:${data.title}`);
+                          if (data.type === 'video' && data.videoUrl) setActiveVideo(data);
+                        }}
+                        onKeyDown={() => {}}
+                        role={data.type === 'video' ? 'button' : undefined}
+                        tabIndex={data.type === 'video' ? 0 : undefined}
+                      >
+                        {thumb ? <img src={thumb} alt={data.title} /> : <div className="gallery-card-placeholder" />}
+                        <div className="card-overlay" />
+                        {data.type === 'video' ? <span className="gallery-video-badge"><Play size={14} /></span> : null}
+                        <div className="gallery-card-body">
+                          <span>{category}</span>
+                          <strong>{data.title}</strong>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null
           ))}
-        </div>
+          {activeVideo ? (
+            <div className="explore-video-modal" role="dialog" onClick={() => setActiveVideo(null)}>
+              <div className="explore-video-card" onClick={e => e.stopPropagation()}>
+                <div className="explore-video-head">
+                  <strong>{activeVideo.title}</strong>
+                  <button type="button" onClick={() => setActiveVideo(null)}><X size={16} /></button>
+                </div>
+                <div className="explore-video-frame">
+                  <iframe src={getYoutubeEmbedUrl(activeVideo.videoUrl)} title={activeVideo.title} allowFullScreen />
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </>
       }
       backTo="/"
     />
@@ -1247,10 +1319,9 @@ function DesktopShell({ state, setState }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
-  const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
-  const heroSlides = bannerSlides.length
-    ? bannerSlides
-    : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const homeServices = featuredOrAll(services, 8);
+  const homePackages = featuredOrAll(packages, 6);
+  const homeGallery = featuredOrAll(gallery, 8);
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -1326,14 +1397,18 @@ function DesktopShell({ state, setState }) {
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
           <div className="service-row">
-            {services.map(service => (
+            {homeServices.map(service => (
               <button
                 key={service.title}
                 type="button"
                 className={`service-card ${selectedService?.title === service.title ? 'selected' : ''}`}
-                onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
+                style={{ '--service-accent': service.accent || '#7CFF4F' }}
+                onClick={() => {
+                  trackSiteClick(`service:${service.title}`);
+                  setState(prev => ({ ...prev, selectedService: service }));
+                }}
               >
-                <img src={service.image} alt={service.title} />
+                <img src={service.image} alt={service.title} style={{ objectFit: service.imageFit || 'cover' }} />
                 <div className="card-overlay" />
                 <div className="service-card-body">
                   <Dumbbell size={16} />
@@ -1367,36 +1442,41 @@ function DesktopShell({ state, setState }) {
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
           <div className="package-grid">
-            {packages.map((item, index) => (
+            {homePackages.map((item, index) => {
+              const pkg = normalizePackage(item);
+              return (
               <article
                 key={item.title}
                 className={`package-card theme-${index} ${selectedPackage?.title === item.title ? 'selected' : ''}`}
+                style={{ '--pkg-accent': pkg.accent }}
                 onClick={() => setState(prev => ({ ...prev, selectedPackage: item }))}
               >
+                {pkg.discountLabel ? <span className="package-discount-badge">{pkg.discountLabel}</span> : null}
                 <div className="package-shape" />
                 <div className="package-top">
                   <div>
-                    <span>{item.subtitle}</span>
-                    <h3>{item.title}</h3>
+                    <span>{pkg.subtitle}</span>
+                    <h3>{pkg.title}</h3>
                   </div>
                   <div className="package-price">
-                    ₺{formatPrice(item.price)}
-                    <small>{item.period}</small>
+                    {pkg.originalPrice ? <s className="package-old-price">₺{formatPrice(pkg.originalPrice)}</s> : null}
+                    ₺{formatPrice(pkg.price)}
+                    <small>{pkg.period}</small>
                   </div>
                 </div>
                 <ul>
-                  {item.features.slice(0, 4).map(feature => (
+                  {pkg.features.slice(0, 4).map(feature => (
                     <li key={feature}>
                       <span className="check">✓</span>
                       {feature}
                     </li>
                   ))}
                 </ul>
-                <button className="package-cta" type="button" onClick={e => e.stopPropagation()}>
-                  {item.cta}
+                <button className="package-cta" type="button" onClick={e => { e.stopPropagation(); trackSiteClick(`package:${pkg.title}`); }}>
+                  {pkg.cta}
                 </button>
               </article>
-            ))}
+            );})}
           </div>
 
           {selectedPackage ? (
@@ -1421,16 +1501,20 @@ function DesktopShell({ state, setState }) {
             action={<button className="text-button" type="button">Tümü <ChevronRight size={16} /></button>}
           />
           <div className="gallery-grid">
-            {gallery.map(item => (
-              <article key={item.title} className="gallery-card">
-                <img src={item.image} alt={item.title} />
+            {homeGallery.map(item => {
+              const data = normalizeGalleryItem(item);
+              const thumb = data.type === 'video' ? data.image : data.image;
+              return (
+              <article key={data.id || data.title} className="gallery-card">
+                {thumb ? <img src={thumb} alt={data.title} /> : null}
                 <div className="card-overlay" />
+                {data.type === 'video' ? <span className="gallery-video-badge"><Play size={14} /></span> : null}
                 <div className="gallery-card-body">
-                  <span>{item.category}</span>
-                  <strong>{item.title}</strong>
+                  <span>{data.category}</span>
+                  <strong>{data.title}</strong>
                 </div>
               </article>
-            ))}
+            );})}
           </div>
         </section>
 
@@ -1503,11 +1587,14 @@ function MobileShell({ state, setState }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
+  const homeServices = featuredOrAll(services, 8);
+  const homePackages = featuredOrAll(packages, 6);
+  const homeGallery = featuredOrAll(gallery, 8);
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
     : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
-  const serviceLoop = services.length > 1 ? [...services, ...services] : services;
+  const serviceLoop = homeServices.length > 1 ? [...homeServices, ...homeServices] : homeServices;
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -1563,7 +1650,7 @@ function MobileShell({ state, setState }) {
                     className={`service-card service-card-mobile service-card-mini ${selectedService?.title === service.title ? 'selected' : ''}`}
                     onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
                   >
-                    <img src={service.image} alt={service.title} />
+                    <img src={service.image} alt={service.title} style={{ objectFit: service.imageFit || 'cover' }} />
                     <div className="card-overlay" />
                     <div className="service-card-body">
                       <Dumbbell size={15} />
@@ -1586,25 +1673,30 @@ function MobileShell({ state, setState }) {
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
           <div className="package-rail-mobile mobile-horizontal-rail package-auto-scroll">
-            {packages.map((item, index) => (
+            {homePackages.map((item, index) => {
+              const pkg = normalizePackage(item);
+              return (
               <article
                 key={item.title}
                 className={`package-card theme-${index} package-card-mobile ${selectedPackage?.title === item.title ? 'selected' : ''}`}
+                style={{ '--pkg-accent': pkg.accent }}
                 onClick={() => setState(prev => ({ ...prev, selectedPackage: item }))}
               >
+                {pkg.discountLabel ? <span className="package-discount-badge">{pkg.discountLabel}</span> : null}
                 <div className="package-shape" />
                 <div className="package-top">
                   <div>
-                    <span>{item.subtitle}</span>
-                    <h3>{item.title}</h3>
+                    <span>{pkg.subtitle}</span>
+                    <h3>{pkg.title}</h3>
                   </div>
                   <div className="package-price">
-                    ₺{formatPrice(item.price)}
-                    <small>{item.period}</small>
+                    {pkg.originalPrice ? <s className="package-old-price">₺{formatPrice(pkg.originalPrice)}</s> : null}
+                    ₺{formatPrice(pkg.price)}
+                    <small>{pkg.period}</small>
                   </div>
                 </div>
                 <ul>
-                  {item.features.slice(0, 4).map(feature => (
+                  {pkg.features.slice(0, 4).map(feature => (
                     <li key={feature}>
                       <span className="check">✓</span>
                       {feature}
@@ -1612,10 +1704,10 @@ function MobileShell({ state, setState }) {
                   ))}
                 </ul>
                 <button className="package-cta" type="button" onClick={e => e.stopPropagation()}>
-                  {item.cta}
+                  {pkg.cta}
                 </button>
               </article>
-            ))}
+            );})}
           </div>
           <PackageAutoScroller />
         </section>
@@ -1629,20 +1721,24 @@ function MobileShell({ state, setState }) {
           <div className="service-carousel">
             <div className="service-carousel-viewport gallery-carousel-viewport">
               <div className="service-carousel-track gallery-carousel-track gallery-carousel-loop">
-                {[...gallery, ...gallery].map((item, index) => (
+                {[...homeGallery, ...homeGallery].map((item, index) => {
+                  const data = normalizeGalleryItem(item);
+                  const thumb = data.image;
+                  return (
                   <button
-                    key={`${item.title}-${index}`}
+                    key={`${data.id}-${index}`}
                     type="button"
                     className="service-card service-card-mobile gallery-card-mini"
                   >
-                    <img src={item.image} alt={item.title} />
+                    {thumb ? <img src={thumb} alt={data.title} /> : null}
                     <div className="card-overlay" />
+                    {data.type === 'video' ? <span className="gallery-video-badge"><Play size={12} /></span> : null}
                     <div className="gallery-card-body">
-                      <span>{item.category}</span>
-                      <strong>{item.title}</strong>
+                      <span>{data.category}</span>
+                      <strong>{data.title}</strong>
                     </div>
                   </button>
-                ))}
+                );})}
               </div>
             </div>
           </div>
@@ -1837,6 +1933,8 @@ export default function App() {
   const isMobile = useMemo(() => state.viewportWidth < 980, [state.viewportWidth]);
   const pathname = usePathname();
   const sectionPath = useSectionPath(pathname);
+
+  useAnalytics(pathname);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });

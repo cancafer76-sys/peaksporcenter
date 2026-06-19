@@ -19,6 +19,8 @@ import {
   defaultContent,
   defaultFacilityAreas,
   defaultGallery,
+  defaultGalleryCategories,
+  defaultAnalytics,
   defaultPackages,
   defaultPosts,
   defaultServices,
@@ -190,7 +192,9 @@ async function ensureSeedData() {
     ['gallery', defaultGallery],
     ['announcements', defaultAnnouncements],
     ['trainers', defaultTrainers],
-    ['facilityAreas', defaultFacilityAreas]
+    ['facilityAreas', defaultFacilityAreas],
+    ['galleryCategories', defaultGalleryCategories],
+    ['analytics', defaultAnalytics]
   ];
 
   for (const [key, value] of settings) {
@@ -276,6 +280,66 @@ app.get('/api/content', async (_, res) => {
   const entries = await prisma.setting.findMany();
   const content = Object.fromEntries(entries.map(item => [item.key, item.value]));
   res.json(content);
+});
+
+async function readAnalytics() {
+  const row = await prisma.setting.findUnique({ where: { key: 'analytics' } });
+  const base = { ...defaultAnalytics, ...(row?.value || {}) };
+  return {
+    ...base,
+    visitorIds: Array.isArray(base.visitorIds) ? base.visitorIds : []
+  };
+}
+
+async function writeAnalytics(value) {
+  return prisma.setting.upsert({
+    where: { key: 'analytics' },
+    create: { key: 'analytics', value },
+    update: { value }
+  });
+}
+
+app.post('/api/analytics/visit', async (req, res) => {
+  try {
+    const { visitorId, path = '/' } = req.body || {};
+    const analytics = await readAnalytics();
+    analytics.totalVisits = Number(analytics.totalVisits || 0) + 1;
+    const day = new Date().toISOString().slice(0, 10);
+    analytics.visitsByDay = { ...(analytics.visitsByDay || {}), [day]: (analytics.visitsByDay?.[day] || 0) + 1 };
+    analytics.pageViews = { ...(analytics.pageViews || {}), [path]: (analytics.pageViews?.[path] || 0) + 1 };
+    if (visitorId) {
+      const ids = new Set(analytics.visitorIds || []);
+      ids.add(visitorId);
+      analytics.visitorIds = [...ids].slice(-5000);
+      analytics.uniqueVisitors = analytics.visitorIds.length;
+    }
+    await writeAnalytics(analytics);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Analytics visit error:', error);
+    res.json({ ok: false });
+  }
+});
+
+app.post('/api/analytics/click', async (req, res) => {
+  try {
+    const { target = 'unknown' } = req.body || {};
+    const analytics = await readAnalytics();
+    analytics.totalClicks = Number(analytics.totalClicks || 0) + 1;
+    analytics.clicksByTarget = {
+      ...(analytics.clicksByTarget || {}),
+      [target]: (analytics.clicksByTarget?.[target] || 0) + 1
+    };
+    await writeAnalytics(analytics);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Analytics click error:', error);
+    res.json({ ok: false });
+  }
+});
+
+app.get('/api/admin/analytics', adminRequired, async (_, res) => {
+  res.json(await readAnalytics());
 });
 
 app.get('/api/public', async (_, res) => {
