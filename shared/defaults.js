@@ -22,7 +22,7 @@ export const defaultContent = {
     shortName: 'PEAK',
     slogan: 'Kocaeli Premium Fitness Merkezi',
     logoMark: '▲',
-    logoUrl: '/logo-circle.png?v=4'
+    logoUrl: '/logo-circle.png?v=5'
   },
   hero: {
     title: 'HEDEFİNE ULAŞ\nZİRVEYİ YAŞA!',
@@ -64,11 +64,35 @@ export const defaultContent = {
     buttons: ['Üyelik Bilgileri', 'Paket Fiyatları', 'Ders Programları', 'Kampanyalar', 'WhatsApp Destek']
   },
   stats: [
-    { label: 'Aktif Üye', value: '5.000+', icon: 'users' },
-    { label: 'Uzman Eğitmen', value: '25', icon: 'coach' },
-    { label: 'Grup Dersi', value: '100+', icon: 'class' },
-    { label: 'Yıllık Deneyim', value: '10+', icon: 'years' }
+    { id: 'stat-1', label: 'Aktif Üye', value: '5.000+', icon: 'users', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true },
+    { id: 'stat-2', label: 'Uzman Eğitmen', value: '25', icon: 'coach', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true },
+    { id: 'stat-3', label: 'Grup Dersi', value: '100+', icon: 'class', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true },
+    { id: 'stat-4', label: 'Yıllık Deneyim', value: '10+', icon: 'years', accentColor: '#7CFF4F', bgColor: '#111827', valueColor: '#FFFFFF', labelColor: '#9CA3AF', visible: true }
   ],
+  homeCards: {
+    selectedService: {
+      visible: true,
+      label: 'Seçili Hizmet',
+      buttonText: 'Paketleri Gör',
+      accent: '#7CFF4F',
+      background: '#111827',
+      text: '#FFFFFF',
+      muted: '#9CA3AF'
+    },
+    selectedPackage: {
+      visible: true,
+      label: 'Seçili Paket',
+      accent: '#7CFF4F',
+      background: '#111827',
+      text: '#FFFFFF',
+      muted: '#9CA3AF',
+      showPrice: true
+    },
+    heroFloating: {
+      visible: true,
+      statIndex: 0
+    }
+  },
   admin: {
     email: 'admin@peakspor.com',
     password: 'Admin1234!'

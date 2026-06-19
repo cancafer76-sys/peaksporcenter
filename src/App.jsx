@@ -11,7 +11,7 @@ import {
   defaultPosts,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, getYoutubeEmbedUrl, getYoutubeThumbnail, groupGalleryByCategory, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizePackage, normalizeService } from '../shared/media.js';
+import { featuredOrAll, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAnnouncement, normalizeAnnouncements, normalizeGalleryItem, normalizeHomeCards, normalizePackage, normalizeService, normalizeStats } from '../shared/media.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
 import {
@@ -70,7 +70,84 @@ const mobileNav = [
   { id: 'contact', label: 'İletişim', icon: Phone, route: '/contact' }
 ];
 
-const statIcons = [Users, Users, Video, Medal];
+function getStatIcon(name) {
+  const map = { users: Users, coach: Medal, class: Video, years: Medal, medal: Medal, dumbbell: Dumbbell, video: Video };
+  return map[name] || Users;
+}
+
+function StatCard({ item, compact = false }) {
+  if (!item.visible) return null;
+  const Icon = getStatIcon(item.icon);
+  return (
+    <article className="stat-card" style={{ background: item.bgColor, borderColor: `${item.accentColor}40` }}>
+      <Icon size={compact ? 18 : 20} style={{ color: item.accentColor }} />
+      <strong style={{ color: item.valueColor }}>{item.value}</strong>
+      <span style={{ color: item.labelColor }}>{item.label}</span>
+    </article>
+  );
+}
+
+function StatsGrid({ stats, mobile = false }) {
+  const items = getVisibleStats(stats);
+  if (!items.length) return null;
+  return (
+    <section className={`stats-grid ${mobile ? 'stats-grid-mobile' : ''}`}>
+      {items.map(item => <StatCard key={item.id} item={item} compact={mobile} />)}
+    </section>
+  );
+}
+
+function SelectedServiceCard({ service, config, showButton = false, onButtonClick }) {
+  if (!service || !config.visible) return null;
+  return (
+    <article className="detail-card" style={{ background: config.background, borderColor: `${config.accent}40` }}>
+      <div>
+        <span style={{ color: config.muted }}>{config.label}</span>
+        <h3 style={{ color: config.text }}>{service.title}</h3>
+        <p style={{ color: config.muted }}>{service.description}</p>
+      </div>
+      {showButton ? (
+        <button className="detail-link" type="button" style={{ color: config.accent, borderColor: `${config.accent}44` }} onClick={onButtonClick}>
+          {config.buttonText} <ChevronRight size={16} />
+        </button>
+      ) : null}
+    </article>
+  );
+}
+
+function SelectedPackageCard({ pkg, config, compact = false }) {
+  const data = normalizePackage(pkg);
+  if (!data || !config.visible) return null;
+  return (
+    <article className={`detail-card ${compact ? 'detail-card-compact' : ''}`} style={{ background: config.background, borderColor: `${config.accent}40` }}>
+      <div>
+        <span style={{ color: config.muted }}>{config.label}</span>
+        <h3 style={{ color: config.text }}>{data.title}</h3>
+        <p style={{ color: config.muted }}>{data.subtitle}</p>
+      </div>
+      {config.showPrice ? (
+        <div className="detail-price" style={{ color: config.accent }}>
+          ₺{formatPrice(data.price)}
+          <small style={{ color: config.muted }}>{data.period}</small>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function HeroFloatingStat({ stats, config }) {
+  if (!config.visible) return null;
+  const items = normalizeStats(stats);
+  const item = items[config.statIndex];
+  const resolved = item?.visible !== false ? item : getVisibleStats(stats)[0];
+  if (!resolved) return null;
+  return (
+    <div className="hero-floating-card" style={{ background: resolved.bgColor, borderColor: `${resolved.accentColor}44` }}>
+      <strong style={{ color: resolved.valueColor }}>{resolved.value}</strong>
+      <span style={{ color: resolved.labelColor }}>{resolved.label}</span>
+    </div>
+  );
+}
 
 function normalizeSettings(payload) {
   const source = payload && typeof payload === 'object' ? payload : {};
@@ -211,15 +288,17 @@ function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone 
   return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 }
 
-const LOGO_CIRCLE = '/logo-circle.png?v=4';
+const LOGO_CIRCLE = '/logo-circle.png?v=5';
 const LOGO_ALT = 'PEAK SPORTS CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
   return (
     <span className={`circle-logo circle-logo-${size} ${className}`.trim()}>
-      <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" draggable="false" loading="eager" decoding="async" />
-      <span className="circle-logo-orbit" aria-hidden="true" />
+      <span className="circle-logo-core">
+        <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" draggable="false" loading="eager" decoding="async" />
+      </span>
       <span className="circle-logo-glow" aria-hidden="true" />
+      <span className="circle-logo-orbit" aria-hidden="true" />
     </span>
   );
 }
@@ -941,9 +1020,9 @@ function SectionHeader({ title, subtitle, action }) {
 
 function ServicesPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
+  const homeCards = normalizeHomeCards(content.homeCards);
   const services = state.settings.services || defaultServices;
   const selectedService = state.selectedService || services[0];
-  const mobile = state.viewportWidth < 980;
   return (
     <RouteChrome
       state={state}
@@ -972,15 +1051,7 @@ function ServicesPage({ state, setState }) {
               </button>
             ))}
           </div>
-          {selectedService ? (
-            <article className="detail-card">
-              <div>
-                <span>Seçili Hizmet</span>
-                <h3>{selectedService.title}</h3>
-                <p>{selectedService.description}</p>
-              </div>
-            </article>
-          ) : null}
+          <SelectedServiceCard service={selectedService} config={homeCards.selectedService} />
         </>
       }
       backTo="/"
@@ -989,6 +1060,8 @@ function ServicesPage({ state, setState }) {
 }
 
 function PackagesPage({ state, setState }) {
+  const content = state.settings.content || defaultContent;
+  const homeCards = normalizeHomeCards(content.homeCards);
   const packages = state.settings.packages || defaultPackages;
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -1029,19 +1102,7 @@ function PackagesPage({ state, setState }) {
               </article>
             ))}
           </div>
-          {selectedPackage ? (
-            <article className="detail-card detail-card-compact">
-              <div>
-                <span>Seçili Paket</span>
-                <h3>{selectedPackage.title}</h3>
-                <p>{selectedPackage.subtitle}</p>
-              </div>
-              <div className="detail-price">
-                ₺{formatPrice(selectedPackage.price)}
-                <small>/ay</small>
-              </div>
-            </article>
-          ) : null}
+          <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </>
       }
       backTo="/"
@@ -1372,7 +1433,8 @@ function GalleryPage({ state, setState }) {
 
 function DesktopShell({ state, setState }) {
   const content = state.settings.content || defaultContent;
-  const stats = content.stats || defaultContent.stats;
+  const stats = normalizeStats(content.stats || defaultContent.stats);
+  const homeCards = normalizeHomeCards(content.homeCards);
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
@@ -1440,10 +1502,7 @@ function DesktopShell({ state, setState }) {
           <div className="desktop-hero-media">
             <img src={content.hero?.image || defaultContent.hero.image} alt="Peakspor hero" />
             <div className="hero-overlay" />
-            <div className="hero-floating-card">
-              <strong>5.000+</strong>
-              <span>Aktif Üye</span>
-            </div>
+            <HeroFloatingStat stats={stats} config={homeCards.heroFloating} />
           </div>
         </section>
 
@@ -1478,18 +1537,12 @@ function DesktopShell({ state, setState }) {
             ))}
           </div>
 
-          {selectedService ? (
-            <article className="detail-card">
-              <div>
-                <span>Seçili Hizmet</span>
-                <h3>{selectedService.title}</h3>
-                <p>{selectedService.description}</p>
-              </div>
-              <button className="detail-link" type="button" onClick={() => scrollToSection('packages')}>
-                Paketleri Gör <ChevronRight size={16} />
-              </button>
-            </article>
-          ) : null}
+          <SelectedServiceCard
+            service={selectedService}
+            config={homeCards.selectedService}
+            showButton
+            onButtonClick={() => scrollToSection('packages')}
+          />
         </section>
 
         <section className="section-block" id="packages">
@@ -1536,19 +1589,7 @@ function DesktopShell({ state, setState }) {
             );})}
           </div>
 
-          {selectedPackage ? (
-            <article className="detail-card detail-card-compact">
-              <div>
-                <span>Seçili Paket</span>
-                <h3>{selectedPackage.title}</h3>
-                <p>{selectedPackage.subtitle}</p>
-              </div>
-              <div className="detail-price">
-                ₺{formatPrice(selectedPackage.price)}
-                <small>/ay</small>
-              </div>
-            </article>
-          ) : null}
+          <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </section>
 
         <section className="section-block" id="gallery">
@@ -1575,18 +1616,7 @@ function DesktopShell({ state, setState }) {
           </div>
         </section>
 
-        <section className="stats-grid">
-          {stats.map((item, index) => {
-            const Icon = statIcons[index] || Users;
-            return (
-              <article key={item.label} className="stat-card">
-                <Icon size={20} />
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            );
-          })}
-        </section>
+        <StatsGrid stats={stats} />
 
         <section className="feature-bar">
           {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (
@@ -1641,7 +1671,8 @@ function MobileShell({ state, setState }) {
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
   const content = state.settings.content || defaultContent;
-  const stats = content.stats || defaultContent.stats;
+  const stats = normalizeStats(content.stats || defaultContent.stats);
+  const homeCards = normalizeHomeCards(content.homeCards);
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
@@ -1723,6 +1754,12 @@ function MobileShell({ state, setState }) {
             </div>
           </div>
           <ServiceAutoScroller />
+          <SelectedServiceCard
+            service={selectedService}
+            config={homeCards.selectedService}
+            showButton
+            onButtonClick={() => navigateToPath('/packages')}
+          />
         </section>
 
         <section className="section-block" id="packages">
@@ -1768,6 +1805,7 @@ function MobileShell({ state, setState }) {
             );})}
           </div>
           <PackageAutoScroller />
+          <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
         </section>
 
         <section className="section-block" id="gallery">
@@ -1803,18 +1841,7 @@ function MobileShell({ state, setState }) {
           </div>
         </section>
 
-        <section className="stats-grid stats-grid-mobile">
-          {stats.map((item, index) => {
-            const Icon = statIcons[index] || Users;
-            return (
-              <article key={item.label} className="stat-card">
-                <Icon size={18} />
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            );
-          })}
-        </section>
+        <StatsGrid stats={stats} mobile />
 
         <section className="feature-bar feature-bar-mobile">
           {['Esnek Üyelik', '7/24 Destek', 'Güvenli Ödeme', 'Uzman Eğitmenler'].map(item => (

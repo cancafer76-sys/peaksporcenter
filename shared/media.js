@@ -27,6 +27,66 @@ export function normalizeAnnouncements(items) {
   return list.map((item, index) => normalizeAnnouncement(item, index));
 }
 
+export const STAT_ICON_OPTIONS = [
+  { id: 'users', label: 'Üyeler' },
+  { id: 'coach', label: 'Eğitmen' },
+  { id: 'class', label: 'Ders' },
+  { id: 'years', label: 'Deneyim' },
+  { id: 'medal', label: 'Madalya' },
+  { id: 'dumbbell', label: 'Fitness' },
+  { id: 'video', label: 'Video' }
+];
+
+export function normalizeStat(item = {}, index = 0) {
+  return {
+    id: item.id || `stat-${index}`,
+    label: item.label || 'Yeni Kart',
+    value: item.value || '0',
+    icon: item.icon || 'users',
+    accentColor: item.accentColor || '#7CFF4F',
+    bgColor: item.bgColor || '#111827',
+    valueColor: item.valueColor || '#FFFFFF',
+    labelColor: item.labelColor || '#9CA3AF',
+    visible: item.visible !== false
+  };
+}
+
+export function normalizeStats(items) {
+  const list = Array.isArray(items) && items.length ? items : [];
+  return list.map((item, index) => normalizeStat(item, index));
+}
+
+export function getVisibleStats(items) {
+  return normalizeStats(items).filter(item => item.visible);
+}
+
+export function normalizeHomeCards(cards = {}) {
+  return {
+    selectedService: {
+      visible: cards.selectedService?.visible !== false,
+      label: cards.selectedService?.label || 'Seçili Hizmet',
+      buttonText: cards.selectedService?.buttonText || 'Paketleri Gör',
+      accent: cards.selectedService?.accent || '#7CFF4F',
+      background: cards.selectedService?.background || '#111827',
+      text: cards.selectedService?.text || '#FFFFFF',
+      muted: cards.selectedService?.muted || '#9CA3AF'
+    },
+    selectedPackage: {
+      visible: cards.selectedPackage?.visible !== false,
+      label: cards.selectedPackage?.label || 'Seçili Paket',
+      accent: cards.selectedPackage?.accent || '#7CFF4F',
+      background: cards.selectedPackage?.background || '#111827',
+      text: cards.selectedPackage?.text || '#FFFFFF',
+      muted: cards.selectedPackage?.muted || '#9CA3AF',
+      showPrice: cards.selectedPackage?.showPrice !== false
+    },
+    heroFloating: {
+      visible: cards.heroFloating?.visible !== false,
+      statIndex: Number.isFinite(cards.heroFloating?.statIndex) ? cards.heroFloating.statIndex : 0
+    }
+  };
+}
+
 export function normalizeService(item = {}) {
   return {
     title: item.title || 'Yeni Hizmet',

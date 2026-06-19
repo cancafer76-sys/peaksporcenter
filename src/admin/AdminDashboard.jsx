@@ -9,6 +9,7 @@ import {
   LogOut,
   Megaphone,
   Package,
+  LayoutGrid,
   Palette,
   Phone,
   Save,
@@ -24,6 +25,7 @@ import {
 import { applySiteTheme, hexToRgbString, themePresets } from '../../shared/theme.js';
 import {
   AnnouncementsEditor,
+  CardsEditor,
   DashboardStats,
   GalleryEditor,
   PackagesEditor,
@@ -37,6 +39,7 @@ const NAV = [
   { id: 'packages', label: 'Paketler', icon: Package },
   { id: 'gallery', label: 'Galeri', icon: GalleryHorizontal },
   { id: 'announcements', label: 'Duyurular', icon: Megaphone },
+  { id: 'cards', label: 'Kartlar', icon: LayoutGrid },
   { id: 'settings', label: 'Ayarlar', icon: Settings2 }
 ];
 
@@ -46,6 +49,7 @@ const TITLES = {
   packages: 'Paketler',
   gallery: 'Galeri',
   announcements: 'Duyurular',
+  cards: 'Kartlar',
   settings: 'Ayarlar'
 };
 
@@ -257,6 +261,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
       return;
     }
     if (section === 'announcements') return persist('announcements', draft.announcements, 'Duyurular');
+    if (section === 'cards') return persist('content', draft.content, 'Kartlar');
     if (section === 'settings') return persist('content', draft.content, 'Ayarlar');
     return null;
   };
@@ -308,6 +313,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
               />
             ) : null}
             {section === 'announcements' ? <AnnouncementsEditor items={draft.announcements} onChange={v => setDraft(p => ({ ...p, announcements: v }))} /> : null}
+            {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {showSave ? <SaveBar onSave={handleSave} saving={saving} message={message} /> : null}
           </main>

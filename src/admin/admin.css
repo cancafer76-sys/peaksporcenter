@@ -683,6 +683,35 @@
   }
 }
 
+.admin-card-row {
+  margin-top: 12px;
+}
+
+.admin-card-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.preview-stat-card {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 4px;
+}
+
+.preview-stat-card strong {
+  font-size: 22px;
+}
+
+.preview-stat-card span {
+  font-size: 12px;
+}
+
 .preview-service-card, .preview-package-card, .preview-gallery-card {
   border-radius: 16px;
   overflow: hidden;

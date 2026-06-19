@@ -6,9 +6,13 @@ import {
   normalizeGalleryItem,
   normalizePackage,
   normalizeService,
-  normalizeAnnouncement
+  normalizeAnnouncement,
+  normalizeStat,
+  normalizeStats,
+  normalizeHomeCards,
+  STAT_ICON_OPTIONS
 } from '../../shared/media.js';
-import { defaultGalleryCategories } from '../../shared/defaults.js';
+import { defaultContent, defaultGalleryCategories } from '../../shared/defaults.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -358,6 +362,107 @@ export function AnnouncementsEditor({ items, onChange }) {
           <button type="button" className="admin-mini-btn danger" onClick={() => onChange(list.filter((_, i) => i !== index))}><Trash2 size={14} /></button>
         </div>
       ))}
+    </>
+  );
+}
+
+export function CardsEditor({ content, onChange }) {
+  const data = content || defaultContent;
+  const stats = normalizeStats(data.stats || defaultContent.stats);
+  const homeCards = normalizeHomeCards(data.homeCards);
+
+  const patch = next => onChange({ ...data, ...next });
+  const patchHome = key => next => patch({ homeCards: { ...homeCards, [key]: { ...homeCards[key], ...next } } });
+
+  const updateStat = (index, patchStat) => {
+    const next = clone(stats);
+    next[index] = { ...next[index], ...patchStat };
+    patch({ stats: next });
+  };
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <div>
+          <h2 className="admin-page-title">Ana Sayfa Kartları</h2>
+          <p className="admin-page-sub">İstatistik kartlarını ve seçili hizmet/paket kartlarını yönetin.</p>
+        </div>
+        <button
+          type="button"
+          className="admin-mini-btn primary"
+          onClick={() => patch({ stats: [...stats, normalizeStat({ label: 'Yeni Kart', value: '0' }, stats.length)] })}
+        >
+          <Plus size={14} /> Kart Ekle
+        </button>
+      </div>
+
+      <div className="admin-form-card">
+        <h4>İstatistik Kartları</h4>
+        <p className="admin-hint">5.000+ Aktif Üye gibi rakam kartları. Gizle, sil veya renkleri değiştir.</p>
+        {stats.map((item, index) => (
+          <div key={item.id} className="admin-form-card admin-card-row">
+            <div className="admin-card-row-head">
+              <Toggle checked={item.visible} onChange={v => updateStat(index, { visible: v })} label={item.visible ? 'Görünür' : 'Gizli'} />
+              <button type="button" className="admin-mini-btn danger" onClick={() => patch({ stats: stats.filter((_, i) => i !== index) })}><Trash2 size={14} /></button>
+            </div>
+            <div className="admin-form-grid">
+              <label className="admin-field">Etiket<input value={item.label} onChange={e => updateStat(index, { label: e.target.value })} /></label>
+              <label className="admin-field">Rakam / Değer<input value={item.value} onChange={e => updateStat(index, { value: e.target.value })} /></label>
+              <label className="admin-field">İkon
+                <select value={item.icon} onChange={e => updateStat(index, { icon: e.target.value })}>
+                  {STAT_ICON_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                </select>
+              </label>
+              <ColorField label="İkon Rengi" value={item.accentColor} onChange={v => updateStat(index, { accentColor: v })} />
+              <ColorField label="Arka Plan" value={item.bgColor} onChange={v => updateStat(index, { bgColor: v })} />
+              <ColorField label="Rakam Rengi" value={item.valueColor} onChange={v => updateStat(index, { valueColor: v })} />
+              <ColorField label="Etiket Rengi" value={item.labelColor} onChange={v => updateStat(index, { labelColor: v })} />
+            </div>
+            <article className="preview-stat-card" style={{ background: item.bgColor, borderColor: `${item.accentColor}44` }}>
+              <strong style={{ color: item.valueColor }}>{item.value}</strong>
+              <span style={{ color: item.labelColor }}>{item.label}</span>
+            </article>
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-form-card">
+        <h4>Seçili Hizmet Kartı</h4>
+        <Toggle checked={homeCards.selectedService.visible} onChange={v => patchHome('selectedService')({ visible: v })} label="Kartı göster" />
+        <div className="admin-form-grid">
+          <label className="admin-field">Başlık<input value={homeCards.selectedService.label} onChange={e => patchHome('selectedService')({ label: e.target.value })} /></label>
+          <label className="admin-field">Buton Yazısı<input value={homeCards.selectedService.buttonText} onChange={e => patchHome('selectedService')({ buttonText: e.target.value })} /></label>
+          <ColorField label="Vurgu Rengi" value={homeCards.selectedService.accent} onChange={v => patchHome('selectedService')({ accent: v })} />
+          <ColorField label="Arka Plan" value={homeCards.selectedService.background} onChange={v => patchHome('selectedService')({ background: v })} />
+          <ColorField label="Metin Rengi" value={homeCards.selectedService.text} onChange={v => patchHome('selectedService')({ text: v })} />
+          <ColorField label="Açıklama Rengi" value={homeCards.selectedService.muted} onChange={v => patchHome('selectedService')({ muted: v })} />
+        </div>
+      </div>
+
+      <div className="admin-form-card">
+        <h4>Seçili Paket Kartı</h4>
+        <Toggle checked={homeCards.selectedPackage.visible} onChange={v => patchHome('selectedPackage')({ visible: v })} label="Kartı göster" />
+        <Toggle checked={homeCards.selectedPackage.showPrice} onChange={v => patchHome('selectedPackage')({ showPrice: v })} label="Fiyat göster" />
+        <div className="admin-form-grid">
+          <label className="admin-field">Başlık<input value={homeCards.selectedPackage.label} onChange={e => patchHome('selectedPackage')({ label: e.target.value })} /></label>
+          <ColorField label="Vurgu Rengi" value={homeCards.selectedPackage.accent} onChange={v => patchHome('selectedPackage')({ accent: v })} />
+          <ColorField label="Arka Plan" value={homeCards.selectedPackage.background} onChange={v => patchHome('selectedPackage')({ background: v })} />
+          <ColorField label="Metin Rengi" value={homeCards.selectedPackage.text} onChange={v => patchHome('selectedPackage')({ text: v })} />
+          <ColorField label="Alt Metin Rengi" value={homeCards.selectedPackage.muted} onChange={v => patchHome('selectedPackage')({ muted: v })} />
+        </div>
+      </div>
+
+      <div className="admin-form-card">
+        <h4>Hero Rozet (5.000+ Aktif Üye)</h4>
+        <Toggle checked={homeCards.heroFloating.visible} onChange={v => patchHome('heroFloating')({ visible: v })} label="Hero üzerinde göster" />
+        <label className="admin-field">Hangi istatistik kartı?
+          <select value={homeCards.heroFloating.statIndex} onChange={e => patchHome('heroFloating')({ statIndex: Number(e.target.value) })}>
+            {stats.map((item, index) => (
+              <option key={item.id} value={index}>{item.label} — {item.value}</option>
+            ))}
+          </select>
+        </label>
+      </div>
     </>
   );
 }
