@@ -12,6 +12,8 @@ import {
   defaultTrainers
 } from '../shared/defaults.js';
 import { featuredOrAll, getYoutubeEmbedUrl, groupGalleryByCategory, normalizeGalleryItem, normalizePackage, normalizeService } from '../shared/media.js';
+import { applySiteTheme } from '../shared/theme.js';
+import { applySiteSeo } from '../shared/seo.js';
 import {
   BadgeInfo,
   ChevronRight,
@@ -219,12 +221,13 @@ function resolveAnnouncementText(items) {
 }
 
 const LOGO_CIRCLE = '/logo-circle.png';
+const LOGO_ALT = 'PEAK SPOR CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
   return (
     <span className={`circle-logo circle-logo-${size} ${className}`.trim()}>
       <span className="circle-logo-orbit" aria-hidden="true" />
-      <img src={LOGO_CIRCLE} alt="" className="circle-logo-img" />
+      <img src={LOGO_CIRCLE} alt={LOGO_ALT} className="circle-logo-img" />
     </span>
   );
 }
@@ -1402,7 +1405,7 @@ function DesktopShell({ state, setState }) {
                 key={service.title}
                 type="button"
                 className={`service-card ${selectedService?.title === service.title ? 'selected' : ''}`}
-                style={{ '--service-accent': service.accent || '#7CFF4F' }}
+                style={{ '--service-accent': service.accent || 'var(--accent)' }}
                 onClick={() => {
                   trackSiteClick(`service:${service.title}`);
                   setState(prev => ({ ...prev, selectedService: service }));
@@ -1942,25 +1945,16 @@ export default function App() {
 
   useEffect(() => {
     const theme = state.settings.content?.theme;
-    if (!theme) return;
-    const root = document.documentElement;
-    if (theme.primary) root.style.setProperty('--green', theme.primary);
-    if (theme.secondary) root.style.setProperty('--green-strong', theme.secondary);
-    if (theme.background) root.style.background = theme.background;
-    if (theme.text) root.style.setProperty('--text', theme.text);
-    if (theme.muted) root.style.setProperty('--muted', theme.muted);
-    const seo = state.settings.content?.seo;
-    if (seo?.title) document.title = seo.title;
-  }, [state.settings.content?.theme, state.settings.content?.seo]);
+    const content = state.settings.content;
+    applySiteTheme(theme, { darkMode: state.darkMode });
+    applySiteSeo(content?.seo, content?.brand);
+  }, [state.settings.content?.theme, state.settings.content?.seo, state.settings.content?.brand, state.darkMode]);
 
   useEffect(() => {
     const isLight = !state.darkMode;
-    document.documentElement.classList.toggle('theme-light', isLight);
-    document.documentElement.style.background = isLight ? '#f5f7fa' : '#050505';
     document.documentElement.style.minHeight = '100dvh';
     document.documentElement.style.width = '100%';
     document.documentElement.style.overflowX = 'hidden';
-    document.body.style.background = isLight ? '#f5f7fa' : '#050505';
     document.body.style.minHeight = '100dvh';
     document.body.style.width = '100%';
     document.body.style.overflowX = 'hidden';
@@ -1968,8 +1962,10 @@ export default function App() {
     document.body.style.padding = '0';
     document.body.style.overscrollBehaviorY = 'auto';
     document.body.style.touchAction = 'pan-y';
-    document.body.style.color = isLight ? '#0f172a' : '#ffffff';
-  }, [state.darkMode]);
+    if (!state.settings.content?.theme) {
+      document.documentElement.classList.toggle('theme-light', isLight);
+    }
+  }, [state.darkMode, state.settings.content?.theme]);
 
   if (state.loading) {
     return (

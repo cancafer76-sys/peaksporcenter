@@ -18,10 +18,11 @@ export const defaultBannerSlides = [
 
 export const defaultContent = {
   brand: {
-    name: 'PEAKSPOR',
-    shortName: 'PK',
-    slogan: 'Premium Fitness Platform',
-    logoMark: '▲'
+    name: 'PEAK SPOR CENTER',
+    shortName: 'PEAK',
+    slogan: 'Kocaeli Premium Fitness Merkezi',
+    logoMark: '▲',
+    logoUrl: '/logo-circle.png'
   },
   hero: {
     title: 'HEDEFİNE ULAŞ\nZİRVEYİ YAŞA!',
@@ -37,13 +38,20 @@ export const defaultContent = {
     label: 'WhatsApp'
   },
   seo: {
-    title: 'PEAKSPOR | Premium Fitness Platform',
-    description: 'PEAKSPOR için premium fitness platformu, rezervasyon sistemi ve admin paneli.',
-    keywords: 'fitness, gym, premium gym, spor salonu, rezervasyon, PEAKSPOR'
+    title: 'PEAK SPOR CENTER | Kocaeli Fitness ve Spor Salonu',
+    description: 'Kocaeli\'nin premium fitness ve spor merkezi PEAK SPOR CENTER. Kişisel antrenman, pilates, crossfit, grup dersleri ve üyelik paketleri. Türkiye\'nin modern spor salonu deneyimi.',
+    keywords: 'kocaeli spor salonu, kocaeli fitness, peak spor center, türkiye fitness, gym kocaeli, fitness merkezi kocaeli, personal training, pilates kocaeli, crossfit kocaeli, spor merkezi türkiye',
+    siteUrl: '',
+    city: 'Kocaeli',
+    region: 'Kocaeli',
+    country: 'TR',
+    countryName: 'Türkiye',
+    socialLinks: []
   },
   theme: {
     primary: '#7CFF4F',
     secondary: '#22C55E',
+    accentLight: '#d7ff8a',
     background: '#050505',
     surface: '#0D1117',
     panel: '#111827',

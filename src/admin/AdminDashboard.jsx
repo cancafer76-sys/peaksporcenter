@@ -21,6 +21,7 @@ import {
   defaultContent,
   defaultGalleryCategories
 } from '../../shared/defaults.js';
+import { applySiteTheme, hexToRgbString, themePresets } from '../../shared/theme.js';
 import {
   AnnouncementsEditor,
   DashboardStats,
@@ -109,17 +110,64 @@ function SettingsSection({ content, onChange }) {
   const seo = { ...defaultContent.seo, ...(data.seo || {}) };
 
   const patch = next => onChange({ ...data, ...next });
+  const patchTheme = next => {
+    const merged = { ...theme, ...next };
+    patch({ theme: merged });
+    applySiteTheme(merged, { darkMode: true });
+  };
+
+  const colorFields = [
+    ['primary', 'Ana Renk (Yeşil/Kırmızı vb.)'],
+    ['secondary', 'İkincil Renk'],
+    ['accentLight', 'Açık Vurgu'],
+    ['background', 'Arka Plan (Siyah)'],
+    ['surface', 'Yüzey'],
+    ['panel', 'Panel / Kart'],
+    ['text', 'Metin'],
+    ['muted', 'Soluk Metin']
+  ];
 
   return (
     <>
       <h2 className="admin-page-title">Ayarlar</h2>
-      <p className="admin-page-sub">Tema renkleri, WhatsApp ve SEO.</p>
+      <p className="admin-page-sub">Tek tuşla tema değiştirin veya renkleri tek tek ayarlayın.</p>
+
+      <div className="admin-form-card">
+        <h4>Hazır Temalar</h4>
+        <p className="admin-hint">Tüm site renklerini (yeşil, siyah arka plan vb.) tek tıkla değiştirir.</p>
+        <div className="admin-preset-grid">
+          {Object.entries(themePresets).map(([key, preset]) => (
+            <button
+              key={key}
+              type="button"
+              className="admin-preset-btn"
+              onClick={() => patchTheme(preset.theme)}
+            >
+              <span className="admin-preset-swatch" style={{ background: preset.theme.primary }} />
+              <span className="admin-preset-swatch admin-preset-swatch-dark" style={{ background: preset.theme.background }} />
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="admin-form-card">
         <h4>Tema Renkleri</h4>
         <div className="admin-color-grid">
-          {[['primary', 'Ana Renk'], ['secondary', 'İkincil'], ['background', 'Arka Plan'], ['text', 'Metin']].map(([key, label]) => (
-            <label key={key} className="admin-field admin-color-field">{label}<input type="color" value={theme[key]} onChange={e => patch({ theme: { ...theme, [key]: e.target.value } })} /></label>
+          {colorFields.map(([key, label]) => (
+            <label key={key} className="admin-field admin-color-field">
+              {label}
+              <input type="color" value={theme[key] || '#000000'} onChange={e => patchTheme({ [key]: e.target.value })} />
+            </label>
           ))}
+        </div>
+        <div className="admin-theme-preview" style={{
+          background: theme.background,
+          color: theme.text,
+          borderColor: `rgba(${hexToRgbString(theme.primary)}, 0.35)`
+        }}>
+          <span style={{ color: theme.primary }}>Önizleme</span>
+          <button type="button" style={{ background: theme.primary, color: theme.background }}>Buton</button>
         </div>
       </div>
       <div className="admin-form-card">
@@ -130,10 +178,14 @@ function SettingsSection({ content, onChange }) {
         </div>
       </div>
       <div className="admin-form-card">
-        <h4>SEO</h4>
+        <h4>SEO (Google & Arama)</h4>
+        <p className="admin-hint">Kocaeli, fitness ve spor salonu anahtar kelimeleri Google aramalarında görünürlüğü artırır.</p>
         <div className="admin-form-grid single">
-          <label className="admin-field">Başlık<input value={seo.title} onChange={e => patch({ seo: { ...seo, title: e.target.value } })} /></label>
-          <label className="admin-field">Açıklama<textarea rows={2} value={seo.description} onChange={e => patch({ seo: { ...seo, description: e.target.value } })} /></label>
+          <label className="admin-field">Site Başlığı<input value={seo.title} onChange={e => patch({ seo: { ...seo, title: e.target.value } })} /></label>
+          <label className="admin-field">Meta Açıklama<textarea rows={3} value={seo.description} onChange={e => patch({ seo: { ...seo, description: e.target.value } })} /></label>
+          <label className="admin-field">Anahtar Kelimeler<textarea rows={2} value={seo.keywords} onChange={e => patch({ seo: { ...seo, keywords: e.target.value } })} /></label>
+          <label className="admin-field">Site URL (Google için)<input value={seo.siteUrl || ''} placeholder="https://siteniz.com" onChange={e => patch({ seo: { ...seo, siteUrl: e.target.value } })} /></label>
+          <label className="admin-field">Şehir<input value={seo.city || 'Kocaeli'} onChange={e => patch({ seo: { ...seo, city: e.target.value } })} /></label>
         </div>
       </div>
     </>
