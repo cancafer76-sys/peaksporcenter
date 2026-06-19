@@ -613,7 +613,7 @@ export function AboutEditor({ data, onChange }) {
       <div className="admin-form-card">
         <h4>Paragraflar</h4>
         {about.paragraphs.map((paragraph, index) => (
-          <div key={`p-${index}`} className="admin-feature-row" style={{ gridTemplateColumns: '1fr auto', marginBottom: 10 }}>
+          <div key={`p-${index}`} className="admin-feature-row admin-text-row">
             <textarea rows={2} value={paragraph} onChange={e => updateParagraph(index, e.target.value)} />
             <button type="button" className="admin-feature-remove" onClick={() => patch({ paragraphs: about.paragraphs.filter((_, i) => i !== index) })}><Trash2 size={14} /></button>
           </div>

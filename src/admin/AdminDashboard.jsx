@@ -370,8 +370,8 @@ export default function AdminDashboard({ state, setState, onClose }) {
             {section === 'announcements' ? <AnnouncementsEditor items={draft.announcements} onChange={v => setDraft(p => ({ ...p, announcements: v }))} /> : null}
             {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
-            {showSave ? <SaveBar onSave={handleSave} saving={saving} message={message} /> : null}
           </main>
+          {showSave ? <SaveBar onSave={handleSave} saving={saving} message={message} /> : null}
         </div>
       </div>
     </div>

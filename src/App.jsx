@@ -77,6 +77,11 @@ const desktopNav = [
   { id: 'contact', label: 'İletişim', route: '/contact' }
 ];
 
+function buildHomeRailItems(items) {
+  const list = Array.isArray(items) ? items : [];
+  return list.length > 1 ? [...list, ...list] : list;
+}
+
 function getStatIcon(name) {
   const map = { users: Users, coach: Medal, class: Video, years: Medal, medal: Medal, dumbbell: Dumbbell, video: Video };
   return map[name] || Users;
@@ -1726,16 +1731,18 @@ function DesktopShell({ state, setState }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
-  const homeServices = featuredOrAll(services, 8);
+  const allServices = services.map(normalizeService);
+  const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
+  const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
+  const servicesRailItems = buildHomeRailItems(allServices);
+  const galleryRailItems = buildHomeRailItems(allGallery);
+  const coachesRailItems = buildHomeRailItems(allCoaches);
   const homePackages = featuredOrAll(packages, 8);
-  const homeGallery = featuredOrAll(gallery, 8);
-  const homeCoaches = featuredOrAll(state.settings.trainers || defaultTrainers, 8);
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
     : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
-  const serviceLoop = homeServices.length > 1 ? [...homeServices, ...homeServices] : homeServices;
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
@@ -1794,8 +1801,8 @@ function DesktopShell({ state, setState }) {
             subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail">
-            {serviceLoop.map((service, index) => (
+          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail" data-loop={servicesRailItems.length > allServices.length ? 'true' : 'false'}>
+            {servicesRailItems.map((service, index) => (
               <ServiceCardButton
                 key={`${service.title}-${index}`}
                 service={service}
@@ -1848,9 +1855,9 @@ function DesktopShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail">
-            {homeCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
+          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail" data-loop={coachesRailItems.length > allCoaches.length ? 'true' : 'false'}>
+            {coachesRailItems.map((coach, index) => (
+              <CoachCard key={`${normalizeTrainer(coach).id}-${index}`} coach={coach} mini />
             ))}
           </div>
           <CoachAutoScroller />
@@ -1862,10 +1869,10 @@ function DesktopShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail">
-            {homeGallery.map(item => (
+          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail" data-loop={galleryRailItems.length > allGallery.length ? 'true' : 'false'}>
+            {galleryRailItems.map((item, index) => (
               <GalleryCard
-                key={normalizeGalleryItem(item).id}
+                key={`${normalizeGalleryItem(item).id}-${index}`}
                 item={item}
                 interactive
                 compact
@@ -1922,16 +1929,18 @@ function MobileShell({ state, setState }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
-  const homeServices = featuredOrAll(services, 8);
+  const allServices = services.map(normalizeService);
+  const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
+  const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
+  const servicesRailItems = buildHomeRailItems(allServices);
+  const galleryRailItems = buildHomeRailItems(allGallery);
+  const coachesRailItems = buildHomeRailItems(allCoaches);
   const homePackages = featuredOrAll(packages, 6);
-  const homeGallery = featuredOrAll(gallery, 8);
-  const homeCoaches = featuredOrAll(state.settings.trainers || defaultTrainers, 8);
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = bannerSlides.length
     ? bannerSlides
     : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
-  const serviceLoop = homeServices.length > 1 ? [...homeServices, ...homeServices] : homeServices;
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 
@@ -1977,8 +1986,8 @@ function MobileShell({ state, setState }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail">
-            {serviceLoop.map((service, index) => (
+          <div className="home-scroll-rail mobile-horizontal-rail home-services-rail" data-loop={servicesRailItems.length > allServices.length ? 'true' : 'false'}>
+            {servicesRailItems.map((service, index) => (
               <ServiceCardButton
                 key={`${service.title}-${index}`}
                 service={service}
@@ -2025,9 +2034,9 @@ function MobileShell({ state, setState }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail">
-            {homeCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
+          <div className="home-scroll-rail mobile-horizontal-rail home-coaches-rail" data-loop={coachesRailItems.length > allCoaches.length ? 'true' : 'false'}>
+            {coachesRailItems.map((coach, index) => (
+              <CoachCard key={`${normalizeTrainer(coach).id}-${index}`} coach={coach} mini />
             ))}
           </div>
           <CoachAutoScroller />
@@ -2039,10 +2048,10 @@ function MobileShell({ state, setState }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail">
-            {homeGallery.map(item => (
+          <div className="home-scroll-rail mobile-horizontal-rail home-gallery-rail" data-loop={galleryRailItems.length > allGallery.length ? 'true' : 'false'}>
+            {galleryRailItems.map((item, index) => (
               <GalleryCard
-                key={normalizeGalleryItem(item).id}
+                key={`${normalizeGalleryItem(item).id}-${index}`}
                 item={item}
                 interactive
                 compact
@@ -2123,14 +2132,21 @@ function RailAutoScroller({ selector, speed = 0.35 }) {
     const rail = document.querySelector(selector);
     if (!rail) return undefined;
     let frameId;
-    let direction = -Math.abs(speed);
+    const loop = rail.dataset.loop === 'true';
+    const step = Math.abs(speed);
 
     const tick = () => {
       const maxScroll = rail.scrollWidth - rail.clientWidth;
       if (maxScroll > 0) {
-        rail.scrollLeft += direction;
-        if (rail.scrollLeft <= 0) direction = Math.abs(speed);
-        if (rail.scrollLeft >= maxScroll) direction = -Math.abs(speed);
+        rail.scrollLeft += step;
+        if (loop) {
+          const loopPoint = rail.scrollWidth / 2;
+          if (rail.scrollLeft >= loopPoint) {
+            rail.scrollLeft -= loopPoint;
+          }
+        } else if (rail.scrollLeft >= maxScroll) {
+          rail.scrollLeft = 0;
+        }
       }
       frameId = requestAnimationFrame(tick);
     };

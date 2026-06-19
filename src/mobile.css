@@ -1537,16 +1537,18 @@ img { display: block; width: 100%; }
 .mobile-horizontal-rail,
 .home-scroll-rail {
   display: flex !important;
+  flex-wrap: nowrap;
   gap: 12px;
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 4px;
-  scroll-snap-type: x proximity;
+  scroll-snap-type: none;
   -ms-overflow-style: none;
   scrollbar-width: none;
   scroll-behavior: auto;
   width: 100%;
   max-width: 100%;
+  touch-action: pan-x;
 }
 
 .service-carousel {
@@ -1668,6 +1670,10 @@ img { display: block; width: 100%; }
 .home-scroll-rail .gallery-card img,
 .home-scroll-rail .gallery-card-home img {
   min-height: 150px;
+}
+
+.home-scroll-rail > * {
+  flex: 0 0 auto;
 }
 
 .mobile-horizontal-rail .service-card-mobile {
