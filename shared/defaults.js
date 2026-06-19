@@ -18,8 +18,8 @@ export const defaultBannerSlides = [
 
 export const defaultContent = {
   brand: {
-    name: 'PEAK SPOR CENTER',
-    shortName: 'PEAK',
+    name: 'PEAKSPORTS CENTER',
+    shortName: 'PEAKSPORTS',
     slogan: 'Kocaeli Premium Fitness Merkezi',
     logoMark: '▲',
     logoUrl: '/logo-circle.png?v=6'
@@ -38,8 +38,8 @@ export const defaultContent = {
     label: 'WhatsApp'
   },
   seo: {
-    title: 'PEAK SPOR CENTER | Kocaeli Fitness ve Spor Salonu',
-    description: 'Kocaeli\'nin premium fitness ve spor merkezi PEAK SPOR CENTER. Kişisel antrenman, pilates, crossfit, grup dersleri ve üyelik paketleri. Türkiye\'nin modern spor salonu deneyimi.',
+    title: 'PEAKSPORTS CENTER | Kocaeli Fitness ve Spor Salonu',
+    description: 'Kocaeli\'nin premium fitness ve spor merkezi PEAKSPORTS CENTER. Kişisel antrenman, pilates, crossfit, grup dersleri ve üyelik paketleri. Türkiye\'nin modern spor salonu deneyimi.',
     keywords: 'kocaeli spor salonu, kocaeli fitness, peak spor center, türkiye fitness, gym kocaeli, fitness merkezi kocaeli, personal training, pilates kocaeli, crossfit kocaeli, spor merkezi türkiye',
     siteUrl: '',
     city: 'Kocaeli',

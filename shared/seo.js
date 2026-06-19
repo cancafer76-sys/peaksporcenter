@@ -68,14 +68,14 @@ export function applySiteSeo(seoInput = {}, brandInput = {}) {
   if (seo.title) document.title = seo.title;
   upsertMeta('description', seo.description);
   upsertMeta('keywords', seo.keywords);
-  upsertMeta('author', brand.name || 'PEAK SPOR CENTER');
+  upsertMeta('author', brand.name || 'PEAKSPORTS CENTER');
   upsertMeta('robots', 'index, follow, max-image-preview:large');
   upsertMeta('geo.region', 'TR-41');
   upsertMeta('geo.placename', seo.city || 'Kocaeli');
   upsertMeta('language', 'Turkish');
 
   upsertProperty('og:type', 'website');
-  upsertProperty('og:site_name', brand.name || 'PEAK SPOR CENTER');
+  upsertProperty('og:site_name', brand.name || 'PEAKSPORTS CENTER');
   upsertProperty('og:title', seo.title);
   upsertProperty('og:description', seo.description);
   upsertProperty('og:url', pageUrl);
@@ -96,7 +96,7 @@ export function applySiteSeo(seoInput = {}, brandInput = {}) {
   upsertJsonLd('peakspor-local-business', {
     '@context': 'https://schema.org',
     '@type': 'SportsActivityLocation',
-    name: brand.name || 'PEAK SPOR CENTER',
+    name: brand.name || 'PEAKSPORTS CENTER',
     description: seo.description,
     url: siteUrl || pageUrl,
     image: imageUrl,
@@ -118,7 +118,7 @@ export function applySiteSeo(seoInput = {}, brandInput = {}) {
   upsertJsonLd('peakspor-organization', {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: brand.name || 'PEAK SPOR CENTER',
+    name: brand.name || 'PEAKSPORTS CENTER',
     url: siteUrl || pageUrl,
     logo: logoUrl,
     description: seo.description

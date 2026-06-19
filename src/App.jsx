@@ -329,7 +329,7 @@ function buildMembershipWhatsAppUrl(number, { firstName, lastName, email, phone 
 }
 
 const LOGO_CIRCLE = '/logo-circle.png?v=6';
-const LOGO_ALT = 'PEAK SPORTS CENTER logo';
+const LOGO_ALT = 'PEAKSPORTS CENTER logo';
 
 function CircleLogo({ className = '', size = 'md' }) {
   return (
@@ -345,13 +345,12 @@ function CircleLogo({ className = '', size = 'md' }) {
 
 function Brand({ compact = false, logoOnly = false }) {
   return (
-    <div className={`brand brand-circle ${compact ? 'brand-compact' : ''} ${logoOnly ? 'brand-logo-only' : ''}`} aria-label="PEAK SPOR CENTER">
+    <div className={`brand brand-circle ${compact ? 'brand-compact' : ''} ${logoOnly ? 'brand-logo-only' : ''}`} aria-label="PEAKSPORTS CENTER">
       <CircleLogo size={compact ? 'md' : 'lg'} />
       {logoOnly ? null : (
         <span className="brand-caption">
           <strong>
-            <span className="brand-caption-peak">PEAK</span>
-            <span className="brand-caption-spor"> SPOR</span>
+            <span className="brand-caption-peak">PEAKSPORTS</span>
           </strong>
           <small className="brand-center" aria-label="CENTER">
             <span className="brand-center-track">
@@ -721,8 +720,7 @@ function AppDrawer({ open, onClose, pathname }) {
             <CircleLogo size="xl" className="drawer-logo-mark" />
             <div className="drawer-brand-text">
               <strong>
-                <span className="brand-caption-peak">PEAK</span>
-                <span className="brand-caption-spor"> SPOR</span>
+                <span className="brand-caption-peak">PEAKSPORTS</span>
               </strong>
               <span>CENTER</span>
             </div>
@@ -946,7 +944,7 @@ function HeroCarousel({ slides, mobile = false }) {
               <img src={slide.image} alt={slide.title} />
               <div className={`hero-overlay ${mobile ? 'hero-overlay-mobile' : ''}`} />
               <div className={`hero-carousel-copy ${mobile ? 'hero-carousel-copy-mobile' : ''}`}>
-                <span className="hero-banner-kicker">PEAKSPOR</span>
+                <span className="hero-banner-kicker">PEAKSPORTS</span>
                 <strong>{slide.title}</strong>
                 <p>{slide.subtitle}</p>
               </div>

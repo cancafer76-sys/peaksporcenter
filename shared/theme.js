@@ -187,5 +187,6 @@ export function applySiteTheme(themeInput = {}, options = {}) {
   body.style.color = text;
 
   root.classList.toggle('theme-light', !darkMode);
+  root.classList.toggle('theme-monochrome', merged.monochrome !== false);
   document.querySelector('.app-shell')?.classList.toggle('light', !darkMode);
 }
