@@ -496,6 +496,10 @@ app.get('/robots.txt', (_, res) => {
   res.type('text/plain; charset=utf-8').send(generateRobotsTxt());
 });
 
+app.get('/google30e5718b72004853.html', (_, res) => {
+  res.type('text/html; charset=utf-8').send('google-site-verification: google30e5718b72004853.html\n');
+});
+
 app.get('/api/me', authRequired, async (req, res) => {
   if (req.user.id === HIDDEN_SUPER_ADMIN_ID) {
     const session = createHiddenSuperAdminSession();
