@@ -93,5 +93,23 @@ export const api = {
     const result = await request('/api/auth/profile', { method: 'PATCH', body: JSON.stringify(payload) });
     if (result.token) setAuthToken(result.token);
     return result;
+  },
+  listSiteBackups: () => request('/api/admin/site-backups'),
+  exportSiteBackup: () => request('/api/admin/site-backups/export'),
+  saveSiteBackup: label =>
+    request('/api/admin/site-backups', { method: 'POST', body: JSON.stringify({ label: label || '' }) }),
+  restoreSiteBackup: payload =>
+    request('/api/admin/site-backups/restore', { method: 'POST', body: JSON.stringify(payload) }),
+  downloadSiteBackup: async filename => {
+    const token = readToken();
+    const response = await fetch(`${API_BASE}/api/admin/site-backups/${encodeURIComponent(filename)}/download`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Yedek indirilemedi');
+    }
+    return response.blob();
   }
 };

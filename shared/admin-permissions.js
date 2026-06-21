@@ -16,7 +16,7 @@ export function canManageStaffUsers(role) {
 
 export function canAccessAdminSection(role, sectionId) {
   if (!isStaffRole(role)) return false;
-  if (sectionId === 'users') return canManageStaffUsers(role);
+  if (sectionId === 'users' || sectionId === 'backup') return canManageStaffUsers(role);
   return true;
 }
 

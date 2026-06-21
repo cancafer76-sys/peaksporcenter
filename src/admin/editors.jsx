@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Eye, Plus, Star, Trash2, Video, Image as ImageIcon, UserCog } from 'lucide-react';
+import { Eye, Plus, Star, Trash2, Video, Image as ImageIcon, UserCog, Download, Upload, Archive, RotateCcw } from 'lucide-react';
 import {
   getYoutubeEmbedUrl,
   getYoutubeThumbnail,
@@ -25,6 +25,13 @@ import {
   STAT_ICON_OPTIONS
 } from '../../shared/media.js';
 import { defaultContent, defaultGalleryCategories, defaultAbout, defaultBannerSlides } from '../../shared/defaults.js';
+import {
+  SITE_BACKUP_EXTENSION,
+  buildSiteBackupFilename,
+  createSiteBackupEnvelope,
+  parseSiteBackupPayload,
+  summarizeSiteBackup
+} from '../../shared/site-backup.js';
 import { api } from '../api';
 
 function isVideoCategory(category) {
@@ -1425,6 +1432,230 @@ export function CeoEditor({ content, onChange }) {
             hint="Kare veya dikey portre önerilir"
           />
         </div>
+      </div>
+    </>
+  );
+}
+
+function formatBackupDate(value) {
+  if (!value) return '-';
+  try {
+    return new Date(value).toLocaleString('tr-TR');
+  } catch {
+    return value;
+  }
+}
+
+function downloadBackupBlob(envelope, filename) {
+  const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function BackupEditor({ onRestored, onMessage }) {
+  const [backups, setBackups] = useState([]);
+  const [label, setLabel] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState('');
+
+  const refreshBackups = async () => {
+    const result = await api.listSiteBackups();
+    setBackups(result.backups || []);
+  };
+
+  useEffect(() => {
+    refreshBackups().catch(() => setBackups([]));
+  }, []);
+
+  const handleExport = async () => {
+    setPendingAction('export');
+    setLoading(true);
+    try {
+      const envelope = await api.exportSiteBackup();
+      downloadBackupBlob(envelope, buildSiteBackupFilename('peakspor-yedek'));
+      onMessage?.('Yedek dosyası indirildi.');
+    } catch (error) {
+      onMessage?.(error.message || 'Yedek alınamadı');
+    } finally {
+      setLoading(false);
+      setPendingAction('');
+    }
+  };
+
+  const handleSaveServer = async () => {
+    setPendingAction('save');
+    setLoading(true);
+    try {
+      const result = await api.saveSiteBackup(label.trim());
+      setBackups(result.backups || []);
+      setLabel('');
+      onMessage?.('Sunucuya yedek kaydedildi.');
+    } catch (error) {
+      onMessage?.(error.message || 'Yedek kaydedilemedi');
+    } finally {
+      setLoading(false);
+      setPendingAction('');
+    }
+  };
+
+  const handleUpload = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setPendingAction('upload');
+    setLoading(true);
+    try {
+      const text = await file.text();
+      const parsed = parseSiteBackupPayload(text);
+      const summary = summarizeSiteBackup(parsed.data);
+      const ok = window.confirm(
+        `${file.name} dosyası yüklensin mi?\n\nBölüm: ${summary.sections}\nGaleri: ${summary.galleryItems}\nHizmet: ${summary.services}\nPaket: ${summary.packages}\nHoca: ${summary.trainers}\n\nMevcut site içeriğinin üzerine yazılır.`
+      );
+      if (!ok) return;
+
+      const result = await api.restoreSiteBackup({ payload: parsed.envelope || parsed.data });
+      setBackups(result.backups || []);
+      await onRestored?.();
+      onMessage?.('Yedek başarıyla yüklendi.');
+    } catch (error) {
+      onMessage?.(error.message || 'Yedek yüklenemedi');
+    } finally {
+      setLoading(false);
+      setPendingAction('');
+    }
+  };
+
+  const handleRestoreStored = async item => {
+    const ok = window.confirm(`${item.filename} yedeği geri yüklensin mi?\n\nMevcut site içeriğinin üzerine yazılır.`);
+    if (!ok) return;
+
+    setPendingAction(`restore-${item.id}`);
+    setLoading(true);
+    try {
+      const result = await api.restoreSiteBackup({ filename: item.filename });
+      setBackups(result.backups || []);
+      await onRestored?.();
+      onMessage?.('Sunucu yedeği geri yüklendi.');
+    } catch (error) {
+      onMessage?.(error.message || 'Yedek geri yüklenemedi');
+    } finally {
+      setLoading(false);
+      setPendingAction('');
+    }
+  };
+
+  const handleDownloadStored = async item => {
+    setPendingAction(`download-${item.id}`);
+    setLoading(true);
+    try {
+      const blob = await api.downloadSiteBackup(item.filename);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = item.filename.endsWith(SITE_BACKUP_EXTENSION) ? item.filename : `${item.filename}${SITE_BACKUP_EXTENSION}`;
+      link.click();
+      URL.revokeObjectURL(url);
+      onMessage?.('Yedek indirildi.');
+    } catch (error) {
+      onMessage?.(error.message || 'Yedek indirilemedi');
+    } finally {
+      setLoading(false);
+      setPendingAction('');
+    }
+  };
+
+  return (
+    <>
+      <h2 className="admin-page-title">Yedekleme</h2>
+      <p className="admin-page-sub">
+        Tüm yazılar, görseller, sayfa içerikleri ve ayarlar `{SITE_BACKUP_EXTENSION}` uzantılı yedek dosyasında saklanır.
+      </p>
+
+      <div className="admin-form-card">
+        <h4>Yedek Al / Yedek Yükle</h4>
+        <p className="admin-hint">
+          Yedek dosyası tüm site ayarlarını içerir. `.peakspor`, `.json` ve uyumlu yedek dosyalarını yükleyebilirsiniz.
+        </p>
+        <div className="admin-backup-actions">
+          <button className="admin-save-btn" type="button" onClick={handleExport} disabled={loading}>
+            <Download size={16} />
+            {pendingAction === 'export' ? 'Hazırlanıyor...' : 'Yedek Al'}
+          </button>
+          <label className="admin-upload-btn admin-backup-upload-btn">
+            <Upload size={16} />
+            {pendingAction === 'upload' ? 'Yükleniyor...' : 'Yedek Yükle'}
+            <input
+              type="file"
+              accept={`.peakspor,.json,application/json,${SITE_BACKUP_EXTENSION}`}
+              onChange={handleUpload}
+              hidden
+              disabled={loading}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="admin-form-card">
+        <h4>Sunucuya Kaydet</h4>
+        <p className="admin-hint">Anlık site içeriğini sunucuda otomatik yedek listesine ekler. İçerik kaydettikçe arka planda otomatik yedekler de oluşur.</p>
+        <label className="admin-field">
+          Yedek Notu (isteğe bağlı)
+          <input value={label} onChange={e => setLabel(e.target.value)} placeholder="Örn: Kampanya öncesi yedek" />
+        </label>
+        <button className="admin-save-btn" type="button" onClick={handleSaveServer} disabled={loading}>
+          <Archive size={16} />
+          {pendingAction === 'save' ? 'Kaydediliyor...' : 'Kaydet'}
+        </button>
+      </div>
+
+      <div className="admin-form-card">
+        <div className="admin-gallery-category-head">
+          <h4>Otomatik Yedekler</h4>
+          <button className="admin-mini-btn" type="button" onClick={() => refreshBackups()} disabled={loading}>
+            Yenile
+          </button>
+        </div>
+        {backups.length ? (
+          <div className="admin-backup-list">
+            {backups.map(item => (
+              <div key={item.id} className="admin-backup-item">
+                <div className="admin-backup-item-main">
+                  <strong>{item.label || item.filename}</strong>
+                  <span>{formatBackupDate(item.createdAt)}</span>
+                  <span className="admin-backup-meta">
+                    {item.kind === 'auto' ? 'Otomatik' : 'Manuel'} · {item.sections} bölüm · {(item.size / 1024).toFixed(1)} KB
+                  </span>
+                </div>
+                <div className="admin-backup-item-actions">
+                  <button
+                    className="admin-mini-btn"
+                    type="button"
+                    onClick={() => handleDownloadStored(item)}
+                    disabled={loading}
+                  >
+                    <Download size={14} /> İndir
+                  </button>
+                  <button
+                    className="admin-mini-btn"
+                    type="button"
+                    onClick={() => handleRestoreStored(item)}
+                    disabled={loading}
+                  >
+                    <RotateCcw size={14} />
+                    {pendingAction === `restore-${item.id}` ? '...' : 'Geri Yükle'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="admin-hint">Henüz sunucu yedeği yok. Kaydet butonuna basın veya içerik kaydedince otomatik yedekler burada görünür.</p>
+        )}
       </div>
     </>
   );

@@ -19,7 +19,8 @@ import {
   Star,
   UserCog,
   Users,
-  X
+  X,
+  Archive
 } from 'lucide-react';
 import { api } from '../api';
 import {
@@ -45,6 +46,7 @@ import {
   BannerEditor,
   CardsEditor,
   CeoEditor,
+  BackupEditor,
   DashboardStats,
   GalleryEditor,
   PackagesEditor,
@@ -68,6 +70,7 @@ const NAV = [
   { id: 'cards', label: 'Kartlar', icon: LayoutGrid },
   { id: 'ceo', label: 'CEO Bilgileri', icon: UserCog },
   { id: 'settings', label: 'Ayarlar', icon: Settings2 },
+  { id: 'backup', label: 'Yedekleme', icon: Archive, adminOnly: true },
   { id: 'users', label: 'Kullanıcılar', icon: Users, adminOnly: true },
   { id: 'account', label: 'Hesabım', icon: UserCog }
 ];
@@ -85,6 +88,7 @@ const TITLES = {
   cards: 'Kartlar',
   ceo: 'CEO Bilgileri',
   settings: 'Ayarlar',
+  backup: 'Yedekleme',
   users: 'Kullanıcılar',
   account: 'Hesabım'
 };
@@ -414,7 +418,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
     return <AdminLogin onClose={onClose} onSuccess={u => { setUser(u); setState(prev => ({ ...prev, user: u })); }} />;
   }
 
-  const showSave = !['dashboard', 'users', 'account'].includes(section);
+  const showSave = !['dashboard', 'users', 'account', 'backup'].includes(section);
   const visibleNav = NAV.filter(item => canAccessAdminSection(user?.role, item.id));
   const isAdmin = canManageStaffUsers(user?.role);
 
@@ -496,6 +500,12 @@ export default function AdminDashboard({ state, setState, onClose }) {
             {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'ceo' ? <CeoEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
+            {section === 'backup' && isAdmin ? (
+              <BackupEditor
+                onRestored={refreshSettings}
+                onMessage={setMessage}
+              />
+            ) : null}
             {section === 'users' && isAdmin ? <UsersEditor /> : null}
             {section === 'account' ? (
               <AccountEditor
