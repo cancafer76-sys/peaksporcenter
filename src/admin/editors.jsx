@@ -4,6 +4,7 @@ import {
   getYoutubeEmbedUrl,
   getYoutubeThumbnail,
   getGalleryVideoSource,
+  parseVideoUrl,
   normalizeAbout,
   normalizeGalleryItem,
   normalizePackage,
@@ -24,6 +25,12 @@ import {
 } from '../../shared/media.js';
 import { defaultContent, defaultGalleryCategories, defaultAbout, defaultBannerSlides } from '../../shared/defaults.js';
 import { api } from '../api';
+
+function isVideoCategory(category) {
+  return String(category || '').toLowerCase().includes('video');
+}
+
+const GALLERY_IMAGE_ACCEPT = 'image/*,.heic,.heif,.webp,.png,.jpg,.jpeg,.gif,.bmp,.avif,.tif,.tiff';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -345,7 +352,8 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
     const next = clone(list);
     next[activeIndex] = { ...next[activeIndex], [key]: value };
     if (key === 'videoUrl' && next[activeIndex].type === 'video') {
-      next[activeIndex].image = next[activeIndex].image || getYoutubeThumbnail(value);
+      const parsed = parseVideoUrl(value);
+      next[activeIndex].image = next[activeIndex].image || parsed?.thumbnail || '';
     }
     if (key === 'type' && value === 'video' && next[activeIndex].videoUrl) {
       next[activeIndex].image = next[activeIndex].image || getYoutubeThumbnail(next[activeIndex].videoUrl);
@@ -365,23 +373,49 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
     onChange(list.map(item => (item.category === cat ? { ...item, category: cats[0] || 'Salon' } : item)));
   };
 
-  const addItemToCategory = (category, type = 'image') => {
+  const addVideoToCategory = category => {
     const count = itemsByCategory[category]?.length || 0;
     if (count >= GALLERY_CATEGORY_LIMIT) {
       window.alert(`"${category}" bölümüne en fazla ${GALLERY_CATEGORY_LIMIT} içerik eklenebilir.`);
       return;
     }
+
+    const videoUrl = window.prompt(
+      'Video bağlantısı yapıştırın:\n\n• YouTube: https://youtube.com/watch?v=...\n• YouTube kısa: https://youtu.be/...\n• Vimeo: https://vimeo.com/123456789\n• Doğrudan video: https://.../video.mp4'
+    );
+    if (!videoUrl?.trim()) return;
+
+    const parsed = parseVideoUrl(videoUrl.trim());
+    if (!parsed) {
+      window.alert('Geçerli bir video bağlantısı girin (YouTube, Vimeo veya .mp4/.webm).');
+      return;
+    }
+
+    const defaultTitle = parsed.kind === 'youtube' ? 'YouTube Video' : parsed.kind === 'vimeo' ? 'Vimeo Video' : 'Video';
+    const title = window.prompt('Video başlığı', defaultTitle)?.trim() || defaultTitle;
+
     const nextItem = normalizeGalleryItem(
       {
         id: `g-${Date.now()}`,
-        title: type === 'video' ? 'Yeni Video' : 'Yeni Görsel',
+        title,
         category,
-        type
+        type: 'video',
+        videoUrl: videoUrl.trim(),
+        image: parsed.thumbnail || '',
+        featured: false
       },
       list.length
     );
+
     onChange([...list, nextItem]);
     setActiveId(nextItem.id);
+  };
+
+  const removeItem = id => {
+    if (!window.confirm('Bu içerik silinsin mi?')) return;
+    const next = list.filter(item => item.id !== id);
+    onChange(next);
+    if (activeId === id) setActiveId(next[0]?.id || null);
   };
 
   const uploadCategoryImages = async (category, event) => {
@@ -427,37 +461,9 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
     }
   };
 
-  const uploadVideoFile = async event => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const category = current.category || cats[0];
-    const count = itemsByCategory[category]?.length || 0;
-    if (count >= GALLERY_CATEGORY_LIMIT) {
-      window.alert(`"${category}" bölümüne en fazla ${GALLERY_CATEGORY_LIMIT} içerik eklenebilir.`);
-      event.target.value = '';
-      return;
-    }
-    try {
-      const result = await api.upload(file);
-      const next = clone(list);
-      next[activeIndex] = {
-        ...next[activeIndex],
-        type: 'video',
-        videoUrl: result.url,
-        image: next[activeIndex].image || result.url
-      };
-      onChange(next);
-    } catch (uploadError) {
-      window.alert(uploadError.message || 'Video yüklenemedi');
-    } finally {
-      event.target.value = '';
-    }
-  };
-
   const removeCurrent = () => {
-    const next = list.filter((_, index) => index !== activeIndex);
-    onChange(next);
-    setActiveId(next[0]?.id || null);
+    if (!current?.id) return;
+    removeItem(current.id);
   };
 
   return (
@@ -466,7 +472,7 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
         <div className="admin-toolbar">
           <div>
             <h2 className="admin-page-title">Galeri</h2>
-            <p className="admin-page-sub">Her bölüme en fazla 10 görsel veya video ekleyin.</p>
+            <p className="admin-page-sub">Görseller tüm cihazlarda görünür (JPG, PNG, HEIC vb.). Videolar bağlantı ile eklenir.</p>
           </div>
         </div>
 
@@ -486,33 +492,40 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
         {cats.map(category => {
           const categoryItems = itemsByCategory[category] || [];
           const remaining = GALLERY_CATEGORY_LIMIT - categoryItems.length;
+          const videoSection = isVideoCategory(category);
           return (
             <section key={category} className="admin-gallery-category-block">
               <div className="admin-gallery-category-head">
                 <div>
                   <h4>{category}</h4>
-                  <p className="admin-page-sub">{categoryItems.length}/{GALLERY_CATEGORY_LIMIT} içerik</p>
+                  <p className="admin-page-sub">
+                    {categoryItems.length}/{GALLERY_CATEGORY_LIMIT} içerik
+                    {videoSection ? ' · YouTube / Vimeo / video URL' : ' · Görsel yükleme'}
+                  </p>
                 </div>
                 <div className="admin-gallery-category-actions">
-                  <label className={`admin-mini-btn ${remaining <= 0 ? 'is-disabled' : ''}`}>
-                    <ImageIcon size={14} /> Görsel Ekle
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      hidden
+                  {!videoSection ? (
+                    <label className={`admin-mini-btn ${remaining <= 0 ? 'is-disabled' : ''}`}>
+                      <ImageIcon size={14} /> Görsel Ekle
+                      <input
+                        type="file"
+                        accept={GALLERY_IMAGE_ACCEPT}
+                        multiple
+                        hidden
+                        disabled={remaining <= 0}
+                        onChange={event => uploadCategoryImages(category, event)}
+                      />
+                    </label>
+                  ) : (
+                    <button
+                      type="button"
+                      className="admin-mini-btn primary"
                       disabled={remaining <= 0}
-                      onChange={event => uploadCategoryImages(category, event)}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="admin-mini-btn"
-                    disabled={remaining <= 0}
-                    onClick={() => addItemToCategory(category, 'video')}
-                  >
-                    <Video size={14} /> Video Ekle
-                  </button>
+                      onClick={() => addVideoToCategory(category)}
+                    >
+                      <Video size={14} /> Video Ekle
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -521,21 +534,34 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
                   {categoryItems.map(item => {
                     const thumb = item.type === 'video' ? item.image || getYoutubeThumbnail(item.videoUrl) : item.image;
                     return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`admin-gallery-thumb ${activeId === item.id ? 'active' : ''}`}
-                        onClick={() => setActiveId(item.id)}
-                      >
-                        {thumb ? <img src={thumb} alt={item.title} /> : <span className="preview-empty">Medya yok</span>}
-                        {item.type === 'video' ? <span className="admin-gallery-thumb-badge">▶</span> : null}
-                        <span className="admin-gallery-thumb-title">{item.title}</span>
-                      </button>
+                      <div key={item.id} className="admin-gallery-thumb-wrap">
+                        <button
+                          type="button"
+                          className={`admin-gallery-thumb ${activeId === item.id ? 'active' : ''}`}
+                          onClick={() => setActiveId(item.id)}
+                        >
+                          {thumb ? <img src={thumb} alt={item.title} /> : <span className="preview-empty">Medya yok</span>}
+                          {item.type === 'video' ? <span className="admin-gallery-thumb-badge">▶</span> : null}
+                          <span className="admin-gallery-thumb-title">{item.title}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-gallery-thumb-remove"
+                          aria-label={`${item.title} sil`}
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="admin-hint">Bu bölümde henüz içerik yok. Birden fazla görsel seçerek yükleyebilirsiniz.</p>
+                <p className="admin-hint">
+                  {videoSection
+                    ? 'Video Ekle ile YouTube, Vimeo veya doğrudan video bağlantısı ekleyin.'
+                    : 'Görsel Ekle ile birden fazla fotoğraf seçip yükleyebilirsiniz.'}
+                </p>
               )}
             </section>
           );
@@ -558,18 +584,21 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
                 </select>
               </label>
               {current.type === 'image' ? (
-                <MediaUploadField label="Görsel" value={current.image} onChange={v => update('image', v)} accept="image/*" />
+                <MediaUploadField label="Görsel" value={current.image} onChange={v => update('image', v)} accept={GALLERY_IMAGE_ACCEPT} />
               ) : (
                 <>
-                  <label className="admin-field" style={{ gridColumn: '1 / -1' }}>YouTube URL<input value={current.videoUrl} onChange={e => update('videoUrl', e.target.value)} placeholder="https://youtube.com/watch?v=..." /></label>
-                  <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
-                    <span>Video Dosyası Yükle</span>
-                    <label className="admin-upload-btn" style={{ marginTop: 8 }}>
-                      Bilgisayardan video seç
-                      <input type="file" accept="video/*" onChange={uploadVideoFile} hidden />
-                    </label>
-                  </div>
-                  <MediaUploadField label="Kapak Görseli (opsiyonel)" value={current.image} onChange={v => update('image', v)} accept="image/*" />
+                  <label className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                    Video URL
+                    <input
+                      value={current.videoUrl}
+                      onChange={e => update('videoUrl', e.target.value)}
+                      placeholder="https://youtube.com/watch?v=... veya https://vimeo.com/... veya .mp4 bağlantısı"
+                    />
+                  </label>
+                  <p className="admin-hint" style={{ gridColumn: '1 / -1', margin: 0 }}>
+                    YouTube, Vimeo veya doğrudan video bağlantısı desteklenir. Cihazdan video yüklemesi yapılmaz.
+                  </p>
+                  <MediaUploadField label="Kapak Görseli (opsiyonel)" value={current.image} onChange={v => update('image', v)} accept={GALLERY_IMAGE_ACCEPT} />
                 </>
               )}
             </div>
@@ -589,7 +618,7 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
               if (source.kind === 'file') {
                 return <video src={source.src} controls className="media-lightbox-video" />;
               }
-              return <iframe src={source.src} title={current.title} allowFullScreen />;
+              return <iframe src={source.src} title={current.title} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />;
             })()}
           </div>
         ) : null}

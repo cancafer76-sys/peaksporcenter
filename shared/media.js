@@ -1,13 +1,58 @@
+export function parseVideoUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return null;
+
+  const youtubeMatch = value.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/i
+  );
+  if (youtubeMatch) {
+    const id = youtubeMatch[1];
+    return {
+      kind: 'youtube',
+      src: `https://www.youtube.com/embed/${id}`,
+      thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+    };
+  }
+
+  const vimeoMatch = value.match(/vimeo\.com\/(?:channels\/[^/]+\/|groups\/[^/]+\/videos\/|video\/)?(\d+)/i);
+  if (vimeoMatch) {
+    const id = vimeoMatch[1];
+    return {
+      kind: 'vimeo',
+      src: `https://player.vimeo.com/video/${id}`,
+      thumbnail: ''
+    };
+  }
+
+  const resolved = resolveMediaUrl(value);
+  if (
+    isDirectMediaVideoUrl(resolved) ||
+    /^https?:\/\/.+\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i.test(resolved)
+  ) {
+    return { kind: 'file', src: resolved, thumbnail: '' };
+  }
+
+  if (/youtube\.com\/embed\//i.test(value)) {
+    const id = value.split('/embed/')[1]?.split(/[?&]/)[0];
+    return {
+      kind: 'youtube',
+      src: value.startsWith('http') ? value : `https:${value}`,
+      thumbnail: id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''
+    };
+  }
+
+  return null;
+}
+
 export function getYoutubeEmbedUrl(url) {
-  if (!url) return '';
-  const match = String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&\s?/]+)/i);
-  return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+  const parsed = parseVideoUrl(url);
+  if (parsed && (parsed.kind === 'youtube' || parsed.kind === 'vimeo')) return parsed.src;
+  return String(url || '');
 }
 
 export function getYoutubeThumbnail(url) {
-  const embed = getYoutubeEmbedUrl(url);
-  const id = embed.split('/embed/')[1];
-  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+  const parsed = parseVideoUrl(url);
+  return parsed?.thumbnail || '';
 }
 
 export function normalizeAnnouncement(item = {}, index = 0) {
@@ -342,11 +387,10 @@ export function isDirectMediaVideoUrl(url) {
 }
 
 export function getGalleryVideoSource(url) {
-  if (!url) return null;
-  if (isDirectMediaVideoUrl(url)) return { kind: 'file', src: url };
-  const embed = getYoutubeEmbedUrl(url);
-  if (embed.includes('/embed/')) return { kind: 'youtube', src: embed };
-  return null;
+  const parsed = parseVideoUrl(url);
+  if (!parsed) return null;
+  if (parsed.kind === 'file') return { kind: 'file', src: parsed.src };
+  return { kind: 'embed', src: parsed.src };
 }
 
 export function normalizeTestimonials(items) {
