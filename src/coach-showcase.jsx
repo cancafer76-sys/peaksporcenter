@@ -21,8 +21,8 @@ export function CoachCard({ coach, mini = false, onOpenDetails }) {
         <strong>{data.name}</strong>
         <span>{data.specialty}</span>
         <button type="button" className="coach-showcase-details-btn" onClick={() => onOpenDetails?.(data)}>
-          Detayları Gör
-          <ArrowRight size={15} />
+          Detay
+          <ArrowRight size={14} />
         </button>
       </div>
     </article>

@@ -4600,24 +4600,29 @@ img { display: block; width: 100%; }
 
 .coaches-home-grid-mobile .coach-showcase-card {
   min-width: 0;
+  height: 100%;
 }
 
 .coaches-home-grid-mobile .coach-showcase-body {
-  padding: 12px;
+  padding: 10px;
+  flex: 1 1 auto;
 }
 
 .coaches-home-grid-mobile .coach-showcase-body strong {
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 .coaches-home-grid-mobile .coach-showcase-body > span {
-  font-size: 11px;
+  font-size: 10px;
+  -webkit-line-clamp: 2;
 }
 
 .coaches-home-grid-mobile .coach-showcase-details-btn {
-  min-height: 36px;
-  font-size: 11px;
-  margin-top: 8px;
+  min-height: 34px;
+  font-size: 10px;
+  margin-top: auto;
+  padding: 0 8px;
 }
 
 .coach-grid {

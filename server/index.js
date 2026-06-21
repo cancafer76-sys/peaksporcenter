@@ -431,8 +431,13 @@ async function pushDatabaseSchema(timeoutMs = 45000) {
       return;
     }
 
+    const pushArgs = ['db', 'push', '--skip-generate'];
+    if (isRailway || isProduction) {
+      pushArgs.push('--accept-data-loss');
+    }
+
     await Promise.race([
-      execFileAsync(process.execPath, [prismaCli, 'db', 'push', '--skip-generate'], {
+      execFileAsync(process.execPath, [prismaCli, ...pushArgs], {
         cwd: rootDir,
         env: process.env
       }),
@@ -449,8 +454,16 @@ async function pushDatabaseSchema(timeoutMs = 45000) {
 
 async function ensureSeedData() {
   const { email: adminEmail, password: adminPassword } = getAdminCredentials();
-  await ensureAdminUser(adminEmail, adminPassword);
-  await ensureModeratorUser();
+  try {
+    await ensureAdminUser(adminEmail, adminPassword);
+  } catch (error) {
+    console.warn('Admin user seed skipped:', error.message || error);
+  }
+  try {
+    await ensureModeratorUser();
+  } catch (error) {
+    console.warn('Moderator user seed skipped:', error.message || error);
+  }
 
   const settings = [
     ['content', defaultContent],

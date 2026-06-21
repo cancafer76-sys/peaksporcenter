@@ -18,7 +18,7 @@
     "prisma:studio": "prisma studio",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:push": "prisma db push --skip-generate"
+    "db:push": "prisma db push --skip-generate --accept-data-loss"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
