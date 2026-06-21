@@ -17,6 +17,7 @@ import {
   normalizeBannerSlide,
   normalizeBannerSlides,
   normalizeTestimonial,
+  normalizeCeo,
   getTestimonialStarTypes,
   normalizeTrainer,
   packageCardVars,
@@ -1384,6 +1385,47 @@ export function UsersEditor() {
           </form>
         </div>
       ) : null}
+    </>
+  );
+}
+
+export function CeoEditor({ content, onChange }) {
+  const data = content || defaultContent;
+  const ceo = normalizeCeo(data.ceo, defaultContent.ceo);
+  const patch = next => onChange({ ...data, ceo: { ...ceo, ...next } });
+
+  return (
+    <>
+      <h2 className="admin-page-title">CEO Bilgileri</h2>
+      <p className="admin-page-sub">Hamburger menünün en altında görünen CEO fotoğrafı, unvan ve isim.</p>
+
+      <div className="admin-form-card">
+        <Toggle checked={ceo.visible} onChange={v => patch({ visible: v })} label="Hamburger menüde göster" />
+        <div className="admin-form-grid single">
+          <label className="admin-field">
+            Unvan / Başlık
+            <input
+              value={ceo.title}
+              placeholder="Kurucu & CEO"
+              onChange={e => patch({ title: e.target.value })}
+            />
+          </label>
+          <label className="admin-field">
+            İsim
+            <input
+              value={ceo.name}
+              placeholder="Ad Soyad"
+              onChange={e => patch({ name: e.target.value })}
+            />
+          </label>
+          <MediaUploadField
+            label="CEO Fotoğrafı"
+            value={ceo.image}
+            onChange={v => patch({ image: v })}
+            hint="Kare veya dikey portre önerilir"
+          />
+        </div>
+      </div>
     </>
   );
 }

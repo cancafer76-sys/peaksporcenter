@@ -44,6 +44,7 @@ import {
   AboutEditor,
   BannerEditor,
   CardsEditor,
+  CeoEditor,
   DashboardStats,
   GalleryEditor,
   PackagesEditor,
@@ -65,6 +66,7 @@ const NAV = [
   { id: 'announcements', label: 'Duyurular', icon: Megaphone },
   { id: 'banner', label: 'Banner', icon: Images },
   { id: 'cards', label: 'Kartlar', icon: LayoutGrid },
+  { id: 'ceo', label: 'CEO Bilgileri', icon: UserCog },
   { id: 'settings', label: 'Ayarlar', icon: Settings2 },
   { id: 'users', label: 'Kullanıcılar', icon: Users, adminOnly: true },
   { id: 'account', label: 'Hesabım', icon: UserCog }
@@ -81,6 +83,7 @@ const TITLES = {
   announcements: 'Duyurular',
   banner: 'Ana Sayfa Banner',
   cards: 'Kartlar',
+  ceo: 'CEO Bilgileri',
   settings: 'Ayarlar',
   users: 'Kullanıcılar',
   account: 'Hesabım'
@@ -402,6 +405,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
     if (section === 'announcements') return persist('announcements', draft.announcements, 'Duyurular');
     if (section === 'banner') return persist('content', draft.content, 'Banner');
     if (section === 'cards') return persist('content', draft.content, 'Kartlar');
+    if (section === 'ceo') return persist('content', draft.content, 'CEO Bilgileri');
     if (section === 'settings') return persist('content', draft.content, 'Ayarlar');
     return null;
   };
@@ -490,6 +494,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
             {section === 'announcements' ? <AnnouncementsEditor items={draft.announcements} onChange={v => setDraft(p => ({ ...p, announcements: v }))} /> : null}
             {section === 'banner' ? <BannerEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
+            {section === 'ceo' ? <CeoEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'users' && isAdmin ? <UsersEditor /> : null}
             {section === 'account' ? (

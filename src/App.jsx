@@ -13,7 +13,7 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeBannerSlides, normalizeContact, normalizeFacilityAreas, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeBannerSlides, normalizeCeo, normalizeContact, normalizeFacilityAreas, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
 import { fallbackSettings, normalizeSettings } from '../shared/settings.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
@@ -1254,8 +1254,11 @@ function MenuToggle({ open, onClick }) {
   );
 }
 
-function AppDrawer({ open, onClose, pathname }) {
+function AppDrawer({ open, onClose, pathname, ceo }) {
   if (!open) return null;
+
+  const ceoInfo = normalizeCeo(ceo, defaultContent.ceo);
+  const showCeo = ceoInfo.visible && (ceoInfo.image || ceoInfo.name || ceoInfo.title);
 
   const handleNavigate = item => {
     if (item.route) {
@@ -1270,42 +1273,57 @@ function AppDrawer({ open, onClose, pathname }) {
     <>
       <button type="button" className="drawer-backdrop drawer-backdrop-visible" aria-label="Menüyü kapat" onClick={onClose} />
       <aside className="side-drawer mobile-drawer is-open" aria-label="Ana menü">
-        <div className="drawer-head">
-          <div className="drawer-brand-block">
-            <CircleLogo size="xl" className="drawer-logo-mark" />
-            <div className="drawer-brand-text">
-              <strong>
-                <span className="brand-caption-peak">PEAKSPORTS</span>
-              </strong>
-              <span>CENTER</span>
+        <div className="drawer-body">
+          <div className="drawer-head">
+            <div className="drawer-brand-block">
+              <CircleLogo size="xl" className="drawer-logo-mark" />
+              <div className="drawer-brand-text">
+                <strong>
+                  <span className="brand-caption-peak">PEAKSPORTS</span>
+                </strong>
+                <span>CENTER</span>
+              </div>
             </div>
+            <button type="button" className="drawer-close" onClick={onClose} aria-label="Kapat">
+              <X size={18} />
+            </button>
           </div>
-          <button type="button" className="drawer-close" onClick={onClose} aria-label="Kapat">
-            <X size={18} />
-          </button>
+          <p className="drawer-kicker">Keşfet</p>
+          <nav className="drawer-links">
+            {drawerNav.map((item, index) => {
+              const Icon = item.icon;
+              const active = item.route ? pathname === item.route : false;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`drawer-link ${active ? 'active' : ''}`}
+                  style={{ '--i': index }}
+                  onClick={() => handleNavigate(item)}
+                >
+                  <span className="drawer-link-icon">
+                    <Icon size={18} />
+                  </span>
+                  <span className="drawer-link-text">{item.label}</span>
+                  <ChevronRight size={16} />
+                </button>
+              );
+            })}
+          </nav>
         </div>
-        <p className="drawer-kicker">Keşfet</p>
-        <nav className="drawer-links">
-          {drawerNav.map((item, index) => {
-            const Icon = item.icon;
-            const active = item.route ? pathname === item.route : false;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`drawer-link ${active ? 'active' : ''}`}
-                style={{ '--i': index }}
-                onClick={() => handleNavigate(item)}
-              >
-                <span className="drawer-link-icon">
-                  <Icon size={18} />
-                </span>
-                <span className="drawer-link-text">{item.label}</span>
-                <ChevronRight size={16} />
-              </button>
-            );
-          })}
-        </nav>
+        {showCeo ? (
+          <footer className="drawer-ceo-footer">
+            {ceoInfo.image ? (
+              <div className="drawer-ceo-photo">
+                <MediaImage src={ceoInfo.image} alt={ceoInfo.name || ceoInfo.title || 'CEO'} />
+              </div>
+            ) : null}
+            <div className="drawer-ceo-text">
+              {ceoInfo.title ? <span className="drawer-ceo-title">{ceoInfo.title}</span> : null}
+              {ceoInfo.name ? <strong className="drawer-ceo-name">{ceoInfo.name}</strong> : null}
+            </div>
+          </footer>
+        ) : null}
       </aside>
     </>
   );
@@ -1433,6 +1451,7 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
         open={state.drawerOpen}
         onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
         pathname={pathname}
+        ceo={pageContent.ceo}
       />
 
       {state.adminOpen ? (
@@ -2081,12 +2100,18 @@ function GalleryPage({ state, setState }) {
   const categories = state.settings.galleryCategories || defaultGalleryCategories;
   const grouped = groupGalleryByCategory(gallery, categories);
   const [activeItem, setActiveItem] = useState(null);
+  const mobile = state.viewportWidth < 980;
 
   const openItem = item => {
     const data = normalizeGalleryItem(item);
     trackSiteClick(`gallery:${data.title}`);
     setActiveItem(item);
   };
+
+  const orderedCategories = [
+    ...categories,
+    ...Object.keys(grouped).filter(cat => !categories.includes(cat))
+  ];
 
   return (
     <RouteChrome
@@ -2095,12 +2120,14 @@ function GalleryPage({ state, setState }) {
       title="GALERİ"
       subtitle="Görseller, videolar ve etkinlikler."
       content={
-        <>
-          {Object.entries(grouped).map(([category, items]) => (
-            items.length ? (
+        <div className={`gallery-page-mobile ${mobile ? 'is-mobile' : ''}`.trim()}>
+          {orderedCategories.map(category => {
+            const items = grouped[category];
+            if (!items?.length) return null;
+            return (
               <section key={category} className="gallery-section-block">
                 <h3 className="gallery-section-title">{category}</h3>
-                <GalleryScrollRail>
+                <GalleryScrollRail className="gallery-page-rail">
                   {items.map(item => (
                     <GalleryCard
                       key={normalizeGalleryItem(item).id}
@@ -2114,10 +2141,10 @@ function GalleryPage({ state, setState }) {
                   ))}
                 </GalleryScrollRail>
               </section>
-            ) : null
-          ))}
+            );
+          })}
           <MediaLightbox item={activeItem} onClose={() => setActiveItem(null)} />
-        </>
+        </div>
       }
       backTo="/"
     />
@@ -2310,6 +2337,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
         open={state.drawerOpen}
         onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
         pathname={pathname}
+        ceo={content.ceo}
       />
 
       {state.adminOpen ? (
@@ -2514,6 +2542,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
         open={state.drawerOpen}
         onClose={() => setState(prev => ({ ...prev, drawerOpen: false }))}
         pathname={pathname}
+        ceo={content.ceo}
       />
 
       <MembershipModal

@@ -381,6 +381,16 @@ export function normalizeContact(config = {}, defaults = {}) {
   return { email, address, city, mapQuery };
 }
 
+export function normalizeCeo(config = {}, defaults = {}) {
+  const base = { ...defaults, ...(config && typeof config === 'object' ? config : {}) };
+  return {
+    visible: base.visible !== false,
+    title: base.title || defaults.title || 'Kurucu & CEO',
+    name: base.name || '',
+    image: resolveMediaUrl(base.image || '')
+  };
+}
+
 export function normalizeFacilityArea(item = {}) {
   return {
     title: item.title || 'Alan',

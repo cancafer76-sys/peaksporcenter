@@ -42,6 +42,12 @@ export const defaultContent = {
     address: 'Akse mahallesi 501. Sokak serçe halısaha yanı',
     city: 'Kocaeli'
   },
+  ceo: {
+    visible: true,
+    title: 'Kurucu & CEO',
+    name: '',
+    image: ''
+  },
   seo: {
     title: 'PEAKSPOR CENTER | Kocaeli Gebze Fitness ve Spor Salonu',
     description:
