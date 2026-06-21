@@ -13,7 +13,7 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, buildGalleryCategorySummaries, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeBannerSlides, normalizeContact, normalizeFacilityAreas, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeBannerSlides, normalizeContact, normalizeFacilityAreas, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
 import { fallbackSettings, normalizeSettings } from '../shared/settings.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
@@ -41,7 +41,6 @@ import {
   MapPin,
   Megaphone,
   Image,
-  Images,
   MessageCircle,
   Medal,
   Moon,
@@ -433,62 +432,22 @@ function ServiceCardButton({ service, selected = false, compact = false, mini = 
   );
 }
 
-function GalleryCategoryCard({ category, cover, count, active = false, onClick }) {
+function GalleryScrollRail({ className = '', children }) {
   return (
-    <button
-      type="button"
-      className={`gallery-category-card ${active ? 'is-active' : ''}`}
-      onClick={onClick}
-      aria-label={`${category}, ${count} görsel`}
-    >
-      <div className="gallery-category-card-media">
-        {cover ? (
-          <MediaImage src={cover} alt={category} className="gallery-category-card-image" loading="eager" />
-        ) : (
-          <div className="gallery-category-card-placeholder" />
-        )}
-      </div>
-      <div className="gallery-category-card-overlay" aria-hidden="true" />
-      <div className="gallery-category-card-body">
-        <strong>{category}</strong>
-        <span className="gallery-category-card-meta">
-          <Images size={13} aria-hidden="true" />
-          {count} görsel
-        </span>
-      </div>
-    </button>
-  );
-}
-
-function GalleryCategoriesRail({ summaries, activeCategory, onSelectCategory }) {
-  if (!summaries.length) return null;
-
-  return (
-    <div className="gallery-category-rail-viewport">
-      <div className="gallery-category-rail-track">
-        {summaries.map(entry => (
-          <GalleryCategoryCard
-            key={entry.category}
-            category={entry.category}
-            cover={entry.cover}
-            count={entry.count}
-            active={activeCategory === entry.category}
-            onClick={() => onSelectCategory?.(entry.category)}
-          />
-        ))}
-      </div>
+    <div className={`gallery-scroll-rail-viewport ${className}`.trim()}>
+      <div className="gallery-scroll-rail-track">{children}</div>
     </div>
   );
 }
 
-function GalleryCard({ item, category, interactive = false, compact = false, onClick }) {
+function GalleryCard({ item, category, interactive = false, compact = false, hideCaption = false, onClick }) {
   const data = normalizeGalleryItem(item);
   const thumb = data.type === 'video' ? data.image || getYoutubeThumbnail(data.videoUrl) : data.image;
   const Tag = onClick ? 'button' : 'article';
   return (
     <Tag
       type={onClick ? 'button' : undefined}
-      className={`gallery-card ${interactive ? 'gallery-card-interactive' : ''} ${compact ? 'gallery-card-home' : ''}`}
+      className={`gallery-card ${interactive ? 'gallery-card-interactive' : ''} ${compact ? 'gallery-card-home' : ''} ${hideCaption ? 'gallery-card-clean' : ''}`}
       onClick={onClick}
     >
       <div className="gallery-card-media" aria-hidden={!thumb}>
@@ -504,13 +463,15 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
           <div className="gallery-card-placeholder" />
         )}
       </div>
-      <div className="card-overlay" />
-      {interactive ? <span className="gallery-card-orbit" aria-hidden="true" /> : null}
+      {!hideCaption ? <div className="card-overlay" /> : null}
+      {interactive && !hideCaption ? <span className="gallery-card-orbit" aria-hidden="true" /> : null}
       {data.type === 'video' ? <span className="gallery-video-badge"><Play size={compact ? 12 : 14} /></span> : null}
-      <div className="gallery-card-body">
-        <span>{category || data.category}</span>
-        <strong>{data.title}</strong>
-      </div>
+      {!hideCaption ? (
+        <div className="gallery-card-body">
+          <span>{category || data.category}</span>
+          <strong>{data.title}</strong>
+        </div>
+      ) : null}
     </Tag>
   );
 }
@@ -2119,35 +2080,13 @@ function GalleryPage({ state, setState }) {
   const gallery = state.settings.gallery || defaultGallery;
   const categories = state.settings.galleryCategories || defaultGalleryCategories;
   const grouped = groupGalleryByCategory(gallery, categories);
-  const summaries = buildGalleryCategorySummaries(gallery, categories);
   const [activeItem, setActiveItem] = useState(null);
-  const [activeCategory, setActiveCategory] = useState('');
-  const mobile = state.viewportWidth < 980;
-
-  useEffect(() => {
-    const hash = decodeURIComponent(window.location.hash.replace(/^#/, '')).trim();
-    if (hash && summaries.some(entry => entry.category === hash)) {
-      setActiveCategory(hash);
-    }
-  }, [summaries]);
 
   const openItem = item => {
     const data = normalizeGalleryItem(item);
     trackSiteClick(`gallery:${data.title}`);
     setActiveItem(item);
   };
-
-  const selectCategory = category => {
-    setActiveCategory(category);
-    window.history.replaceState(null, '', `#${encodeURIComponent(category)}`);
-  };
-
-  const clearCategory = () => {
-    setActiveCategory('');
-    window.history.replaceState(null, '', window.location.pathname);
-  };
-
-  const categoryItems = activeCategory ? grouped[activeCategory] || [] : [];
 
   return (
     <RouteChrome
@@ -2157,40 +2096,26 @@ function GalleryPage({ state, setState }) {
       subtitle="Görseller, videolar ve etkinlikler."
       content={
         <>
-          <section className="gallery-section-block gallery-categories-section">
-            <div className="gallery-section-head">
-              <h3 className="gallery-section-title">Görseller</h3>
-            </div>
-            <GalleryCategoriesRail
-              summaries={summaries}
-              activeCategory={activeCategory}
-              onSelectCategory={selectCategory}
-            />
-          </section>
-
-          {activeCategory ? (
-            <section className="gallery-section-block gallery-items-section">
-              <div className="gallery-section-head gallery-items-head">
-                <h3 className="gallery-section-title">{activeCategory}</h3>
-                <button type="button" className="text-button gallery-back-btn" onClick={clearCategory}>
-                  <ChevronRight size={16} />
-                  Kategoriler
-                </button>
-              </div>
-              <div className={mobile ? 'gallery-page-grid-mobile' : 'route-card-grid card-grid-4 card-grid-gallery'}>
-                {categoryItems.map(item => (
-                  <GalleryCard
-                    key={normalizeGalleryItem(item).id}
-                    item={item}
-                    category={activeCategory}
-                    interactive
-                    onClick={() => openItem(item)}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-
+          {Object.entries(grouped).map(([category, items]) => (
+            items.length ? (
+              <section key={category} className="gallery-section-block">
+                <h3 className="gallery-section-title">{category}</h3>
+                <GalleryScrollRail>
+                  {items.map(item => (
+                    <GalleryCard
+                      key={normalizeGalleryItem(item).id}
+                      item={item}
+                      category={category}
+                      compact
+                      hideCaption
+                      interactive
+                      onClick={() => openItem(item)}
+                    />
+                  ))}
+                </GalleryScrollRail>
+              </section>
+            ) : null
+          ))}
           <MediaLightbox item={activeItem} onClose={() => setActiveItem(null)} />
         </>
       }
@@ -2207,9 +2132,8 @@ function DesktopShell({ state, setState, onOpenCoach }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
-  const galleryCategories = state.settings.galleryCategories || defaultGalleryCategories;
-  const gallerySummaries = buildGalleryCategorySummaries(gallery, galleryCategories);
   const allServices = services.map(normalizeService);
+  const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
   const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
   const homePackages = packages.map(normalizePackage);
   const testimonials = state.settings.testimonials || defaultTestimonials;
@@ -2226,6 +2150,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
   );
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
+  const [activeGalleryItem, setActiveGalleryItem] = useState(null);
 
   return (
     <div className={`app-shell desktop-shell ${state.darkMode ? 'dark' : 'light'}`}>
@@ -2346,15 +2271,23 @@ function DesktopShell({ state, setState, onOpenCoach }) {
           <SectionHeader
             title="GALERİ"
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
-            action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümünü Gör <ChevronRight size={16} /></button>}
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="gallery-home-section">
-            <h3 className="gallery-home-section-title">Görseller</h3>
-            <GalleryCategoriesRail
-              summaries={gallerySummaries}
-              onSelectCategory={category => navigateToPath(`/gallery#${encodeURIComponent(category)}`)}
-            />
-          </div>
+          <AnimatedHomeRail className="home-gallery-rail" duration={54}>
+            {allGallery.map(item => (
+              <GalleryCard
+                key={normalizeGalleryItem(item).id}
+                item={item}
+                interactive
+                compact
+                hideCaption
+                onClick={() => {
+                  trackSiteClick(`gallery-home:${normalizeGalleryItem(item).title}`);
+                  setActiveGalleryItem(item);
+                }}
+              />
+            ))}
+          </AnimatedHomeRail>
         </section>
 
         <StatsGrid stats={stats} />
@@ -2370,6 +2303,8 @@ function DesktopShell({ state, setState, onOpenCoach }) {
         packages={packages}
         announcements={state.settings.announcements}
       />
+
+      <MediaLightbox item={activeGalleryItem} onClose={() => setActiveGalleryItem(null)} />
 
       <AppDrawer
         open={state.drawerOpen}
@@ -2391,6 +2326,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
 function MobileShell({ state, setState, onOpenCoach }) {
   const pathname = usePathname();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [activeGalleryItem, setActiveGalleryItem] = useState(null);
   const [detailPackage, setDetailPackage] = useState(null);
   const content = state.settings.content || defaultContent;
   const stats = normalizeStats(content.stats || defaultContent.stats);
@@ -2398,9 +2334,8 @@ function MobileShell({ state, setState, onOpenCoach }) {
   const services = state.settings.services || defaultServices;
   const packages = state.settings.packages || defaultPackages;
   const gallery = state.settings.gallery || defaultGallery;
-  const galleryCategories = state.settings.galleryCategories || defaultGalleryCategories;
-  const gallerySummaries = buildGalleryCategorySummaries(gallery, galleryCategories);
   const allServices = services.map(normalizeService);
+  const allGallery = gallery.map((item, index) => normalizeGalleryItem(item, index));
   const allCoaches = normalizeTrainers(state.settings.trainers || defaultTrainers);
   const homePackages = packages.map(normalizePackage);
   const testimonials = state.settings.testimonials || defaultTestimonials;
@@ -2517,15 +2452,23 @@ function MobileShell({ state, setState, onOpenCoach }) {
           <SectionHeader
             title="GALERİ"
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
-            action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümünü Gör <ChevronRight size={16} /></button>}
+            action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <div className="gallery-home-section">
-            <h3 className="gallery-home-section-title">Görseller</h3>
-            <GalleryCategoriesRail
-              summaries={gallerySummaries}
-              onSelectCategory={category => navigateToPath(`/gallery#${encodeURIComponent(category)}`)}
-            />
-          </div>
+          <AnimatedHomeRail className="home-gallery-rail" isMobile mobileLoopMin={0} duration={54}>
+            {allGallery.map(item => (
+              <GalleryCard
+                key={normalizeGalleryItem(item).id}
+                item={item}
+                interactive
+                compact
+                hideCaption
+                onClick={() => {
+                  trackSiteClick(`gallery-home:${normalizeGalleryItem(item).title}`);
+                  setActiveGalleryItem(item);
+                }}
+              />
+            ))}
+          </AnimatedHomeRail>
         </section>
 
         <StatsGrid stats={stats} mobile />
@@ -2564,6 +2507,8 @@ function MobileShell({ state, setState, onOpenCoach }) {
         packages={packages}
         announcements={state.settings.announcements}
       />
+
+      <MediaLightbox item={activeGalleryItem} onClose={() => setActiveGalleryItem(null)} />
 
       <AppDrawer
         open={state.drawerOpen}
