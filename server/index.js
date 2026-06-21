@@ -413,17 +413,23 @@ async function connectDatabase(retries = 10) {
   }
 }
 
-async function pushDatabaseSchema() {
+async function pushDatabaseSchema(timeoutMs = 45000) {
   try {
     const prismaCli = path.join(rootDir, 'node_modules', 'prisma', 'build', 'index.js');
     if (!fs.existsSync(prismaCli)) {
       console.warn('Prisma CLI not found, skipping schema push');
       return;
     }
-    await execFileAsync(process.execPath, [prismaCli, 'db', 'push', '--skip-generate'], {
-      cwd: rootDir,
-      env: process.env
-    });
+
+    await Promise.race([
+      execFileAsync(process.execPath, [prismaCli, 'db', 'push', '--skip-generate'], {
+        cwd: rootDir,
+        env: process.env
+      }),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('schema push timeout')), timeoutMs);
+      })
+    ]);
     console.log('Database schema synced');
   } catch (error) {
     const message = error.stderr || error.message || 'unknown error';
@@ -506,8 +512,15 @@ async function ensureSeedData() {
   }
 }
 
+let dbReady = false;
+
 app.get('/api/health', (_, res) => {
-  res.json({ ok: true, service: 'peakspor', env: process.env.NODE_ENV || 'development' });
+  res.json({
+    ok: true,
+    service: 'peakspor',
+    dbReady,
+    env: process.env.NODE_ENV || 'development'
+  });
 });
 
 app.get('/api/public-config', (_, res) => {
@@ -1073,28 +1086,33 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Build bulunamadı' });
 });
 
-async function start() {
+async function bootstrapDatabase() {
   try {
     await connectDatabase();
   } catch (error) {
     console.error('Database connect failed:', error.message || error);
+    return;
   }
 
-  await pushDatabaseSchema();
+  await pushDatabaseSchema(isRailway ? 30000 : 45000);
 
   try {
     await ensureSeedData();
+    dbReady = true;
     console.log('Database seeded successfully');
   } catch (error) {
     console.error('Database seed failed:', error.message || error);
   }
+}
 
+async function start() {
   app.listen(port, '0.0.0.0', () => {
     const dbHint = process.env.DATABASE_URL
       ? `${process.env.DATABASE_URL.split(':')[0]}://***`
       : 'not set';
     console.log(`PEAKSPOR server listening on ${port} (0.0.0.0)`);
     console.log(`Environment: ${isProduction ? 'production' : 'development'}, DATABASE_URL: ${dbHint}`);
+    void bootstrapDatabase();
   });
 }
 
