@@ -88,12 +88,14 @@ function AnimatedHomeRail({
   loop = true,
   isMobile = false,
   mobileLoopMin = 1,
+  alwaysLoop = false,
   duration = 48,
   children
 }) {
   const items = React.Children.toArray(children);
   const itemCount = items.length;
-  const shouldLoop = loop && isMobile && itemCount > mobileLoopMin;
+  const loopMin = alwaysLoop ? 0 : mobileLoopMin;
+  const shouldLoop = loop && (alwaysLoop || isMobile) && itemCount > loopMin;
   const trackItems = shouldLoop ? [...items, ...items] : items;
 
   return (
@@ -429,14 +431,6 @@ function ServiceCardButton({ service, selected = false, compact = false, mini = 
         </div>
       </div>
     </button>
-  );
-}
-
-function GalleryScrollRail({ className = '', children }) {
-  return (
-    <div className={`gallery-scroll-rail-viewport ${className}`.trim()}>
-      <div className="gallery-scroll-rail-track">{children}</div>
-    </div>
   );
 }
 
@@ -2121,13 +2115,17 @@ function GalleryPage({ state, setState }) {
       subtitle="Görseller, videolar ve etkinlikler."
       content={
         <div className={`gallery-page-mobile ${mobile ? 'is-mobile' : ''}`.trim()}>
-          {orderedCategories.map(category => {
+          {orderedCategories.map((category, categoryIndex) => {
             const items = grouped[category];
             if (!items?.length) return null;
             return (
               <section key={category} className="gallery-section-block">
                 <h3 className="gallery-section-title">{category}</h3>
-                <GalleryScrollRail className="gallery-page-rail">
+                <AnimatedHomeRail
+                  className="gallery-page-rail"
+                  alwaysLoop
+                  duration={44 + (categoryIndex % 3) * 8}
+                >
                   {items.map(item => (
                     <GalleryCard
                       key={normalizeGalleryItem(item).id}
@@ -2139,7 +2137,7 @@ function GalleryPage({ state, setState }) {
                       onClick={() => openItem(item)}
                     />
                   ))}
-                </GalleryScrollRail>
+                </AnimatedHomeRail>
               </section>
             );
           })}
