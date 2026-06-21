@@ -2089,11 +2089,61 @@ function ContactPage({ state, setState }) {
   );
 }
 
+function GalleryCategoryAllModal({ category, items, onClose, onOpenItem }) {
+  useEffect(() => {
+    if (!category) return undefined;
+    const onKey = event => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [category, onClose]);
+
+  if (!category) return null;
+
+  return (
+    <div
+      className="gallery-category-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${category} galerisi`}
+      onClick={onClose}
+    >
+      <div className="gallery-category-modal-panel" onClick={event => event.stopPropagation()}>
+        <header className="gallery-category-modal-head">
+          <h2>{category}</h2>
+          <button type="button" className="gallery-category-modal-close" onClick={onClose} aria-label="Kapat">
+            <X size={20} />
+          </button>
+        </header>
+        <div className="gallery-category-modal-grid">
+          {items.map(item => (
+            <GalleryCard
+              key={normalizeGalleryItem(item).id}
+              item={item}
+              category={category}
+              compact
+              hideCaption
+              interactive
+              onClick={() => onOpenItem(item)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GalleryPage({ state, setState }) {
   const gallery = state.settings.gallery || defaultGallery;
   const categories = state.settings.galleryCategories || defaultGalleryCategories;
   const grouped = groupGalleryByCategory(gallery, categories);
   const [activeItem, setActiveItem] = useState(null);
+  const [expandedCategory, setExpandedCategory] = useState(null);
   const mobile = state.viewportWidth < 980;
 
   const openItem = item => {
@@ -2120,7 +2170,17 @@ function GalleryPage({ state, setState }) {
             if (!items?.length) return null;
             return (
               <section key={category} className="gallery-section-block">
-                <h3 className="gallery-section-title">{category}</h3>
+                <div className="gallery-section-head">
+                  <h3 className="gallery-section-title">{category}</h3>
+                  <button
+                    type="button"
+                    className="text-button gallery-see-all-btn"
+                    onClick={() => setExpandedCategory(category)}
+                  >
+                    Tümünü Gör
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
                 <AnimatedHomeRail
                   className="gallery-page-rail"
                   alwaysLoop
@@ -2141,6 +2201,12 @@ function GalleryPage({ state, setState }) {
               </section>
             );
           })}
+          <GalleryCategoryAllModal
+            category={expandedCategory}
+            items={expandedCategory ? grouped[expandedCategory] || [] : []}
+            onClose={() => setExpandedCategory(null)}
+            onOpenItem={openItem}
+          />
           <MediaLightbox item={activeItem} onClose={() => setActiveItem(null)} />
         </div>
       }
