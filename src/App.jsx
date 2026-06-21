@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from './api';
 import {
   defaultAnnouncements,
@@ -872,7 +873,7 @@ function MediaLightbox({ item, onClose }) {
 
   const videoSource = data.type === 'video' && data.videoUrl ? getGalleryVideoSource(data.videoUrl) : null;
 
-  return (
+  return createPortal(
     <div className="media-lightbox" role="dialog" aria-modal="true" aria-label={data.title} onClick={onClose}>
       <button type="button" className="media-lightbox-close" onClick={onClose} aria-label="Kapat">
         <X size={22} />
@@ -895,7 +896,8 @@ function MediaLightbox({ item, onClose }) {
           <strong>{data.title}</strong>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -2095,17 +2097,22 @@ function GalleryCategoryAllModal({ category, items, onClose, onOpenItem }) {
     const onKey = event => {
       if (event.key === 'Escape') onClose();
     };
+    const scrollRoot = document.querySelector('.mobile-page, .mobile-main');
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousRootOverflow = scrollRoot?.style.overflow || '';
     document.body.style.overflow = 'hidden';
+    if (scrollRoot) scrollRoot.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousBodyOverflow;
+      if (scrollRoot) scrollRoot.style.overflow = previousRootOverflow;
       window.removeEventListener('keydown', onKey);
     };
   }, [category, onClose]);
 
   if (!category) return null;
 
-  return (
+  return createPortal(
     <div
       className="gallery-category-modal"
       role="dialog"
@@ -2134,7 +2141,8 @@ function GalleryCategoryAllModal({ category, items, onClose, onOpenItem }) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
