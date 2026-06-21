@@ -697,23 +697,23 @@ function useAppData() {
 
     Promise.allSettled([api.content(), api.me()])
       .then(([contentResult, meResult]) => {
-        if (!mounted) return;
+      if (!mounted) return;
         try {
-          const settings =
-            contentResult.status === 'fulfilled' ? normalizeSettings(contentResult.value) : fallbackSettings;
-          setState(prev => ({
-            ...prev,
-            settings,
-            user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
-            loading: false
-          }));
+      const settings =
+        contentResult.status === 'fulfilled' ? normalizeSettings(contentResult.value) : fallbackSettings;
+      setState(prev => ({
+        ...prev,
+        settings,
+        user: meResult.status === 'fulfilled' ? meResult.value?.user || null : null,
+        loading: false
+      }));
         } catch {
           setState(prev => ({ ...prev, loading: false }));
         }
       })
       .finally(() => {
         window.clearTimeout(loadingTimeout);
-      });
+    });
 
     const updateViewport = () => setState(prev => ({ ...prev, viewportWidth: window.innerWidth }));
     updateViewport();
@@ -830,15 +830,15 @@ function Brand({ compact = false, logoOnly = false }) {
       <CircleLogo size={compact ? 'md' : 'lg'} />
       {logoOnly ? null : (
         <span className="brand-caption">
-          <strong>
+        <strong>
             <span className="brand-caption-peak">PEAKSPORTS</span>
-          </strong>
+        </strong>
           <small className="brand-center" aria-label="CENTER">
             <span className="brand-center-track">
               {'CENTER'.split('').map((letter, index) => (
                 <span key={`${letter}-${index}`} className="brand-center-letter" style={{ '--i': index }}>
                   {letter}
-                </span>
+      </span>
               ))}
             </span>
           </small>
@@ -1107,7 +1107,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
               <span className="assistant-panel-avatar" aria-hidden="true">
                 <AssistantLogo size="md" />
                 <span className="assistant-online-dot" />
-              </span>
+        </span>
               <div>
                 <strong>{assistant.welcome}</strong>
                 <span>Size yardımcı olmaya hazırım</span>
@@ -1123,7 +1123,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
                 {message.role === 'assistant' ? (
                   <span className="assistant-message-avatar" aria-hidden="true">
                     <AssistantLogo size="sm" />
-                  </span>
+        </span>
                 ) : null}
                 <div className="assistant-message-bubble">
                   <p>{message.text}</p>
@@ -1135,7 +1135,7 @@ function AssistantChat({ mobile, content, packages, announcements }) {
                     >
                       <MessageCircle size={12} />
                       WhatsApp
-                    </button>
+      </button>
                   ) : null}
                   {message.suggestMap && message.mapUrl ? (
                     <button
@@ -1345,16 +1345,28 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
   const isActiveRoute = route => pathname === route;
   const pageContent = state.settings.content || defaultContent;
   const onlineCounter = pageContent.onlineCounter || defaultContent.onlineCounter;
+  const sectionHeader = (
+    <SectionHeader
+      title={title}
+      subtitle={subtitle}
+      action={
+        <button className="text-button" type="button" onClick={() => navigateToPath(backTo)}>
+          <ChevronRight size={16} />
+          Geri Dön
+        </button>
+      }
+    />
+  );
 
   return (
-    <div className={`app-shell ${mobile ? 'mobile-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
+    <div className={`app-shell ${mobile ? 'mobile-shell route-page-shell' : 'desktop-shell'} ${state.darkMode ? 'dark' : 'light'}`}>
       <AppTopBand
         announcements={state.settings.announcements}
         onlineCounter={onlineCounter}
         header={
-          <header className={mobile ? 'mobile-header' : 'desktop-header'}>
-            <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
-              <div className="header-left-group">
+        <header className={mobile ? 'mobile-header' : 'desktop-header'}>
+          <div className={`${mobile ? 'mobile-header-inner' : 'desktop-header-inner'} shell-width`}>
+            <div className="header-left-group">
                 <MenuToggle
                   open={state.drawerOpen}
                   onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
@@ -1364,9 +1376,9 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
               {!mobile ? (
                 <nav className="desktop-nav" aria-label="Ana menü">
                   {desktopNav.map(item => (
-                    <button
+              <button
                       key={item.id}
-                      type="button"
+                type="button"
                       className={`desktop-nav-link ${item.route && isActiveRoute(item.route) ? 'active' : ''}`}
                       onClick={() => {
                         if (item.route) {
@@ -1378,33 +1390,30 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
                       }}
                     >
                       {item.label}
-                    </button>
+              </button>
                   ))}
                 </nav>
               ) : null}
-              <HeaderActions
-                darkMode={state.darkMode}
-                onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-                onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+            <HeaderActions
+              darkMode={state.darkMode}
+              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
                 mobile={mobile}
-              />
-            </div>
-          </header>
+            />
+          </div>
+        </header>
         }
       />
 
+      {mobile ? (
+        <div className="route-page-head">
+          <div className="shell-width">{sectionHeader}</div>
+        </div>
+      ) : null}
+
       <main className={`shell-width route-page-main ${mobile ? 'mobile-page mobile-main' : 'desktop-page'}`}>
         <section className="section-block">
-          <SectionHeader
-            title={title}
-            subtitle={subtitle}
-            action={
-              <button className="text-button" type="button" onClick={() => navigateToPath(backTo)}>
-                <ChevronRight size={16} />
-                Geri Dön
-              </button>
-            }
-          />
+          {!mobile ? sectionHeader : null}
           <div className={mobile ? 'route-content-mobile' : ''}>
             {content}
           </div>
@@ -1463,13 +1472,13 @@ function RouteChrome({ state, setState, title, subtitle, content, backTo = '/' }
 
 function HeroButtons({ compact = false, onPrimary, onSecondary }) {
   if (compact) {
-    return (
+  return (
       <>
         <button className="primary-button hero-cta-primary hero-cta-compact" type="button" onClick={onPrimary}>
-          ÜYE OL
-        </button>
+        ÜYE OL
+      </button>
         <button className="secondary-button hero-cta-secondary hero-cta-compact" type="button" onClick={onSecondary}>
-          SALONU KEŞFET
+        SALONU KEŞFET
         </button>
       </>
     );
@@ -1751,12 +1760,12 @@ function PackagesPage({ state, setState }) {
 
   return (
     <>
-      <RouteChrome
-        state={state}
-        setState={setState}
-        title="PAKETLER"
-        subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
-        content={
+    <RouteChrome
+      state={state}
+      setState={setState}
+      title="PAKETLER"
+      subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
+      content={
           <div className={mobile ? 'package-grid-mobile route-card-grid' : 'route-card-grid card-grid-4'}>
             {packages.map(item => (
               <PackageCard
@@ -1828,14 +1837,14 @@ function MembershipModal({ open, onClose, whatsappNumber }) {
     <div className="modal-backdrop membership-modal-backdrop" onClick={onClose}>
       <div className="membership-modal" role="dialog" aria-label="Üyelik formu" onClick={event => event.stopPropagation()}>
         <div className="membership-modal-head">
-          <div>
+                  <div>
             <span>Üyelik</span>
             <strong>Üye Ol</strong>
-          </div>
+                  </div>
           <button type="button" className="membership-modal-close" onClick={onClose} aria-label="Kapat">
             <X size={16} />
           </button>
-        </div>
+                  </div>
         <p className="membership-modal-note">Bilgilerinizi girin, WhatsApp üzerinden üyelik için yönlendirileceksiniz.</p>
         <form className="contact-form membership-modal-form" onSubmit={handleSubmit}>
           <div className="contact-form-grid">
@@ -1847,7 +1856,7 @@ function MembershipModal({ open, onClose, whatsappNumber }) {
               Soyad
               <input type="text" placeholder="Soyadınız" value={form.lastName} onChange={updateField('lastName')} />
             </label>
-          </div>
+                </div>
           <label>
             E-posta
             <input type="email" placeholder="ornek@mail.com" value={form.email} onChange={updateField('email')} />
@@ -1923,7 +1932,7 @@ function ExplorePage({ state, setState }) {
                   <button type="button" onClick={() => setActiveVideo(null)} aria-label="Kapat">
                     <X size={16} />
                   </button>
-                </div>
+              </div>
                 <div className="explore-video-frame">
                   <iframe
                     src={activeVideo.video}
@@ -1931,7 +1940,7 @@ function ExplorePage({ state, setState }) {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
-                </div>
+              </div>
               </div>
             </div>
           ) : null}
@@ -2188,7 +2197,7 @@ function GalleryPage({ state, setState }) {
                     Tümünü Gör
                     <ChevronRight size={14} />
                   </button>
-                </div>
+              </div>
                 <AnimatedHomeRail
                   className="gallery-page-rail"
                   alwaysLoop
@@ -2240,7 +2249,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = normalizeBannerSlides(
     bannerSlides.length
-      ? bannerSlides
+    ? bannerSlides
       : [{
           title: content.hero?.title || defaultContent.hero.title,
           subtitle: content.hero?.subtitle || defaultContent.hero.subtitle,
@@ -2257,34 +2266,34 @@ function DesktopShell({ state, setState, onOpenCoach }) {
         announcements={state.settings.announcements}
         onlineCounter={onlineCounter}
         header={
-          <header className="desktop-header">
-            <div className="shell-width desktop-header-inner">
-              <div className="header-left-group">
+        <header className="desktop-header">
+          <div className="shell-width desktop-header-inner">
+            <div className="header-left-group">
                 <MenuToggle
                   open={state.drawerOpen}
-                  onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
                 />
-                <Brand />
-              </div>
-              <nav className="desktop-nav" aria-label="Ana menü">
-                {desktopNav.map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="desktop-nav-link"
-                    onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-              <HeaderActions
-                darkMode={state.darkMode}
-                onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-                onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
-              />
+              <Brand />
             </div>
-          </header>
+            <nav className="desktop-nav" aria-label="Ana menü">
+              {desktopNav.map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="desktop-nav-link"
+                  onClick={() => (item.route ? navigateToPath(item.route) : scrollToSection(item.id))}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <HeaderActions
+              darkMode={state.darkMode}
+              onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+              onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
+            />
+          </div>
+        </header>
         }
       />
 
@@ -2443,7 +2452,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
   const heroSlides = normalizeBannerSlides(
     bannerSlides.length
-      ? bannerSlides
+    ? bannerSlides
       : [{
           title: content.hero?.title || defaultContent.hero.title,
           subtitle: content.hero?.subtitle || defaultContent.hero.subtitle,
@@ -2458,23 +2467,23 @@ function MobileShell({ state, setState, onOpenCoach }) {
         announcements={state.settings.announcements}
         onlineCounter={onlineCounter}
         header={
-          <header className="mobile-header">
-            <div className="mobile-header-inner shell-width">
-              <div className="header-left-group">
+        <header className="mobile-header">
+          <div className="mobile-header-inner shell-width">
+            <div className="header-left-group">
                 <MenuToggle
                   open={state.drawerOpen}
-                  onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
+                onClick={() => setState(prev => ({ ...prev, drawerOpen: !prev.drawerOpen }))}
                 />
-                <Brand compact />
-              </div>
+              <Brand compact />
+            </div>
               <HeaderActions
                 darkMode={state.darkMode}
                 onToggleTheme={() => setState(prev => ({ ...prev, darkMode: !prev.darkMode }))}
                 onOpenAdmin={() => setState(prev => ({ ...prev, adminOpen: true }))}
                 mobile
               />
-            </div>
-          </header>
+          </div>
+        </header>
         }
       />
 
@@ -2503,7 +2512,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
                 compact
                 mini
                 selected={selectedService?.title === service.title}
-                onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
+                    onClick={() => setState(prev => ({ ...prev, selectedService: service }))}
               />
             ))}
           </AnimatedHomeRail>
@@ -2532,7 +2541,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
                 onOpenDetails={() => setDetailPackage(item)}
               />
             ))}
-          </div>
+                  </div>
         </section>
 
         <section className="section-block" id="trainers">
@@ -2629,7 +2638,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
           onClose={() => setDetailPackage(null)}
           onCtaClick={pkg => openPackageWhatsApp(content, pkg)}
         />
-      ) : null}
+          ) : null}
 
       {state.adminOpen ? (
         <AdminDashboard
@@ -2637,10 +2646,10 @@ function MobileShell({ state, setState, onOpenCoach }) {
           setState={setState}
           onClose={() => setState(prev => ({ ...prev, adminOpen: false }))}
         />
-      ) : null}
-    </div>
-  );
-}
+          ) : null}
+      </div>
+    );
+  }
 
 function RegionalPageRoute({ state, setState, page }) {
   useRegionalPageSeo(page);
