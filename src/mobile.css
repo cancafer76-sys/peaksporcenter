@@ -21,8 +21,15 @@
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   --app-header-height: 72px;
   --app-ticker-block: 54px;
+  --app-ticker-shell-gap: 10px;
   --app-status-bar: 0px;
-  --app-top-offset: calc(env(safe-area-inset-top, 0px) + var(--app-header-height) + var(--app-ticker-block) + var(--app-status-bar));
+  --app-top-offset: calc(
+    env(safe-area-inset-top, 0px) +
+    var(--app-header-height) +
+    var(--app-ticker-block) +
+    var(--app-ticker-shell-gap) +
+    var(--app-status-bar)
+  );
 }
 
 .app-shell:has(.top-status-bar),
@@ -869,8 +876,22 @@ img { display: block; width: 100%; }
 }
 
 @media (max-width: 980px) {
+  .route-page-main {
+    padding-top: calc(var(--app-top-offset) + 22px);
+  }
+
   .route-page-main .section-header {
+    position: sticky;
+    top: calc(var(--app-top-offset) + 4px);
+    z-index: 160;
     scroll-margin-top: calc(var(--app-top-offset) + 12px);
+    margin-bottom: 16px;
+    padding: 8px 0 10px;
+    background: linear-gradient(to bottom, var(--bg) 82%, rgba(0, 0, 0, 0));
+  }
+
+  .app-shell.light .route-page-main .section-header {
+    background: linear-gradient(to bottom, var(--bg) 82%, rgba(255, 255, 255, 0));
   }
 
   .route-page-main .section-header h2 {
@@ -1286,7 +1307,9 @@ img { display: block; width: 100%; }
 @media (max-width: 980px) {
   :root {
     --app-header-height: 68px;
-    --app-ticker-block: 50px;
+    --app-ticker-block: 40px;
+    --app-ticker-shell-gap: 10px;
+    --app-status-bar: 36px;
   }
 
   .ticker {
@@ -4353,9 +4376,10 @@ img { display: block; width: 100%; }
   .mobile-page {
     width: 100%;
     flex: 1 1 auto;
-    height: calc(100dvh - var(--app-top-offset));
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
     min-height: 0;
+    height: 100dvh;
+    padding-top: calc(var(--app-top-offset) + 14px);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -4366,9 +4390,10 @@ img { display: block; width: 100%; }
   .mobile-main {
     width: 100%;
     flex: 1 1 auto;
-    height: calc(100dvh - var(--app-top-offset));
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
     min-height: 0;
+    height: 100dvh;
+    padding-top: calc(var(--app-top-offset) + 14px);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
