@@ -1746,30 +1746,41 @@ img { display: block; width: 100%; }
 
 .home-scroll-rail .coach-card-mini,
 .home-rail-track .coach-card-mini {
-  flex: 0 0 min(320px, 88vw);
-  min-width: min(320px, 88vw);
-  max-width: 360px;
+  flex: 0 0 min(220px, 44vw);
+  min-width: min(220px, 44vw);
+  max-width: 240px;
   border-radius: 16px;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
 }
 
+.home-scroll-rail .coach-card-mini.coach-card-mini-expanded,
+.home-rail-track .coach-card-mini.coach-card-mini-expanded {
+  flex: 0 0 min(340px, 92vw);
+  min-width: min(340px, 92vw);
+  max-width: 420px;
+}
+
 .home-scroll-rail .coach-card-mini .coach-card-media {
-  flex: 0 0 108px;
-  width: 108px;
-  min-height: 108px;
-  max-height: none;
-  aspect-ratio: 1;
+  flex: none;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 4 / 5;
+  max-height: 200px;
+}
+
+.home-scroll-rail .coach-card-mini.coach-card-mini-expanded .coach-card-media {
+  max-height: 220px;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-body {
-  flex: 1;
+  flex: none;
+  width: 100%;
   min-width: 0;
-  padding: 10px 12px;
-  gap: 4px;
+  padding: 10px 12px 12px;
+  gap: 5px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-body strong {
@@ -1789,6 +1800,20 @@ img { display: block; width: 100%; }
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  width: 100%;
+}
+
+.home-scroll-rail .coach-card-mini .coach-card-mini-text-expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  overflow: visible;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+  width: 100%;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .coach-card-readmore {
@@ -4679,8 +4704,14 @@ img { display: block; width: 100%; }
 
   .home-scroll-rail .coach-card-mini,
 .home-rail-track .coach-card-mini {
-    flex-basis: min(300px, 90vw);
-    min-width: min(300px, 90vw);
+    flex-basis: min(200px, 42vw);
+    min-width: min(200px, 42vw);
+  }
+
+  .home-scroll-rail .coach-card-mini.coach-card-mini-expanded,
+  .home-rail-track .coach-card-mini.coach-card-mini-expanded {
+    flex-basis: min(320px, 94vw);
+    min-width: min(320px, 94vw);
   }
 
   .coach-grid {

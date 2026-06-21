@@ -339,6 +339,7 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
 }
 
 function CoachCard({ coach, compact = false, mini = false, page = false, showReadMore = false }) {
+  const [expanded, setExpanded] = useState(false);
   const data = normalizeTrainer(coach);
   const experience = data.experience?.trim() || '';
 
@@ -348,6 +349,7 @@ function CoachCard({ coach, compact = false, mini = false, page = false, showRea
         'coach-card',
         compact ? 'coach-card-compact' : '',
         mini ? 'coach-card-mini' : '',
+        mini && expanded ? 'coach-card-mini-expanded' : '',
         page ? 'coach-card-page' : ''
       ]
         .filter(Boolean)
@@ -364,15 +366,33 @@ function CoachCard({ coach, compact = false, mini = false, page = false, showRea
         <strong>{data.name}</strong>
         <span className="coach-card-specialty">{data.specialty}</span>
         {experience ? (
-          <p className={mini ? 'coach-card-mini-text' : 'coach-card-description'}>{experience}</p>
+          <p
+            className={[
+              mini ? 'coach-card-mini-text' : 'coach-card-description',
+              mini && expanded ? 'coach-card-mini-text-expanded' : ''
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {experience}
+          </p>
         ) : null}
-        {showReadMore && experience ? (
+        {showReadMore && experience && !expanded ? (
           <button
             type="button"
             className="coach-card-readmore text-button"
-            onClick={() => navigateToPath('/hocalarimiz')}
+            onClick={() => setExpanded(true)}
           >
             Devamını Oku
+          </button>
+        ) : null}
+        {showReadMore && expanded ? (
+          <button
+            type="button"
+            className="coach-card-readmore text-button"
+            onClick={() => setExpanded(false)}
+          >
+            Daha Az
           </button>
         ) : null}
       </div>
