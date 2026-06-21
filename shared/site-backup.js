@@ -3,6 +3,8 @@ export const SITE_BACKUP_VERSION = 2;
 export const SITE_BACKUP_EXTENSION = '.peakspor';
 export const SITE_BACKUP_MIME = 'application/x-peakspor-backup+json';
 export const MAX_STORED_SITE_BACKUPS = 3;
+export const MAX_AUTO_SITE_BACKUPS = 3;
+export const MAX_MANUAL_SITE_BACKUPS = 3;
 
 export const SITE_BACKUP_KEYS = [
   'content',

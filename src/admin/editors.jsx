@@ -27,7 +27,7 @@ import {
 import { defaultContent, defaultGalleryCategories, defaultAbout, defaultBannerSlides } from '../../shared/defaults.js';
 import {
   SITE_BACKUP_EXTENSION,
-  MAX_STORED_SITE_BACKUPS,
+  MAX_AUTO_SITE_BACKUPS,
   buildSiteBackupFilename,
   createSiteBackupEnvelope,
   parseSiteBackupPayload,
@@ -1458,18 +1458,18 @@ function downloadBackupBlob(envelope, filename) {
 }
 
 export function BackupEditor({ onRestored, onMessage }) {
-  const [backups, setBackups] = useState([]);
+  const [autoBackups, setAutoBackups] = useState([]);
   const [label, setLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
 
   const refreshBackups = async () => {
     const result = await api.listSiteBackups();
-    setBackups(result.backups || []);
+    setAutoBackups(result.autoBackups || (result.backups || []).filter(item => item.kind === 'auto'));
   };
 
   useEffect(() => {
-    refreshBackups().catch(() => setBackups([]));
+    refreshBackups().catch(() => setAutoBackups([]));
   }, []);
 
   const handleTakeBackup = async () => {
@@ -1477,7 +1477,7 @@ export function BackupEditor({ onRestored, onMessage }) {
     setLoading(true);
     try {
       const result = await api.saveSiteBackup(label.trim() || 'Manuel yedek');
-      setBackups(result.backups || []);
+      setAutoBackups((result.backups || []).filter(item => item.kind === 'auto'));
       onMessage?.('Yedek sunucuya kaydedildi.');
     } catch (error) {
       onMessage?.(error.message || 'Yedek alınamadı');
@@ -1520,7 +1520,7 @@ export function BackupEditor({ onRestored, onMessage }) {
 
       const payload = parsed.envelope || { format: 'peakspor-site-backup', data: parsed.data, files: parsed.files || {} };
       const result = await api.restoreSiteBackup({ payload });
-      setBackups(result.backups || []);
+      setAutoBackups((result.backups || []).filter(item => item.kind === 'auto'));
       await onRestored?.();
       onMessage?.('Yedek başarıyla yüklendi.');
     } catch (error) {
@@ -1539,7 +1539,7 @@ export function BackupEditor({ onRestored, onMessage }) {
     setLoading(true);
     try {
       const result = await api.restoreSiteBackup({ filename: item.filename });
-      setBackups(result.backups || []);
+      setAutoBackups((result.backups || []).filter(item => item.kind === 'auto'));
       await onRestored?.();
       onMessage?.('Sunucu yedeği geri yüklendi.');
     } catch (error) {
@@ -1578,7 +1578,7 @@ export function BackupEditor({ onRestored, onMessage }) {
     setLoading(true);
     try {
       const result = await api.deleteSiteBackup(item.filename);
-      setBackups(result.backups || []);
+      setAutoBackups((result.backups || []).filter(item => item.kind === 'auto'));
       onMessage?.('Yedek silindi.');
     } catch (error) {
       onMessage?.(error.message || 'Yedek silinemedi');
@@ -1592,13 +1592,13 @@ export function BackupEditor({ onRestored, onMessage }) {
     <>
       <h2 className="admin-page-title">Yedekleme</h2>
       <p className="admin-page-sub">
-        Tam yedek; tüm sayfalar, yazılar, duyurular, kartlar, galeri, yüklenen görseller ve yetkili kullanıcıları `{SITE_BACKUP_EXTENSION}` dosyasında saklar. Sunucuda en son {MAX_STORED_SITE_BACKUPS} yedek tutulur.
+        İçerik her kaydedildiğinde otomatik tam yedek alınır (en fazla {MAX_AUTO_SITE_BACKUPS} adet, en eskisi silinir). Railway yeniden açıldığında kalıcı diskten kaldığı yerden devam eder.
       </p>
 
       <div className="admin-form-card">
-        <h4>Yedekleme İşlemleri</h4>
+        <h4>Manuel Yedekleme</h4>
         <p className="admin-hint">
-          Yedek yalnızca Yedek Al butonuna basınca alınır. İndir ile bilgisayara kaydedebilir, Bilgisayardan Yükle ile geri yükleyebilirsiniz.
+          Yedek Al ile sunucuya, İndir ile bilgisayara tam yedek alın. Bilgisayardan Yükle ile geri yükleyin.
         </p>
         <label className="admin-field">
           Yedek Notu (isteğe bağlı)
@@ -1627,19 +1627,25 @@ export function BackupEditor({ onRestored, onMessage }) {
         </div>
       </div>
 
-      <div className="admin-form-card">
+      <div className="admin-form-card admin-form-card-auto-backups">
         <div className="admin-gallery-category-head">
-          <h4>Sunucu Yedekleri (son {MAX_STORED_SITE_BACKUPS})</h4>
+          <div>
+            <h4>Otomatik Yedekler</h4>
+            <p className="admin-hint admin-backup-sort-hint">En yeni → En eski · Maksimum {MAX_AUTO_SITE_BACKUPS} yedek</p>
+          </div>
           <button className="admin-mini-btn" type="button" onClick={() => refreshBackups()} disabled={loading}>
             Yenile
           </button>
         </div>
-        {backups.length ? (
+        {autoBackups.length ? (
           <div className="admin-backup-list">
-            {backups.map(item => (
-              <div key={item.id} className="admin-backup-item">
+            {autoBackups.map((item, index) => (
+              <div key={item.id} className={`admin-backup-item ${index === 0 ? 'is-latest' : ''}`}>
                 <div className="admin-backup-item-main">
-                  <strong>{item.label || item.filename}</strong>
+                  <strong>
+                    {index === 0 ? <span className="admin-backup-badge">En yeni</span> : null}
+                    {item.label || item.filename}
+                  </strong>
                   <span>{formatBackupDate(item.createdAt)}</span>
                   <span className="admin-backup-meta">
                     {item.sections} bölüm · {item.mediaFiles || 0} dosya · {(item.size / 1024).toFixed(1)} KB
@@ -1677,7 +1683,7 @@ export function BackupEditor({ onRestored, onMessage }) {
             ))}
           </div>
         ) : (
-          <p className="admin-hint">Henüz sunucu yedeği yok. Yedek Al butonuna basın; en fazla {MAX_STORED_SITE_BACKUPS} yedek tutulur, fazlası silinir.</p>
+          <p className="admin-hint">Henüz otomatik yedek yok. Admin panelinde içerik kaydettiğinizde burada görünür.</p>
         )}
       </div>
     </>

@@ -2015,6 +2015,34 @@
   flex-shrink: 0;
 }
 
+.admin-form-card-auto-backups {
+  margin-top: 8px;
+}
+
+.admin-backup-sort-hint {
+  margin-top: 4px;
+}
+
+.admin-backup-item.is-latest {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.admin-backup-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.18);
+  vertical-align: middle;
+}
+
 .admin-mini-btn-danger {
   border-color: rgba(248, 113, 113, 0.35);
   color: #fecaca;

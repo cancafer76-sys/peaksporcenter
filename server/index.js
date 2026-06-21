@@ -34,6 +34,8 @@ import {
   SITE_BACKUP_EXTENSION,
   SITE_BACKUP_KEYS,
   MAX_STORED_SITE_BACKUPS,
+  MAX_AUTO_SITE_BACKUPS,
+  MAX_MANUAL_SITE_BACKUPS,
   collectUploadFilenamesFromValue,
   createSiteBackupEnvelope,
   parseSiteBackupPayload,
@@ -88,6 +90,9 @@ const siteBackupsDir = persistencePaths.siteBackupsDir;
 const staffUsersBackupPath = persistencePaths.staffUsersBackupPath;
 const uploadManifestPath = persistencePaths.uploadManifestPath;
 let restoreSiteBackupInProgress = false;
+let autoSiteBackupTimer = null;
+let autoSiteBackupInFlight = false;
+const AUTO_SITE_BACKUP_DEBOUNCE_MS = 8000;
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -543,10 +548,22 @@ function listStoredSiteBackups() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-function pruneStoredSiteBackups() {
-  const backups = listStoredSiteBackups();
-  if (backups.length <= MAX_STORED_SITE_BACKUPS) return;
-  backups.slice(MAX_STORED_SITE_BACKUPS).forEach(item => {
+function pruneAutoSiteBackups() {
+  const autoBackups = listStoredSiteBackups().filter(item => item.kind === 'auto');
+  if (autoBackups.length <= MAX_AUTO_SITE_BACKUPS) return;
+  autoBackups.slice(MAX_AUTO_SITE_BACKUPS).forEach(item => {
+    try {
+      fs.unlinkSync(path.join(siteBackupsDir, item.filename));
+    } catch {
+      // ignore delete errors
+    }
+  });
+}
+
+function pruneManualSiteBackups() {
+  const manualBackups = listStoredSiteBackups().filter(item => item.kind !== 'auto');
+  if (manualBackups.length <= MAX_MANUAL_SITE_BACKUPS) return;
+  manualBackups.slice(MAX_MANUAL_SITE_BACKUPS).forEach(item => {
     try {
       fs.unlinkSync(path.join(siteBackupsDir, item.filename));
     } catch {
@@ -621,15 +638,34 @@ function restoreBackupFiles(files = {}) {
   return restored;
 }
 
-async function createStoredSiteBackup(label = '') {
+async function createStoredSiteBackup({ kind = 'manual', label = '' } = {}) {
   ensureSiteBackupsDir();
   const payload = await buildFullBackupPayload();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const filename = `manual-${stamp}${SITE_BACKUP_EXTENSION}`;
-  const envelope = createSiteBackupEnvelope(payload.settings, { kind: 'manual', label }, payload.files);
+  const prefix = kind === 'auto' ? 'auto' : 'manual';
+  const filename = `${prefix}-${stamp}${SITE_BACKUP_EXTENSION}`;
+  const backupLabel = label || (kind === 'auto' ? 'Otomatik yedek' : 'Manuel yedek');
+  const envelope = createSiteBackupEnvelope(payload.settings, { kind, label: backupLabel }, payload.files);
   fs.writeFileSync(path.join(siteBackupsDir, filename), JSON.stringify(envelope, null, 2));
-  pruneStoredSiteBackups();
+  if (kind === 'auto') pruneAutoSiteBackups();
+  else pruneManualSiteBackups();
   return readSiteBackupFileMeta(filename);
+}
+
+function scheduleAutoSiteBackup() {
+  if (restoreSiteBackupInProgress) return;
+  if (autoSiteBackupTimer) clearTimeout(autoSiteBackupTimer);
+  autoSiteBackupTimer = setTimeout(async () => {
+    if (autoSiteBackupInFlight || restoreSiteBackupInProgress) return;
+    autoSiteBackupInFlight = true;
+    try {
+      await createStoredSiteBackup({ kind: 'auto', label: 'Otomatik yedek' });
+    } catch (error) {
+      console.warn('Auto site backup failed:', error.message);
+    } finally {
+      autoSiteBackupInFlight = false;
+    }
+  }, AUTO_SITE_BACKUP_DEBOUNCE_MS);
 }
 
 async function buildFullBackupSettings() {
@@ -688,6 +724,7 @@ async function persistSettingValue(key, value) {
   }
   backup[key] = value;
   writeSettingsBackup(backup);
+  if (!restoreSiteBackupInProgress) scheduleAutoSiteBackup();
   return setting;
 }
 
@@ -1120,7 +1157,12 @@ app.get('/api/admin/analytics', staffRequired, async (_, res) => {
 
 app.get('/api/admin/site-backups', staffRequired, async (_, res) => {
   try {
-    res.json({ backups: listStoredSiteBackups() });
+    const backups = listStoredSiteBackups();
+    res.json({
+      backups,
+      autoBackups: backups.filter(item => item.kind === 'auto'),
+      manualBackups: backups.filter(item => item.kind !== 'auto')
+    });
   } catch (error) {
     console.error('Site backup list failed:', error);
     res.status(500).json({ message: 'Yedek listesi alınamadı' });
@@ -1141,7 +1183,7 @@ app.get('/api/admin/site-backups/export', staffRequired, async (_, res) => {
 app.post('/api/admin/site-backups', staffRequired, async (req, res) => {
   try {
     const label = String(req.body?.label || '').trim();
-    const backup = await createStoredSiteBackup(label);
+    const backup = await createStoredSiteBackup({ kind: 'manual', label });
     res.json({ ok: true, backup, backups: listStoredSiteBackups() });
   } catch (error) {
     console.error('Site backup save failed:', error);
@@ -1285,6 +1327,8 @@ app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, 
     type: isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype
   });
 
+  if (!restoreSiteBackupInProgress) scheduleAutoSiteBackup();
+
   res.json({
     id: crypto.randomUUID(),
     title: req.file.originalname,
@@ -1402,6 +1446,7 @@ app.post('/api/admin/staff-users', adminOnlyRequired, async (req, res) => {
       select: staffUserSelect
     });
     await syncStaffUsersToFile();
+    scheduleAutoSiteBackup();
     res.json({ user });
   } catch (error) {
     console.error('staff-users create failed:', error);
@@ -1448,6 +1493,7 @@ app.patch('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
       select: staffUserSelect
     });
     await syncStaffUsersToFile();
+    scheduleAutoSiteBackup();
     res.json({ user });
   } catch (error) {
     console.error('staff-users update failed:', error);
@@ -1475,6 +1521,7 @@ app.delete('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => 
     }
     await prisma.user.delete({ where: { id: req.params.id } });
     await syncStaffUsersToFile();
+    scheduleAutoSiteBackup();
     res.json({ ok: true });
   } catch (error) {
     console.error('staff-users delete failed:', error);
