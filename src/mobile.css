@@ -4568,10 +4568,133 @@ img { display: block; width: 100%; }
 }
 
 .gallery-section-block { margin-bottom: 24px; }
+
+.gallery-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gallery-items-head {
+  margin-top: 8px;
+}
+
 .gallery-section-title {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 18px;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.gallery-home-section-title {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.gallery-back-btn {
+  flex-shrink: 0;
+}
+
+.gallery-category-rail-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  width: 100%;
+  max-width: 100%;
+  touch-action: pan-x pan-y;
+}
+
+.gallery-category-rail-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.gallery-category-rail-track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: max-content;
+  padding: 2px 2px 10px;
+}
+
+.gallery-category-card {
+  flex: 0 0 min(172px, 44vw);
+  min-width: min(172px, 44vw);
+  aspect-ratio: 3 / 4.1;
+  position: relative;
+  border: 0;
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #111;
+  scroll-snap-align: start;
+  text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.gallery-category-card.is-active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.gallery-category-card-media,
+.gallery-category-card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-category-card-image {
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-category-card-placeholder {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gallery-category-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 35%, rgba(0, 0, 0, 0.88) 100%);
+  pointer-events: none;
+}
+
+.gallery-category-card-body {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+}
+
+.gallery-category-card-body strong {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.gallery-category-card-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .gallery-card-interactive { cursor: pointer; }

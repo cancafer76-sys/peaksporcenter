@@ -430,3 +430,30 @@ export function groupGalleryByCategory(items, categories) {
   });
   return groups;
 }
+
+export function getGalleryCategoryCover(items) {
+  const list = (items || []).map((item, index) => normalizeGalleryItem(item, index));
+  const imageItem = list.find(entry => entry.type !== 'video' && entry.image)
+    || list.find(entry => entry.image)
+    || list[0];
+  if (!imageItem) return '';
+  if (imageItem.type === 'video') {
+    return imageItem.image || getYoutubeThumbnail(imageItem.videoUrl);
+  }
+  return imageItem.image;
+}
+
+export function buildGalleryCategorySummaries(items, categories) {
+  const grouped = groupGalleryByCategory(items, categories);
+  return (categories || [])
+    .map(category => {
+      const categoryItems = grouped[category] || [];
+      return {
+        category,
+        items: categoryItems,
+        count: categoryItems.length,
+        cover: getGalleryCategoryCover(categoryItems)
+      };
+    })
+    .filter(entry => entry.count > 0);
+}

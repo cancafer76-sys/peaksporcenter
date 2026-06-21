@@ -2,7 +2,8 @@ export const ROUTE_CHANGE_EVENT = 'peakspor:routechange';
 
 export function navigateToPath(pathname) {
   const nextPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
-  if (window.location.pathname !== nextPath) {
+  const current = `${window.location.pathname}${window.location.hash}`;
+  if (current !== nextPath) {
     window.history.pushState({}, '', nextPath);
   }
   window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
