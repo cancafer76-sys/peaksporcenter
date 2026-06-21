@@ -4647,6 +4647,12 @@ img { display: block; width: 100%; }
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.testimonials-grid-mobile-expand {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .testimonials-section-compact .section-header {
   margin-bottom: 10px;
 }
@@ -4883,21 +4889,37 @@ img { display: block; width: 100%; }
 @media (max-width: 560px) {
   .testimonials-grid-home,
   .testimonials-grid-mobile-expand {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .testimonial-card-compact {
-    padding: 14px;
+    padding: 10px;
   }
 
   .testimonial-card-compact p {
     -webkit-line-clamp: 3;
+    font-size: 10px;
+  }
+
+  .testimonial-card-compact .testimonial-author strong {
+    font-size: 9px;
+  }
+
+  .testimonial-card-compact .testimonial-author span {
+    font-size: 8px;
+  }
+
+  .testimonial-card-compact .testimonial-avatar,
+  .testimonial-card-compact .testimonial-photo {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
   }
 
   .testimonial-readmore {
-    font-size: 12px;
-    min-height: 32px;
+    font-size: 10px;
+    min-height: 28px;
   }
 
   .home-scroll-rail .coach-card-mini,

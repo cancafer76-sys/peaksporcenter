@@ -5,4 +5,4 @@ nixPkgs = ["nodejs_20", "npm-10_x"]
 cmds = ["npm install --include=dev", "npm run build", "npx prisma generate"]
 
 [start]
-cmd = "node server/index.js"
+cmd = "npx prisma db push --skip-generate && node server/index.js"

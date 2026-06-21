@@ -36,7 +36,7 @@ async function request(path, options = {}) {
       throw new Error(data.message || 'E-posta veya şifre hatalı');
     }
     if (response.status >= 500) {
-      throw new Error(data.message || 'Sunucu hatası. npm start ile backend çalıştığından emin olun.');
+      throw new Error(data.message || 'Sunucu hatası. Lütfen birkaç saniye sonra tekrar deneyin.');
     }
     throw new Error(data.message || 'İşlem başarısız oldu');
   }

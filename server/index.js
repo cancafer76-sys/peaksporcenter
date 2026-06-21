@@ -889,40 +889,51 @@ const staffUserSelect = {
 };
 
 app.get('/api/admin/staff-users', adminOnlyRequired, async (_, res) => {
-  const hiddenEmail = getHiddenSuperAdmin().email;
-  const users = await prisma.user.findMany({
-    where: {
-      role: { in: ['ADMIN', 'MODERATOR'] },
-      email: { not: hiddenEmail }
-    },
-    orderBy: { createdAt: 'desc' },
-    select: staffUserSelect
-  });
-  res.json({ data: users });
+  try {
+    if (!dbReady) {
+      return res.status(503).json({ message: 'Veritabanı hazırlanıyor, birkaç saniye sonra tekrar deneyin.' });
+    }
+    const hiddenEmail = getHiddenSuperAdmin().email;
+    const users = await prisma.user.findMany({
+      where: {
+        role: { in: ['ADMIN', 'MODERATOR'] },
+        email: { not: hiddenEmail }
+      },
+      orderBy: { createdAt: 'desc' },
+      select: staffUserSelect
+    });
+    res.json({ data: users });
+  } catch (error) {
+    console.error('staff-users list failed:', error);
+    res.status(500).json({ message: 'Kullanıcı listesi alınamadı' });
+  }
 });
 
 app.post('/api/admin/staff-users', adminOnlyRequired, async (req, res) => {
-  if (!canManageStaffUsers(req.user.role)) {
-    return res.status(403).json({ message: 'Yetersiz yetki' });
-  }
-  const { name, email, username, password, role } = req.body || {};
-  const normalizedEmail = (email || '').trim().toLowerCase();
-  const normalizedUsername = (username || '').trim().toLowerCase() || null;
-
-  if (isHiddenSuperAdminEmail(normalizedEmail)) {
-    return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
-  }
-  if (!name || !normalizedEmail || !password) {
-    return res.status(400).json({ message: 'Ad, e-posta ve şifre zorunludur' });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ message: 'Şifre en az 6 karakter olmalı' });
-  }
-
-  const staffRole = role === 'MODERATOR' ? 'MODERATOR' : 'ADMIN';
-  const passwordHash = await bcrypt.hash(password, 10);
-
   try {
+    if (!dbReady) {
+      return res.status(503).json({ message: 'Veritabanı hazırlanıyor, birkaç saniye sonra tekrar deneyin.' });
+    }
+    if (!canManageStaffUsers(req.user.role)) {
+      return res.status(403).json({ message: 'Yetersiz yetki' });
+    }
+    const { name, email, username, password, role } = req.body || {};
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedUsername = (username || '').trim().toLowerCase() || null;
+
+    if (isHiddenSuperAdminEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
+    }
+    if (!name || !normalizedEmail || !password) {
+      return res.status(400).json({ message: 'Ad, e-posta ve şifre zorunludur' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Şifre en az 6 karakter olmalı' });
+    }
+
+    const staffRole = role === 'MODERATOR' ? 'MODERATOR' : 'ADMIN';
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const user = await prisma.user.create({
       data: {
         name: String(name).trim(),
@@ -936,40 +947,44 @@ app.post('/api/admin/staff-users', adminOnlyRequired, async (req, res) => {
     });
     res.json({ user });
   } catch (error) {
+    console.error('staff-users create failed:', error);
     if (error.code === 'P2002') {
       return res.status(400).json({ message: 'E-posta veya kullanıcı adı zaten kayıtlı' });
     }
-    throw error;
+    return res.status(500).json({ message: 'Kullanıcı oluşturulamadı. Veritabanı şeması güncelleniyor olabilir, birkaç saniye sonra tekrar deneyin.' });
   }
 });
 
 app.patch('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
-  const { name, email, username, password, role } = req.body || {};
-  const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
-  if (!existing || !isStaffRole(existing.role)) {
-    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
-  }
-  if (isHiddenSuperAdminEmail(existing.email)) {
-    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
-  }
-  if (email && isHiddenSuperAdminEmail(String(email).trim().toLowerCase())) {
-    return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
-  }
-
-  const data = {};
-  if (name) data.name = String(name).trim();
-  if (email) data.email = String(email).trim().toLowerCase();
-  if (username !== undefined) data.username = username ? String(username).trim().toLowerCase() : null;
-  if (password) {
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Şifre en az 6 karakter olmalı' });
-    }
-    data.passwordHash = await bcrypt.hash(password, 10);
-    data.passwordPlain = password;
-  }
-  if (role === 'MODERATOR' || role === 'ADMIN') data.role = role;
-
   try {
+    if (!dbReady) {
+      return res.status(503).json({ message: 'Veritabanı hazırlanıyor, birkaç saniye sonra tekrar deneyin.' });
+    }
+    const { name, email, username, password, role } = req.body || {};
+    const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!existing || !isStaffRole(existing.role)) {
+      return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+    }
+    if (isHiddenSuperAdminEmail(existing.email)) {
+      return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+    }
+    if (email && isHiddenSuperAdminEmail(String(email).trim().toLowerCase())) {
+      return res.status(400).json({ message: 'Bu e-posta kullanılamaz' });
+    }
+
+    const data = {};
+    if (name) data.name = String(name).trim();
+    if (email) data.email = String(email).trim().toLowerCase();
+    if (username !== undefined) data.username = username ? String(username).trim().toLowerCase() : null;
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ message: 'Şifre en az 6 karakter olmalı' });
+      }
+      data.passwordHash = await bcrypt.hash(password, 10);
+      data.passwordPlain = password;
+    }
+    if (role === 'MODERATOR' || role === 'ADMIN') data.role = role;
+
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data,
@@ -977,26 +992,35 @@ app.patch('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
     });
     res.json({ user });
   } catch (error) {
+    console.error('staff-users update failed:', error);
     if (error.code === 'P2002') {
       return res.status(400).json({ message: 'E-posta veya kullanıcı adı zaten kayıtlı' });
     }
-    throw error;
+    return res.status(500).json({ message: 'Kullanıcı güncellenemedi' });
   }
 });
 
 app.delete('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
-  const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
-  if (!existing || !isStaffRole(existing.role)) {
-    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+  try {
+    if (!dbReady) {
+      return res.status(503).json({ message: 'Veritabanı hazırlanıyor, birkaç saniye sonra tekrar deneyin.' });
+    }
+    const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!existing || !isStaffRole(existing.role)) {
+      return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+    }
+    if (isHiddenSuperAdminEmail(existing.email)) {
+      return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+    }
+    if (req.user.id === existing.id) {
+      return res.status(400).json({ message: 'Kendi hesabınızı silemezsiniz' });
+    }
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('staff-users delete failed:', error);
+    res.status(500).json({ message: 'Kullanıcı silinemedi' });
   }
-  if (isHiddenSuperAdminEmail(existing.email)) {
-    return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
-  }
-  if (req.user.id === existing.id) {
-    return res.status(400).json({ message: 'Kendi hesabınızı silemezsiniz' });
-  }
-  await prisma.user.delete({ where: { id: req.params.id } });
-  res.json({ ok: true });
 });
 
 app.patch('/api/auth/profile', staffRequired, async (req, res) => {
@@ -1094,7 +1118,7 @@ async function bootstrapDatabase() {
     return;
   }
 
-  await pushDatabaseSchema(isRailway ? 30000 : 45000);
+  await pushDatabaseSchema(isRailway ? 90000 : 45000);
 
   try {
     await ensureSeedData();
@@ -1102,6 +1126,14 @@ async function bootstrapDatabase() {
     console.log('Database seeded successfully');
   } catch (error) {
     console.error('Database seed failed:', error.message || error);
+    try {
+      await pushDatabaseSchema(60000);
+      await ensureSeedData();
+      dbReady = true;
+      console.log('Database seeded successfully after schema retry');
+    } catch (retryError) {
+      console.error('Database seed retry failed:', retryError.message || retryError);
+    }
   }
 }
 
