@@ -54,6 +54,16 @@ if (!isProduction) {
 const prisma = new PrismaClient();
 const execFileAsync = promisify(execFile);
 const app = express();
+let dbReady = false;
+
+app.get('/api/health', (_, res) => {
+  res.status(200).json({
+    ok: true,
+    service: 'peakspor',
+    dbReady,
+    env: process.env.NODE_ENV || 'development'
+  });
+});
 const uploadDir = path.join(__dirname, 'uploads');
 const settingsBackupPath = path.join(rootDir, 'data', 'settings-backup.json');
 
@@ -511,17 +521,6 @@ async function ensureSeedData() {
     }
   }
 }
-
-let dbReady = false;
-
-app.get('/api/health', (_, res) => {
-  res.json({
-    ok: true,
-    service: 'peakspor',
-    dbReady,
-    env: process.env.NODE_ENV || 'development'
-  });
-});
 
 app.get('/api/public-config', (_, res) => {
   res.json({
@@ -1138,6 +1137,7 @@ async function bootstrapDatabase() {
 }
 
 async function start() {
+  console.log(`PEAKSPOR booting on port ${port}...`);
   app.listen(port, '0.0.0.0', () => {
     const dbHint = process.env.DATABASE_URL
       ? `${process.env.DATABASE_URL.split(':')[0]}://***`
