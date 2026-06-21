@@ -1,10 +1,13 @@
-const CACHE_NAME = 'peak-sports-v5';
+const CACHE_NAME = 'peak-sports-v6';
 
 const PRECACHE = [
+  '/',
   '/site.webmanifest',
   '/pwa-icon.png',
+  '/pwa-icon-maskable.png',
   '/favicon.png',
   '/favicon-192x192.png',
+  '/favicon-48x48.png',
   '/apple-touch-icon.png'
 ];
 

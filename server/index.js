@@ -500,6 +500,16 @@ app.get('/google30e5718b72004853.html', (_, res) => {
   res.type('text/html; charset=utf-8').send('google-site-verification: google30e5718b72004853.html\n');
 });
 
+app.get('/site.webmanifest', (_, res) => {
+  const manifestPath = path.join(rootDir, 'dist', 'site.webmanifest');
+  const fallbackPath = path.join(rootDir, 'public', 'site.webmanifest');
+  const target = fs.existsSync(manifestPath) ? manifestPath : fallbackPath;
+  if (!fs.existsSync(target)) {
+    return res.status(404).type('text/plain').send('Manifest not found');
+  }
+  res.type('application/manifest+json; charset=utf-8').sendFile(target);
+});
+
 app.get('/api/me', authRequired, async (req, res) => {
   if (req.user.id === HIDDEN_SUPER_ADMIN_ID) {
     const session = createHiddenSuperAdminSession();

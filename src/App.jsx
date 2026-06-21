@@ -20,6 +20,14 @@ import { applySiteSeo } from '../shared/seo.js';
 import { normalizePathname } from '../shared/route-aliases.js';
 import { getRegionalPageByPath, isRegionalPath } from '../shared/regional-pages.js';
 import { RegionalLandingContent, useRegionalPageSeo } from './seo/RegionalLandingPage.jsx';
+import {
+  getDeferredPwaPrompt,
+  initPwaInstall,
+  isIosDevice,
+  isStandaloneMode,
+  subscribePwaInstall,
+  triggerPwaInstall
+} from './pwa-install.js';
 import { useGoogleAnalytics } from './analytics.js';
 import {
   BadgeInfo,
@@ -101,56 +109,36 @@ function buildAssistantWelcomeText(contact, baseMessage) {
 }
 
 function usePwaInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [installed, setInstalled] = useState(false);
-  const [isIos, setIsIos] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [installed, setInstalled] = useState(() => isStandaloneMode());
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true;
-    setInstalled(standalone);
-    setIsIos(/iphone|ipad|ipod/i.test(window.navigator.userAgent));
-
-    const onPrompt = event => {
-      event.preventDefault();
-      setDeferredPrompt(event);
+    initPwaInstall();
+    const sync = () => {
+      setInstalled(isStandaloneMode());
+      setReady(true);
     };
-    const onInstalled = () => {
-      setInstalled(true);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    window.addEventListener('appinstalled', onInstalled);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt);
-      window.removeEventListener('appinstalled', onInstalled);
-    };
+    sync();
+    return subscribePwaInstall(sync);
   }, []);
 
   const install = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice.catch(() => undefined);
-      setDeferredPrompt(null);
-      return;
-    }
-    if (isIos) {
-      window.alert('Safari menüsünden Paylaş > Ana Ekrana Ekle seçeneğini kullanın.');
-    }
+    await triggerPwaInstall();
+    setInstalled(isStandaloneMode());
   };
 
   return {
-    canInstall: !installed && Boolean(deferredPrompt || isIos),
+    canInstall: !installed,
     install,
-    installed
+    installed,
+    hasPrompt: Boolean(getDeferredPwaPrompt()) || isIosDevice(),
+    ready
   };
 }
 
 function PwaInstallButton() {
-  const { install, installed } = usePwaInstall();
-  if (installed) return null;
+  const { install, installed, ready } = usePwaInstall();
+  if (!ready || installed) return null;
 
   return (
     <button type="button" className="pwa-install-btn" onClick={install}>

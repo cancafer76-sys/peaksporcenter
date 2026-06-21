@@ -68,6 +68,7 @@ export function applyFaviconLinks() {
   upsertLink('icon', '/favicon.png', { type: 'image/png' });
   upsertLink('icon', '/favicon-16x16.png', { type: 'image/png', sizes: '16x16' });
   upsertLink('icon', '/favicon-32x32.png', { type: 'image/png', sizes: '32x32' });
+  upsertLink('icon', '/favicon-48x48.png', { type: 'image/png', sizes: '48x48' });
   upsertLink('apple-touch-icon', '/apple-touch-icon.png');
 }
 
