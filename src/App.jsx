@@ -349,33 +349,63 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
   );
 }
 
-function TestimonialsSection({ items, compact = false }) {
+function TestimonialCard({ item, compact = false, expandable = false }) {
+  const [expanded, setExpanded] = useState(false);
+  const text = item.text || '';
+  const canExpand = expandable && text.trim().length > 0;
+
+  return (
+    <article
+      className={[
+        'testimonial-card',
+        compact ? 'testimonial-card-compact' : '',
+        expanded ? 'testimonial-card-expanded' : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <TestimonialStars rating={item.rating} compact={compact} />
+      <p>{text}</p>
+      {canExpand ? (
+        <button
+          type="button"
+          className="testimonial-readmore text-button"
+          onClick={() => setExpanded(prev => !prev)}
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Daha Az' : 'Devamını Gör'}
+        </button>
+      ) : null}
+      <div className="testimonial-author">
+        {item.image ? (
+          <img src={item.image} alt={item.name} className="testimonial-photo" loading="lazy" />
+        ) : (
+          <span className="testimonial-avatar">{item.name.charAt(0)}</span>
+        )}
+        <div>
+          <strong>{item.name}</strong>
+          <span>{item.role}</span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function TestimonialsSection({ items, compact = false, mobile = false }) {
   const list = normalizeTestimonials(items);
   if (!list.length) return null;
-  const visible = compact ? list.slice(0, 4) : list;
+  const visible = compact && !mobile ? list.slice(0, 4) : list;
+  const expandable = compact && mobile;
+
   return (
     <section className={`section-block testimonials-section ${compact ? 'testimonials-section-compact' : ''}`} id="testimonials">
       <SectionHeader
         title="MÜŞTERİ YORUMLARI"
         subtitle={compact ? 'Üyelerimizden kısa notlar.' : 'Üyelerimizin deneyimlerinden ilham alın.'}
       />
-      <div className={`testimonials-grid ${compact ? 'testimonials-grid-home' : ''}`}>
+      <div className={`testimonials-grid ${compact ? 'testimonials-grid-home' : ''} ${mobile ? 'testimonials-grid-mobile-expand' : ''}`}>
         {visible.map(item => (
-          <article key={item.id} className={`testimonial-card ${compact ? 'testimonial-card-compact' : ''}`}>
-            <TestimonialStars rating={item.rating} compact={compact} />
-            <p>{item.text}</p>
-            <div className="testimonial-author">
-              {item.image ? (
-                <img src={item.image} alt={item.name} className="testimonial-photo" loading="lazy" />
-              ) : (
-                <span className="testimonial-avatar">{item.name.charAt(0)}</span>
-              )}
-              <div>
-                <strong>{item.name}</strong>
-                <span>{item.role}</span>
-              </div>
-            </div>
-          </article>
+          <TestimonialCard key={item.id} item={item} compact={compact} expandable={expandable} />
         ))}
       </div>
     </section>
@@ -2284,7 +2314,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
 
         <StatsGrid stats={stats} mobile />
 
-        <TestimonialsSection items={testimonials} compact />
+        <TestimonialsSection items={testimonials} compact mobile />
 
         <HomeFeatureBar mobile />
       </main>

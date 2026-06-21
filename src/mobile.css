@@ -4559,6 +4559,30 @@ img { display: block; width: 100%; }
   gap: 8px;
 }
 
+.testimonial-readmore {
+  margin: 0;
+  padding: 0;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.testimonial-card-compact.testimonial-card-expanded {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #101010;
+}
+
+.testimonial-card-compact.testimonial-card-expanded p {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  overflow: visible;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .testimonial-card {
   padding: 18px;
   border-radius: 20px;
@@ -4716,9 +4740,23 @@ img { display: block; width: 100%; }
 }
 
 @media (max-width: 560px) {
-  .testimonials-grid-home {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+  .testimonials-grid-home,
+  .testimonials-grid-mobile-expand {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .testimonial-card-compact {
+    padding: 14px;
+  }
+
+  .testimonial-card-compact p {
+    -webkit-line-clamp: 3;
+  }
+
+  .testimonial-readmore {
+    font-size: 12px;
+    min-height: 32px;
   }
 
   .home-scroll-rail .coach-card-mini,
