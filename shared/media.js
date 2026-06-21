@@ -135,16 +135,17 @@ export function normalizeService(item = {}) {
   };
 }
 
-export function normalizePackageFeature(feature) {
+export function normalizePackageFeature(feature, index = 0) {
   if (typeof feature === 'string') {
     const text = feature.trim();
     if (!text) return null;
-    return { text, included: true };
+    return { id: `feature-${index}`, text, included: true };
   }
   if (feature && typeof feature === 'object') {
     const text = String(feature.text || feature.label || '').trim();
     if (!text) return null;
     return {
+      id: feature.id || `feature-${index}`,
       text,
       included: feature.included !== false
     };
@@ -168,7 +169,7 @@ export function normalizePackage(item = {}) {
     bgColor: item.bgColor || '',
     borderColor: item.borderColor || '',
     features: (Array.isArray(item.features) ? item.features : [])
-      .map(normalizePackageFeature)
+      .map((feature, index) => normalizePackageFeature(feature, index))
       .filter(Boolean),
     cta: item.cta || 'Seç',
     featured: Boolean(item.featured)

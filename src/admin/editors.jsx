@@ -136,14 +136,14 @@ export function PackagePreviewCard({ pkg }) {
 }
 
 function PackageFeaturesEditor({ features, onChange }) {
-  const items = (features || []).map(normalizePackageFeature).filter(Boolean);
+  const items = (features || []).map((feature, index) => normalizePackageFeature(feature, index)).filter(Boolean);
 
   const updateFeature = (index, patch) => {
     const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
     onChange(next);
   };
 
-  const addFeature = () => onChange([...items, { text: 'Yeni madde', included: true }]);
+  const addFeature = () => onChange([...items, { id: `feature-${Date.now()}`, text: 'Yeni madde', included: true }]);
 
   const removeFeature = index => onChange(items.filter((_, i) => i !== index));
 
@@ -151,7 +151,7 @@ function PackageFeaturesEditor({ features, onChange }) {
     <div className="admin-feature-list">
       <span className="admin-feature-list-label">Özellik maddeleri (✓ dahil / ✗ hariç)</span>
       {items.map((feature, index) => (
-        <div key={`${feature.text}-${index}`} className="admin-feature-row">
+        <div key={feature.id || `feature-row-${index}`} className="admin-feature-row">
           <button
             type="button"
             className={`admin-feature-toggle ${feature.included ? 'is-included' : 'is-excluded'}`}
@@ -321,19 +321,34 @@ export function PackagesEditor({ items, onChange }) {
 }
 
 export function GalleryEditor({ items, categories, onChange, onCategoriesChange }) {
-  const [active, setActive] = useState(0);
+  const GALLERY_CATEGORY_LIMIT = 10;
   const cats = categories?.length ? categories : defaultGalleryCategories;
   const list = (items || []).map((item, index) => normalizeGalleryItem(item, index));
-  const current = list[active] || normalizeGalleryItem({});
+  const [activeId, setActiveId] = useState(list[0]?.id || null);
+  const activeIndex = Math.max(0, list.findIndex(item => item.id === activeId));
+  const current = list[activeIndex] || normalizeGalleryItem({ category: cats[0] });
+
+  const itemsByCategory = useMemo(() => {
+    const grouped = {};
+    cats.forEach(cat => {
+      grouped[cat] = [];
+    });
+    list.forEach(item => {
+      const key = item.category || cats[0];
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(item);
+    });
+    return grouped;
+  }, [list, cats]);
 
   const update = (key, value) => {
     const next = clone(list);
-    next[active] = { ...next[active], [key]: value };
-    if (key === 'videoUrl' && next[active].type === 'video') {
-      next[active].image = next[active].image || getYoutubeThumbnail(value);
+    next[activeIndex] = { ...next[activeIndex], [key]: value };
+    if (key === 'videoUrl' && next[activeIndex].type === 'video') {
+      next[activeIndex].image = next[activeIndex].image || getYoutubeThumbnail(value);
     }
-    if (key === 'type' && value === 'video' && next[active].videoUrl) {
-      next[active].image = next[active].image || getYoutubeThumbnail(next[active].videoUrl);
+    if (key === 'type' && value === 'video' && next[activeIndex].videoUrl) {
+      next[activeIndex].image = next[activeIndex].image || getYoutubeThumbnail(next[activeIndex].videoUrl);
     }
     onChange(next);
   };
@@ -350,17 +365,86 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
     onChange(list.map(item => (item.category === cat ? { ...item, category: cats[0] || 'Salon' } : item)));
   };
 
+  const addItemToCategory = (category, type = 'image') => {
+    const count = itemsByCategory[category]?.length || 0;
+    if (count >= GALLERY_CATEGORY_LIMIT) {
+      window.alert(`"${category}" bölümüne en fazla ${GALLERY_CATEGORY_LIMIT} içerik eklenebilir.`);
+      return;
+    }
+    const nextItem = normalizeGalleryItem(
+      {
+        id: `g-${Date.now()}`,
+        title: type === 'video' ? 'Yeni Video' : 'Yeni Görsel',
+        category,
+        type
+      },
+      list.length
+    );
+    onChange([...list, nextItem]);
+    setActiveId(nextItem.id);
+  };
+
+  const uploadCategoryImages = async (category, event) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (!files.length) return;
+
+    const existing = itemsByCategory[category]?.length || 0;
+    const remaining = GALLERY_CATEGORY_LIMIT - existing;
+    if (remaining <= 0) {
+      window.alert(`"${category}" bölümüne en fazla ${GALLERY_CATEGORY_LIMIT} içerik eklenebilir.`);
+      return;
+    }
+
+    const selected = files.slice(0, remaining);
+    if (files.length > remaining) {
+      window.alert(`En fazla ${remaining} görsel daha eklenebilir. İlk ${remaining} dosya yüklenecek.`);
+    }
+
+    const uploaded = [];
+    try {
+      for (const [index, file] of selected.entries()) {
+        const result = await api.upload(file);
+        const title = file.name.replace(/\.[^.]+$/, '') || `Görsel ${existing + index + 1}`;
+        uploaded.push(
+          normalizeGalleryItem(
+            {
+              id: `g-${Date.now()}-${index}`,
+              title,
+              category,
+              type: 'image',
+              image: result.url,
+              featured: false
+            },
+            list.length + index
+          )
+        );
+      }
+      onChange([...list, ...uploaded]);
+      if (uploaded[0]) setActiveId(uploaded[0].id);
+    } catch (uploadError) {
+      window.alert(uploadError.message || 'Görseller yüklenemedi');
+    }
+  };
+
   const uploadVideoFile = async event => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const category = current.category || cats[0];
+    const count = itemsByCategory[category]?.length || 0;
+    if (count >= GALLERY_CATEGORY_LIMIT) {
+      window.alert(`"${category}" bölümüne en fazla ${GALLERY_CATEGORY_LIMIT} içerik eklenebilir.`);
+      event.target.value = '';
+      return;
+    }
     try {
       const result = await api.upload(file);
       const next = clone(list);
-      next[active] = {
-        ...next[active],
+      next[activeIndex] = {
+        ...next[activeIndex],
         type: 'video',
         videoUrl: result.url,
-        image: next[active].image || result.url
+        image: next[activeIndex].image || result.url
       };
       onChange(next);
     } catch (uploadError) {
@@ -370,15 +454,20 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
     }
   };
 
+  const removeCurrent = () => {
+    const next = list.filter((_, index) => index !== activeIndex);
+    onChange(next);
+    setActiveId(next[0]?.id || null);
+  };
+
   return (
     <div className="admin-editor-layout">
       <div className="admin-editor-main">
         <div className="admin-toolbar">
           <div>
             <h2 className="admin-page-title">Galeri</h2>
-            <p className="admin-page-sub">Görsel, video dosyası, YouTube ve bölüm yönetimi.</p>
+            <p className="admin-page-sub">Her bölüme en fazla 10 görsel veya video ekleyin.</p>
           </div>
-          <button type="button" className="admin-mini-btn primary" onClick={() => { onChange([...list, normalizeGalleryItem({ id: `g-${Date.now()}`, category: cats[0] }, list.length)]); setActive(list.length); }}><Plus size={14} /> İçerik Ekle</button>
         </div>
 
         <div className="admin-form-card">
@@ -394,47 +483,100 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
           </div>
         </div>
 
-        <div className="admin-chip-row">
-          {list.map((item, index) => (
-            <button key={item.id} type="button" className={`admin-chip ${active === index ? 'active' : ''}`} onClick={() => setActive(index)}>
-              {item.type === 'video' ? '▶ ' : ''}{item.title}
-            </button>
-          ))}
-        </div>
-
-        <div className="admin-form-card">
-          <div className="admin-form-grid">
-            <label className="admin-field">Başlık<input value={current.title} onChange={e => update('title', e.target.value)} /></label>
-            <label className="admin-field">Bölüm
-              <select value={current.category} onChange={e => update('category', e.target.value)}>
-                {cats.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-            </label>
-            <label className="admin-field">Tür
-              <select value={current.type} onChange={e => update('type', e.target.value)}>
-                <option value="image">Görsel</option>
-                <option value="video">Video / YouTube</option>
-              </select>
-            </label>
-            {current.type === 'image' ? (
-              <MediaUploadField label="Görsel" value={current.image} onChange={v => update('image', v)} accept="image/*" />
-            ) : (
-              <>
-                <label className="admin-field" style={{ gridColumn: '1 / -1' }}>YouTube URL<input value={current.videoUrl} onChange={e => update('videoUrl', e.target.value)} placeholder="https://youtube.com/watch?v=..." /></label>
-                <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
-                  <span>Video Dosyası Yükle</span>
-                  <label className="admin-upload-btn" style={{ marginTop: 8 }}>
-                    Bilgisayardan video seç
-                    <input type="file" accept="video/*" onChange={uploadVideoFile} hidden />
-                  </label>
+        {cats.map(category => {
+          const categoryItems = itemsByCategory[category] || [];
+          const remaining = GALLERY_CATEGORY_LIMIT - categoryItems.length;
+          return (
+            <section key={category} className="admin-gallery-category-block">
+              <div className="admin-gallery-category-head">
+                <div>
+                  <h4>{category}</h4>
+                  <p className="admin-page-sub">{categoryItems.length}/{GALLERY_CATEGORY_LIMIT} içerik</p>
                 </div>
-                <MediaUploadField label="Kapak Görseli (opsiyonel)" value={current.image} onChange={v => update('image', v)} accept="image/*" />
-              </>
-            )}
+                <div className="admin-gallery-category-actions">
+                  <label className={`admin-mini-btn ${remaining <= 0 ? 'is-disabled' : ''}`}>
+                    <ImageIcon size={14} /> Görsel Ekle
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      hidden
+                      disabled={remaining <= 0}
+                      onChange={event => uploadCategoryImages(category, event)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="admin-mini-btn"
+                    disabled={remaining <= 0}
+                    onClick={() => addItemToCategory(category, 'video')}
+                  >
+                    <Video size={14} /> Video Ekle
+                  </button>
+                </div>
+              </div>
+
+              {categoryItems.length ? (
+                <div className="admin-gallery-category-grid">
+                  {categoryItems.map(item => {
+                    const thumb = item.type === 'video' ? item.image || getYoutubeThumbnail(item.videoUrl) : item.image;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`admin-gallery-thumb ${activeId === item.id ? 'active' : ''}`}
+                        onClick={() => setActiveId(item.id)}
+                      >
+                        {thumb ? <img src={thumb} alt={item.title} /> : <span className="preview-empty">Medya yok</span>}
+                        {item.type === 'video' ? <span className="admin-gallery-thumb-badge">▶</span> : null}
+                        <span className="admin-gallery-thumb-title">{item.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="admin-hint">Bu bölümde henüz içerik yok. Birden fazla görsel seçerek yükleyebilirsiniz.</p>
+              )}
+            </section>
+          );
+        })}
+
+        {activeId ? (
+          <div className="admin-form-card">
+            <h4>Seçili İçerik</h4>
+            <div className="admin-form-grid">
+              <label className="admin-field">Başlık<input value={current.title} onChange={e => update('title', e.target.value)} /></label>
+              <label className="admin-field">Bölüm
+                <select value={current.category} onChange={e => update('category', e.target.value)}>
+                  {cats.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </label>
+              <label className="admin-field">Tür
+                <select value={current.type} onChange={e => update('type', e.target.value)}>
+                  <option value="image">Görsel</option>
+                  <option value="video">Video / YouTube</option>
+                </select>
+              </label>
+              {current.type === 'image' ? (
+                <MediaUploadField label="Görsel" value={current.image} onChange={v => update('image', v)} accept="image/*" />
+              ) : (
+                <>
+                  <label className="admin-field" style={{ gridColumn: '1 / -1' }}>YouTube URL<input value={current.videoUrl} onChange={e => update('videoUrl', e.target.value)} placeholder="https://youtube.com/watch?v=..." /></label>
+                  <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                    <span>Video Dosyası Yükle</span>
+                    <label className="admin-upload-btn" style={{ marginTop: 8 }}>
+                      Bilgisayardan video seç
+                      <input type="file" accept="video/*" onChange={uploadVideoFile} hidden />
+                    </label>
+                  </div>
+                  <MediaUploadField label="Kapak Görseli (opsiyonel)" value={current.image} onChange={v => update('image', v)} accept="image/*" />
+                </>
+              )}
+            </div>
+            <Toggle checked={current.featured} onChange={v => update('featured', v)} label="Ana sayfada öne çıkar" />
+            <button type="button" className="admin-mini-btn danger" onClick={removeCurrent}><Trash2 size={14} /> Sil</button>
           </div>
-          <Toggle checked={current.featured} onChange={v => update('featured', v)} label="Ana sayfada öne çıkar" />
-          <button type="button" className="admin-mini-btn danger" onClick={() => { onChange(list.filter((_, i) => i !== active)); setActive(0); }}><Trash2 size={14} /> Sil</button>
-        </div>
+        ) : null}
       </div>
       <aside className="admin-editor-preview">
         <div className="admin-preview-head"><Eye size={16} /> Canlı Önizleme</div>
