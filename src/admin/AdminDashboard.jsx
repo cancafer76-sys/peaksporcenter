@@ -33,6 +33,12 @@ import { normalizeContact, buildMapEmbedUrl } from '../../shared/media.js';
 import { normalizeSettings } from '../../shared/settings.js';
 import { applySiteTheme, hexToRgbString, themePresets } from '../../shared/theme.js';
 import {
+  canAccessAdminSection,
+  canManageStaffUsers,
+  getStaffRoleLabel,
+  isStaffRole
+} from '../../shared/admin-permissions.js';
+import {
   AccountEditor,
   AnnouncementsEditor,
   AboutEditor,
@@ -93,7 +99,7 @@ function AdminLogin({ onSuccess, onClose }) {
     try {
       const email = loginMode === 'email' ? form.email.trim() : form.username.trim();
       const result = await api.login({ email, password: form.password });
-      if (!['ADMIN', 'MODERATOR'].includes(result.user?.role)) throw new Error('Bu hesap yönetici yetkisine sahip değil.');
+      if (!isStaffRole(result.user?.role)) throw new Error('Bu hesap yönetici yetkisine sahip değil.');
       onSuccess(result.user);
     } catch (loginError) {
       const message = loginError.message || 'Giriş başarısız';
@@ -333,10 +339,18 @@ export default function AdminDashboard({ state, setState, onClose }) {
 
   useEffect(() => {
     if (!user) return;
+    if (!canAccessAdminSection(user.role, section)) {
+      setSection('dashboard');
+    }
+  }, [user, section]);
+
+  useEffect(() => {
+    if (!user) return;
     api.analytics().then(setAnalytics).catch(() => setAnalytics(null));
   }, [user, section]);
 
   const selectSection = id => {
+    if (!canAccessAdminSection(user?.role, id)) return;
     setSection(id);
     setMenuOpen(false);
     setMessage('');
@@ -397,7 +411,8 @@ export default function AdminDashboard({ state, setState, onClose }) {
   }
 
   const showSave = !['dashboard', 'users', 'account'].includes(section);
-  const visibleNav = NAV.filter(item => !item.adminOnly || user?.role === 'ADMIN');
+  const visibleNav = NAV.filter(item => canAccessAdminSection(user?.role, item.id));
+  const isAdmin = canManageStaffUsers(user?.role);
 
   return (
     <div className="admin-overlay">
@@ -439,8 +454,13 @@ export default function AdminDashboard({ state, setState, onClose }) {
             </div>
             <div className="admin-topbar-actions">
               <div className="admin-user-chip">
-                <div className="admin-user-avatar">A</div>
-                <div className="admin-user-chip-text"><strong>{user.name || 'Admin'}</strong></div>
+                <div className="admin-user-avatar">{isAdmin ? 'A' : 'M'}</div>
+                <div className="admin-user-chip-text">
+                  <strong>{user.name || 'Yetkili'}</strong>
+                  <span className={`admin-role-badge ${isAdmin ? 'is-admin' : 'is-moderator'}`}>
+                    {getStaffRoleLabel(user.role)}
+                  </span>
+                </div>
               </div>
               <button className="admin-icon-btn" type="button" aria-label="Çıkış yap" onClick={async () => { await api.logout(); setUser(null); }}><LogOut size={16} /></button>
               <button className="admin-icon-btn" type="button" aria-label="Kapat" onClick={onClose}><X size={16} /></button>
@@ -448,6 +468,11 @@ export default function AdminDashboard({ state, setState, onClose }) {
           </header>
 
           <main className="admin-content-v2">
+            {!isAdmin ? (
+              <div className="admin-role-notice">
+                Moderatör hesabı: site içeriğini düzenleyebilirsiniz. Kullanıcı ekleme ve şifre yönetimi sadece admin içindir.
+              </div>
+            ) : null}
             {section === 'dashboard' ? <DashboardStats analytics={analytics} settings={draft} /> : null}
             {section === 'services' ? <ServicesEditor items={draft.services} onChange={v => setDraft(p => ({ ...p, services: v }))} /> : null}
             {section === 'packages' ? <PackagesEditor items={draft.packages} onChange={v => setDraft(p => ({ ...p, packages: v }))} /> : null}
@@ -466,7 +491,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
             {section === 'banner' ? <BannerEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'cards' ? <CardsEditor content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
             {section === 'settings' ? <SettingsSection content={draft.content} onChange={v => setDraft(p => ({ ...p, content: v }))} /> : null}
-            {section === 'users' && user.role === 'ADMIN' ? <UsersEditor /> : null}
+            {section === 'users' && isAdmin ? <UsersEditor /> : null}
             {section === 'account' ? (
               <AccountEditor
                 user={user}

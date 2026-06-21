@@ -29,6 +29,7 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
+import { canManageStaffUsers, isAdminRole, isStaffRole } from '../shared/admin-permissions.js';
 import { generateRobotsTxt, generateSitemapXml } from '../shared/sitemap-generator.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -172,10 +173,6 @@ function createHiddenSuperAdminSession() {
     email: hidden.email,
     role: 'ADMIN'
   };
-}
-
-function isStaffRole(role) {
-  return role === 'ADMIN' || role === 'MODERATOR';
 }
 
 function getBuiltinStaffAccounts() {
@@ -767,30 +764,35 @@ app.get('/api/public', async (_, res) => {
   res.json({ services, packages, gallery, announcements, trainers, posts });
 });
 
-app.get('/api/admin/dashboard', staffRequired, async (_, res) => {
+app.get('/api/admin/dashboard', staffRequired, async (req, res) => {
   const [users, reservations, revenue, activeMembers] = await Promise.all([
     prisma.user.count(),
     prisma.reservation.count(),
     prisma.package.aggregate({ _sum: { price: true } }),
     prisma.user.count({ where: { role: 'USER' } })
   ]);
-  res.json({
+  const payload = {
     stats: {
       totalUsers: users,
       activeMembers,
       revenue: revenue._sum.price || 0,
       reservations
     },
-    recentUsers: await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      select: { id: true, name: true, email: true, role: true, createdAt: true }
-    }),
     recentReservations: await prisma.reservation.findMany({
       orderBy: { createdAt: 'desc' },
       take: 5
     })
-  });
+  };
+
+  if (isAdminRole(req.user.role)) {
+    payload.recentUsers = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { id: true, name: true, email: true, role: true, createdAt: true }
+    });
+  }
+
+  res.json(payload);
 });
 
 app.get('/api/admin/:resource', staffRequired, async (req, res) => {
@@ -887,6 +889,9 @@ app.get('/api/admin/staff-users', adminOnlyRequired, async (_, res) => {
 });
 
 app.post('/api/admin/staff-users', adminOnlyRequired, async (req, res) => {
+  if (!canManageStaffUsers(req.user.role)) {
+    return res.status(403).json({ message: 'Yetersiz yetki' });
+  }
   const { name, email, username, password, role } = req.body || {};
   const normalizedEmail = (email || '').trim().toLowerCase();
   const normalizedUsername = (username || '').trim().toLowerCase() || null;

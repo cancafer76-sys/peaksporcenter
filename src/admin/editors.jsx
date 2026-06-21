@@ -1299,12 +1299,12 @@ export function UsersEditor() {
 
   return (
     <>
-      <h2 className="admin-page-title">Kullanıcılar</h2>
-      <p className="admin-page-sub">Admin ve moderatör hesapları oluşturun, yetki verin veya düzenleyin.</p>
+      <h2 className="admin-page-title">Kullanıcı Yönetimi</h2>
+      <p className="admin-page-sub">Sadece admin yeni moderatör veya admin hesabı oluşturabilir. Moderatörler site içeriğini düzenler, kullanıcı yönetimine erişemez.</p>
       {message ? <p className="admin-hint">{message}</p> : null}
 
       <div className="admin-form-card">
-        <h4>Yeni Kullanıcı</h4>
+        <h4>Yeni Moderatör / Admin</h4>
         <form onSubmit={handleCreate}>
           <div className="admin-form-grid">
             <label className="admin-field">Ad Soyad<input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></label>
@@ -1319,7 +1319,7 @@ export function UsersEditor() {
               </select>
             </label>
           </div>
-          <button className="admin-save-btn" type="submit" style={{ marginTop: 12 }}><Plus size={16} />Kullanıcı Ekle</button>
+          <button className="admin-save-btn" type="submit" style={{ marginTop: 12 }}><Plus size={16} />Moderatör Ekle</button>
         </form>
       </div>
 

@@ -167,6 +167,45 @@
 .admin-brand-row strong { display: block; font-size: 15px; letter-spacing: 0.06em; }
 .admin-brand-row span { color: #9ca3af; font-size: 11px; }
 
+.admin-user-chip-text span {
+  display: block;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-role-badge.is-admin {
+  background: rgba(var(--accent-rgb), 0.16);
+  color: var(--accent);
+}
+
+.admin-role-badge.is-moderator {
+  background: rgba(96, 165, 250, 0.14);
+  color: #93c5fd;
+}
+
+.admin-role-notice {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  background: rgba(96, 165, 250, 0.08);
+  color: #bfdbfe;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .admin-nav-group { margin-bottom: 18px; }
 .admin-nav-label {
   padding: 0 10px 8px;
