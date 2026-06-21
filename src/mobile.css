@@ -1660,6 +1660,17 @@ img { display: block; width: 100%; }
   overflow: visible;
 }
 
+.home-rail-viewport.is-static .home-rail-track {
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 980px) {
+  .home-rail-viewport.is-static .home-rail-track {
+    flex-wrap: nowrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-rail-track.is-loop {
     animation: none;

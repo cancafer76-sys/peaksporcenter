@@ -85,59 +85,21 @@ const desktopNav = [
 function AnimatedHomeRail({
   className = '',
   loop = true,
-  loopMin = 0,
-  overflowOnly = true,
+  isMobile = false,
+  mobileLoopMin = 1,
   duration = 48,
   children
 }) {
-  const viewportRef = useRef(null);
-  const trackRef = useRef(null);
-  const [overflows, setOverflows] = useState(false);
   const items = React.Children.toArray(children);
   const itemCount = items.length;
-
-  useLayoutEffect(() => {
-    const viewport = viewportRef.current;
-    const track = trackRef.current;
-    if (!viewport || !track) return;
-
-    const gap = 12;
-
-    const measure = () => {
-      const childrenEls = Array.from(track.children).slice(0, itemCount);
-      if (!childrenEls.length) {
-        setOverflows(false);
-        return;
-      }
-
-      let total = 0;
-      childrenEls.forEach((child, index) => {
-        total += child.getBoundingClientRect().width;
-        if (index < childrenEls.length - 1) total += gap;
-      });
-
-      setOverflows(total > viewport.clientWidth + 2);
-    };
-
-    measure();
-
-    const observer = new ResizeObserver(measure);
-    observer.observe(viewport);
-    Array.from(track.children).forEach(child => observer.observe(child));
-
-    return () => observer.disconnect();
-  }, [itemCount, children]);
-
-  const shouldLoop = loop && itemCount > loopMin && (!overflowOnly || overflows);
+  const shouldLoop = loop && isMobile && itemCount > mobileLoopMin;
   const trackItems = shouldLoop ? [...items, ...items] : items;
 
   return (
     <div
-      ref={viewportRef}
       className={`home-rail-viewport ${shouldLoop ? '' : 'is-static'} ${className}`.trim()}
     >
       <div
-        ref={trackRef}
         className={`home-rail-track ${shouldLoop ? 'is-loop' : 'is-static'}`}
         style={{ '--rail-duration': `${duration}s` }}
       >
@@ -2063,7 +2025,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
             subtitle="Modern alanlar, premium eğitimler ve net kategoriler."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-services-rail" loopMin={6} duration={52}>
+          <AnimatedHomeRail className="home-services-rail" duration={52}>
             {allServices.map(service => (
               <ServiceCardButton
                 key={service.title}
@@ -2093,7 +2055,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
             subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-packages-rail" loopMin={6} duration={46}>
+          <AnimatedHomeRail className="home-packages-rail" duration={46}>
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
@@ -2116,7 +2078,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-coaches-rail" loopMin={4} duration={50}>
+          <AnimatedHomeRail className="home-coaches-rail" duration={50}>
             {allCoaches.map(coach => (
               <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini onOpenDetails={onOpenCoach} />
             ))}
@@ -2129,7 +2091,7 @@ function DesktopShell({ state, setState, onOpenCoach }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-gallery-rail" overflowOnly={false} duration={54}>
+          <AnimatedHomeRail className="home-gallery-rail" duration={54}>
             {allGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}
@@ -2244,7 +2206,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
             title="HİZMETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/services')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-services-rail" loopMin={6} duration={52}>
+          <AnimatedHomeRail className="home-services-rail" isMobile mobileLoopMin={6} duration={52}>
             {allServices.map(service => (
               <ServiceCardButton
                 key={service.title}
@@ -2269,7 +2231,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
             title="PAKETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-packages-rail" loopMin={6} duration={46}>
+          <AnimatedHomeRail className="home-packages-rail" isMobile mobileLoopMin={1} duration={46}>
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
@@ -2291,7 +2253,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-coaches-rail" loopMin={4} duration={50}>
+          <AnimatedHomeRail className="home-coaches-rail" isMobile mobileLoopMin={1} duration={50}>
             {allCoaches.map(coach => (
               <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini onOpenDetails={onOpenCoach} />
             ))}
@@ -2304,7 +2266,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-gallery-rail" overflowOnly={false} duration={54}>
+          <AnimatedHomeRail className="home-gallery-rail" isMobile mobileLoopMin={0} duration={54}>
             {allGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}
