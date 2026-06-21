@@ -4589,6 +4589,37 @@ img { display: block; width: 100%; }
   background: rgba(255, 255, 255, 0.08);
 }
 
+.coaches-home-grid-mobile {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.coaches-home-grid-mobile .coach-showcase-card {
+  min-width: 0;
+}
+
+.coaches-home-grid-mobile .coach-showcase-body {
+  padding: 12px;
+}
+
+.coaches-home-grid-mobile .coach-showcase-body strong {
+  font-size: 14px;
+}
+
+.coaches-home-grid-mobile .coach-showcase-body > span {
+  font-size: 11px;
+}
+
+.coaches-home-grid-mobile .coach-showcase-details-btn {
+  min-height: 36px;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
 .coach-grid {
   display: grid;
   gap: 16px;
@@ -4998,7 +5029,8 @@ img { display: block; width: 100%; }
   }
 
   .coach-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .coach-card-page .coach-card-media {

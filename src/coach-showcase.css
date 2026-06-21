@@ -308,7 +308,26 @@
 
 @media (max-width: 640px) {
   .coach-showcase-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .coach-showcase-body {
+    padding: 12px;
+  }
+
+  .coach-showcase-body strong {
+    font-size: 14px;
+  }
+
+  .coach-showcase-body > span {
+    font-size: 11px;
+  }
+
+  .coach-showcase-details-btn {
+    min-height: 36px;
+    font-size: 11px;
+    margin-top: 8px;
   }
 
   .coach-detail-modal {

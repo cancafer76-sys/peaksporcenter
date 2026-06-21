@@ -2429,11 +2429,11 @@ function MobileShell({ state, setState, onOpenCoach }) {
             subtitle="Uzman eğitmen kadromuzla tanışın."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/trainers')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-coaches-rail" isMobile mobileLoopMin={1} duration={50}>
+          <div className="coaches-home-grid-mobile">
             {allCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini onOpenDetails={onOpenCoach} />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} onOpenDetails={onOpenCoach} />
             ))}
-          </AnimatedHomeRail>
+          </div>
         </section>
 
         <section className="section-block" id="gallery">
