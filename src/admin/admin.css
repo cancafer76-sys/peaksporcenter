@@ -759,6 +759,7 @@
 
   .admin-sidebar-v2.is-open {
     transform: translateX(0);
+    z-index: 10040;
   }
 
   .admin-sidebar-close {
@@ -883,6 +884,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(8, 10, 13, 0.98);
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
+    isolation: isolate;
   }
 
   .admin-save-btn {

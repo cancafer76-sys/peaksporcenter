@@ -319,10 +319,24 @@ function SettingsSection({ content, onChange }) {
 }
 
 function SaveBar({ onSave, saving, message }) {
+  const handleSaveClick = event => {
+    event.preventDefault();
+    event.stopPropagation();
+    onSave();
+  };
+
   return (
-    <div className="admin-save-bar">
+    <div
+      className="admin-save-bar"
+      onClick={event => event.stopPropagation()}
+      onMouseDown={event => event.stopPropagation()}
+      onTouchStart={event => event.stopPropagation()}
+    >
       <span className="admin-toast">{message || 'Değişiklikleri kaydetmeyi unutmayın.'}</span>
-      <button className="admin-save-btn" type="button" onClick={onSave} disabled={saving}><Save size={16} />{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+      <button className="admin-save-btn" type="button" onClick={handleSaveClick} disabled={saving}>
+        <Save size={16} />
+        {saving ? 'Kaydediliyor...' : 'Kaydet'}
+      </button>
     </div>
   );
 }
@@ -430,6 +444,7 @@ export default function AdminDashboard({ state, setState, onClose }) {
             type="button"
             className="admin-mobile-backdrop"
             aria-label="Menüyü kapat"
+            onMouseDown={event => event.stopPropagation()}
             onClick={() => setMenuOpen(false)}
           />
         ) : null}
