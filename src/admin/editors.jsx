@@ -1471,13 +1471,13 @@ export function BackupEditor({ onRestored, onMessage }) {
     refreshBackups().catch(() => setBackups([]));
   }, []);
 
-  const handleExport = async () => {
-    setPendingAction('export');
+  const handleTakeBackup = async () => {
+    setPendingAction('take');
     setLoading(true);
     try {
-      const envelope = await api.exportSiteBackup();
-      downloadBackupBlob(envelope, buildSiteBackupFilename('peakspor-yedek'));
-      onMessage?.('Yedek dosyası indirildi.');
+      const result = await api.saveSiteBackup(label.trim() || 'Manuel yedek');
+      setBackups(result.backups || []);
+      onMessage?.('Yedek sunucuya kaydedildi.');
     } catch (error) {
       onMessage?.(error.message || 'Yedek alınamadı');
     } finally {
@@ -1486,16 +1486,15 @@ export function BackupEditor({ onRestored, onMessage }) {
     }
   };
 
-  const handleSaveServer = async () => {
-    setPendingAction('save');
+  const handleDownload = async () => {
+    setPendingAction('download');
     setLoading(true);
     try {
-      const result = await api.saveSiteBackup(label.trim());
-      setBackups(result.backups || []);
-      setLabel('');
-      onMessage?.('Sunucuya yedek kaydedildi.');
+      const envelope = await api.exportSiteBackup();
+      downloadBackupBlob(envelope, buildSiteBackupFilename('peakspor-yedek'));
+      onMessage?.('Yedek bilgisayarınıza indirildi.');
     } catch (error) {
-      onMessage?.(error.message || 'Yedek kaydedilemedi');
+      onMessage?.(error.message || 'Yedek indirilemedi');
     } finally {
       setLoading(false);
       setPendingAction('');
@@ -1514,7 +1513,7 @@ export function BackupEditor({ onRestored, onMessage }) {
       const parsed = parseSiteBackupPayload(text);
       const summary = summarizeSiteBackup(parsed.data);
       const ok = window.confirm(
-        `${file.name} dosyası yüklensin mi?\n\nBölüm: ${summary.sections}\nGaleri: ${summary.galleryItems}\nHizmet: ${summary.services}\nPaket: ${summary.packages}\nHoca: ${summary.trainers}\n\nMevcut site içeriğinin üzerine yazılır.`
+        `${file.name} dosyası yüklensin mi?\n\nBölüm: ${summary.sections}\nGaleri: ${summary.galleryItems}\nHizmet: ${summary.services}\nPaket: ${summary.packages}\nHoca: ${summary.trainers}\nYetkili: ${summary.staffUsers}\n\nMevcut site içeriğinin üzerine yazılır.`
       );
       if (!ok) return;
 
@@ -1573,22 +1572,30 @@ export function BackupEditor({ onRestored, onMessage }) {
     <>
       <h2 className="admin-page-title">Yedekleme</h2>
       <p className="admin-page-sub">
-        Tüm yazılar, görseller, sayfa içerikleri ve ayarlar `{SITE_BACKUP_EXTENSION}` uzantılı yedek dosyasında saklanır.
+        Tüm yazılar, görseller, sayfa içerikleri, yüklenen dosyalar ve yetkili kullanıcılar `{SITE_BACKUP_EXTENSION}` uzantılı yedekte saklanır. Railway push sonrası veriler kalıcı diskten geri yüklenir.
       </p>
 
       <div className="admin-form-card">
-        <h4>Yedek Al / Yedek Yükle</h4>
+        <h4>Yedekleme İşlemleri</h4>
         <p className="admin-hint">
-          Yedek dosyası tüm site ayarlarını içerir. `.peakspor`, `.json` ve uyumlu yedek dosyalarını yükleyebilirsiniz.
+          Yüklenen dosyalar ve site içeriği sunucuda kalıcı olarak tutulur. `.peakspor`, `.json` ve uyumlu yedek dosyalarını bilgisayarınızdan yükleyebilirsiniz.
         </p>
+        <label className="admin-field">
+          Yedek Notu (isteğe bağlı)
+          <input value={label} onChange={e => setLabel(e.target.value)} placeholder="Örn: Kampanya öncesi yedek" />
+        </label>
         <div className="admin-backup-actions">
-          <button className="admin-save-btn" type="button" onClick={handleExport} disabled={loading}>
+          <button className="admin-save-btn" type="button" onClick={handleTakeBackup} disabled={loading}>
+            <Archive size={16} />
+            {pendingAction === 'take' ? 'Kaydediliyor...' : 'Yedek Al'}
+          </button>
+          <button className="admin-save-btn" type="button" onClick={handleDownload} disabled={loading}>
             <Download size={16} />
-            {pendingAction === 'export' ? 'Hazırlanıyor...' : 'Yedek Al'}
+            {pendingAction === 'download' ? 'Hazırlanıyor...' : 'İndir'}
           </button>
           <label className="admin-upload-btn admin-backup-upload-btn">
             <Upload size={16} />
-            {pendingAction === 'upload' ? 'Yükleniyor...' : 'Yedek Yükle'}
+            {pendingAction === 'upload' ? 'Yükleniyor...' : 'Bilgisayardan Yükle'}
             <input
               type="file"
               accept={`.peakspor,.json,application/json,${SITE_BACKUP_EXTENSION}`}
@@ -1598,19 +1605,6 @@ export function BackupEditor({ onRestored, onMessage }) {
             />
           </label>
         </div>
-      </div>
-
-      <div className="admin-form-card">
-        <h4>Sunucuya Kaydet</h4>
-        <p className="admin-hint">Anlık site içeriğini sunucuda otomatik yedek listesine ekler. İçerik kaydettikçe arka planda otomatik yedekler de oluşur.</p>
-        <label className="admin-field">
-          Yedek Notu (isteğe bağlı)
-          <input value={label} onChange={e => setLabel(e.target.value)} placeholder="Örn: Kampanya öncesi yedek" />
-        </label>
-        <button className="admin-save-btn" type="button" onClick={handleSaveServer} disabled={loading}>
-          <Archive size={16} />
-          {pendingAction === 'save' ? 'Kaydediliyor...' : 'Kaydet'}
-        </button>
       </div>
 
       <div className="admin-form-card">

@@ -14,7 +14,8 @@ export const SITE_BACKUP_KEYS = [
   'testimonials',
   'announcements',
   'facilityAreas',
-  'posts'
+  'posts',
+  'staffUsers'
 ];
 
 export function pickSiteBackupData(source = {}) {
@@ -85,6 +86,7 @@ export function summarizeSiteBackup(data = {}) {
     galleryItems: Array.isArray(data.gallery) ? data.gallery.length : 0,
     services: Array.isArray(data.services) ? data.services.length : 0,
     packages: Array.isArray(data.packages) ? data.packages.length : 0,
-    trainers: Array.isArray(data.trainers) ? data.trainers.length : 0
+    trainers: Array.isArray(data.trainers) ? data.trainers.length : 0,
+    staffUsers: Array.isArray(data.staffUsers) ? data.staffUsers.length : 0
   };
 }

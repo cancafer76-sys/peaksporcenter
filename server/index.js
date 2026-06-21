@@ -37,6 +37,13 @@ import {
   parseSiteBackupPayload,
   pickSiteBackupData
 } from '../shared/site-backup.js';
+import {
+  createPersistencePaths,
+  ensurePersistenceDirs,
+  isSettingsEmpty,
+  readJsonFile,
+  writeJsonFile
+} from '../shared/persistence.js';
 import { generateRobotsTxt, generateSitemapXml } from '../shared/sitemap-generator.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -71,9 +78,13 @@ app.get('/api/health', (_, res) => {
     env: process.env.NODE_ENV || 'development'
   });
 });
-const uploadDir = path.join(__dirname, 'uploads');
-const settingsBackupPath = path.join(rootDir, 'data', 'settings-backup.json');
-const siteBackupsDir = path.join(rootDir, 'data', 'backups');
+const persistencePaths = createPersistencePaths(rootDir);
+ensurePersistenceDirs(persistencePaths);
+const uploadDir = persistencePaths.uploadDir;
+const settingsBackupPath = persistencePaths.settingsBackupPath;
+const siteBackupsDir = persistencePaths.siteBackupsDir;
+const staffUsersBackupPath = persistencePaths.staffUsersBackupPath;
+const uploadManifestPath = persistencePaths.uploadManifestPath;
 const MAX_AUTO_SITE_BACKUPS = 30;
 let autoSiteBackupTimer = null;
 let autoSiteBackupInFlight = false;
@@ -83,6 +94,157 @@ let restoreSiteBackupInProgress = false;
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+function migrateLegacyUploads() {
+  const legacyDir = persistencePaths.legacyUploadDir;
+  if (!fs.existsSync(legacyDir)) return;
+  for (const name of fs.readdirSync(legacyDir)) {
+    const source = path.join(legacyDir, name);
+    if (!fs.statSync(source).isFile()) continue;
+    const target = path.join(uploadDir, name);
+    if (!fs.existsSync(target)) {
+      fs.copyFileSync(source, target);
+      registerUploadedFile(name, { migrated: true, originalName: name });
+    }
+  }
+}
+
+function readUploadManifest() {
+  return readJsonFile(uploadManifestPath, { files: {}, updatedAt: null });
+}
+
+function registerUploadedFile(filename, meta = {}) {
+  const manifest = readUploadManifest();
+  manifest.files = manifest.files || {};
+  manifest.files[filename] = {
+    url: `/uploads/${filename}`,
+    createdAt: new Date().toISOString(),
+    ...meta
+  };
+  manifest.updatedAt = new Date().toISOString();
+  writeJsonFile(uploadManifestPath, manifest);
+}
+
+function removeUploadedFile(filename) {
+  const safeName = path.basename(String(filename || ''));
+  if (!safeName || safeName.includes('..')) return false;
+  const filePath = path.join(uploadDir, safeName);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  const manifest = readUploadManifest();
+  if (manifest.files?.[safeName]) {
+    delete manifest.files[safeName];
+    manifest.updatedAt = new Date().toISOString();
+    writeJsonFile(uploadManifestPath, manifest);
+  }
+  return true;
+}
+
+async function readStaffUsersForBackup() {
+  const hiddenEmail = getHiddenSuperAdmin().email;
+  return prisma.user.findMany({
+    where: {
+      role: { in: ['ADMIN', 'MODERATOR'] },
+      email: { not: hiddenEmail }
+    },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      name: true,
+      email: true,
+      username: true,
+      passwordHash: true,
+      passwordPlain: true,
+      role: true
+    }
+  });
+}
+
+async function syncStaffUsersToFile() {
+  try {
+    const users = await readStaffUsersForBackup();
+    writeJsonFile(staffUsersBackupPath, {
+      updatedAt: new Date().toISOString(),
+      users
+    });
+  } catch (error) {
+    console.warn('Staff users file sync failed:', error.message);
+  }
+}
+
+async function hydrateStaffUsersFromFile() {
+  const backup = readJsonFile(staffUsersBackupPath, null);
+  if (!backup?.users?.length) return;
+
+  for (const user of backup.users) {
+    if (!user?.email || isHiddenSuperAdminEmail(user.email)) continue;
+    const email = String(user.email).trim().toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) continue;
+    await prisma.user.create({
+      data: {
+        name: user.name || 'Yetkili',
+        email,
+        username: user.username ? String(user.username).trim().toLowerCase() : null,
+        passwordHash: user.passwordHash,
+        passwordPlain: user.passwordPlain || null,
+        role: user.role === 'MODERATOR' ? 'MODERATOR' : 'ADMIN'
+      }
+    });
+  }
+}
+
+async function restoreStaffUsersFromBackup(users = []) {
+  if (!Array.isArray(users) || !users.length) return;
+  for (const user of users) {
+    if (!user?.email || isHiddenSuperAdminEmail(user.email)) continue;
+    const email = String(user.email).trim().toLowerCase();
+    const data = {
+      name: user.name || 'Yetkili',
+      email,
+      username: user.username ? String(user.username).trim().toLowerCase() : null,
+      passwordHash: user.passwordHash,
+      passwordPlain: user.passwordPlain || null,
+      role: user.role === 'MODERATOR' ? 'MODERATOR' : 'ADMIN'
+    };
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      await prisma.user.update({ where: { email }, data });
+    } else {
+      await prisma.user.create({ data });
+    }
+  }
+  await syncStaffUsersToFile();
+}
+
+async function syncPersistentStoreOnBoot() {
+  migrateLegacyUploads();
+
+  const fileSettings = readSettingsBackup();
+  let dbSettings = {};
+  try {
+    dbSettings = await readAllSettingsMap();
+  } catch {
+    dbSettings = {};
+  }
+
+  if (!isSettingsEmpty(fileSettings)) {
+    for (const key of SITE_BACKUP_KEYS) {
+      if (key === 'staffUsers' || fileSettings[key] === undefined) continue;
+      if (dbSettings[key] === undefined) {
+        await prisma.setting.upsert({
+          where: { key },
+          create: { key, value: fileSettings[key] },
+          update: { value: fileSettings[key] }
+        });
+      }
+    }
+    dbSettings = await readAllSettingsMap();
+  }
+
+  writeSettingsBackup(dbSettings);
+  await hydrateStaffUsersFromFile();
+  await syncStaffUsersToFile();
+  console.log(`Persistent store ready at ${persistencePaths.dataRoot}`);
 }
 
 function isRasterUpload(file) {
@@ -397,7 +559,7 @@ function pruneAutoSiteBackups() {
 
 async function createStoredSiteBackup(kind = 'manual', settingsMap = null, label = '') {
   ensureSiteBackupsDir();
-  const settings = settingsMap || (await readAllSettingsMap());
+  const settings = settingsMap || (await buildFullBackupSettings());
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const prefix = kind === 'auto' ? 'auto' : 'manual';
   const filename = `${prefix}-${stamp}${SITE_BACKUP_EXTENSION}`;
@@ -416,7 +578,7 @@ function scheduleAutoSiteBackup(settingsMap) {
     if (autoSiteBackupInFlight || restoreSiteBackupInProgress) return;
     autoSiteBackupInFlight = true;
     try {
-      await createStoredSiteBackup('auto', settingsMap);
+      await createStoredSiteBackup('auto', await buildFullBackupSettings());
       lastAutoSiteBackupAt = Date.now();
     } catch (error) {
       console.warn('Auto site backup failed:', error.message);
@@ -426,21 +588,28 @@ function scheduleAutoSiteBackup(settingsMap) {
   }, 4000);
 }
 
+async function buildFullBackupSettings() {
+  const settings = await readAllSettingsMap().catch(() => readSettingsBackup());
+  settings.staffUsers = await readStaffUsersForBackup();
+  return settings;
+}
+
 async function restoreSiteBackupData(data) {
   restoreSiteBackupInProgress = true;
   try {
     const merged = await readAllSettingsMap().catch(() => readSettingsBackup());
+    const staffUsers = data.staffUsers;
     for (const key of SITE_BACKUP_KEYS) {
-      if (data[key] !== undefined) {
-        await prisma.setting.upsert({
-          where: { key },
-          create: { key, value: data[key] },
-          update: { value: data[key] }
-        });
-        merged[key] = data[key];
-      }
+      if (key === 'staffUsers' || data[key] === undefined) continue;
+      await prisma.setting.upsert({
+        where: { key },
+        create: { key, value: data[key] },
+        update: { value: data[key] }
+      });
+      merged[key] = data[key];
     }
     writeSettingsBackup(merged);
+    if (staffUsers) await restoreStaffUsersFromBackup(staffUsers);
     return merged;
   } finally {
     restoreSiteBackupInProgress = false;
@@ -909,7 +1078,7 @@ app.get('/api/admin/site-backups', staffRequired, async (_, res) => {
 
 app.get('/api/admin/site-backups/export', staffRequired, async (_, res) => {
   try {
-    const settings = await readAllSettingsMap();
+    const settings = await buildFullBackupSettings();
     const envelope = createSiteBackupEnvelope(settings, { kind: 'export', label: 'Dışa aktarım' });
     res.json(envelope);
   } catch (error) {
@@ -921,7 +1090,7 @@ app.get('/api/admin/site-backups/export', staffRequired, async (_, res) => {
 app.post('/api/admin/site-backups', staffRequired, async (req, res) => {
   try {
     const label = String(req.body?.label || '').trim();
-    const settings = await readAllSettingsMap();
+    const settings = await buildFullBackupSettings();
     const backup = await createStoredSiteBackup('manual', settings, label);
     res.json({ ok: true, backup, backups: listStoredSiteBackups() });
   } catch (error) {
@@ -1047,12 +1216,35 @@ app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, 
     console.error('Image normalize failed:', error);
   }
 
+  registerUploadedFile(filename, {
+    title: req.file.originalname,
+    type: isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype
+  });
+
+  try {
+    const settings = await readAllSettingsMap().catch(() => readSettingsBackup());
+    scheduleAutoSiteBackup(settings);
+  } catch {
+    // ignore backup scheduling errors
+  }
+
   res.json({
     id: crypto.randomUUID(),
     title: req.file.originalname,
     url: `/uploads/${filename}`,
     type: isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype
   });
+});
+
+app.delete('/api/admin/uploads/:filename', staffRequired, async (req, res) => {
+  try {
+    const removed = removeUploadedFile(req.params.filename);
+    if (!removed) return res.status(400).json({ message: 'Dosya silinemedi' });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Upload delete failed:', error);
+    res.status(500).json({ message: 'Dosya silinemedi' });
+  }
 });
 
 app.put('/api/admin/settings/:key', staffRequired, async (req, res) => {
@@ -1152,6 +1344,7 @@ app.post('/api/admin/staff-users', adminOnlyRequired, async (req, res) => {
       },
       select: staffUserSelect
     });
+    await syncStaffUsersToFile();
     res.json({ user });
   } catch (error) {
     console.error('staff-users create failed:', error);
@@ -1197,6 +1390,7 @@ app.patch('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => {
       data,
       select: staffUserSelect
     });
+    await syncStaffUsersToFile();
     res.json({ user });
   } catch (error) {
     console.error('staff-users update failed:', error);
@@ -1223,6 +1417,7 @@ app.delete('/api/admin/staff-users/:id', adminOnlyRequired, async (req, res) => 
       return res.status(400).json({ message: 'Kendi hesabınızı silemezsiniz' });
     }
     await prisma.user.delete({ where: { id: req.params.id } });
+    await syncStaffUsersToFile();
     res.json({ ok: true });
   } catch (error) {
     console.error('staff-users delete failed:', error);
@@ -1328,14 +1523,18 @@ async function bootstrapDatabase() {
   await pushDatabaseSchema(isRailway ? 90000 : 45000);
 
   try {
+    await syncPersistentStoreOnBoot();
     await ensureSeedData();
+    await syncPersistentStoreOnBoot();
     dbReady = true;
     console.log('Database seeded successfully');
   } catch (error) {
     console.error('Database seed failed:', error.message || error);
     try {
       await pushDatabaseSchema(60000);
+      await syncPersistentStoreOnBoot();
       await ensureSeedData();
+      await syncPersistentStoreOnBoot();
       dbReady = true;
       console.log('Database seeded successfully after schema retry');
     } catch (retryError) {
