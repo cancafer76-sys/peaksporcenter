@@ -123,7 +123,7 @@ export function normalizeService(item = {}) {
     title: item.title || 'Yeni Hizmet',
     category: item.category || 'Salon',
     description: item.description || '',
-    image: item.image || '',
+    image: resolveMediaUrl(item.image || ''),
     accent: item.accent || '',
     titleColor: item.titleColor || '',
     textColor: item.textColor || '',
@@ -184,7 +184,7 @@ export function normalizeGalleryItem(item = {}, index = 0) {
     title: item.title || 'Yeni İçerik',
     category: item.category || 'Görseller',
     type,
-    image: item.image || (type === 'video' ? getYoutubeThumbnail(videoUrl) : ''),
+    image: resolveMediaUrl(item.image || (type === 'video' ? getYoutubeThumbnail(videoUrl) : '')),
     videoUrl,
     featured: Boolean(item.featured)
   };
@@ -226,7 +226,7 @@ export function normalizeTrainer(item = {}, index = 0) {
     name: item.name || 'Yeni Hoca',
     specialty,
     experience: item.experience || item.description || item.about || '',
-    image: item.image || '',
+    image: resolveMediaUrl(item.image || ''),
     featured: item.featured !== false,
     instagram: item.instagram || '',
     email: item.email || '',
@@ -244,7 +244,7 @@ export function normalizeAbout(item = {}) {
   return {
     title: base.title || 'Hakkımızda',
     subtitle: base.subtitle || '',
-    heroImage: base.heroImage || '',
+    heroImage: resolveMediaUrl(base.heroImage || ''),
     paragraphs: Array.isArray(base.paragraphs) ? base.paragraphs.filter(Boolean) : [],
     highlights: Array.isArray(base.highlights)
       ? base.highlights.map((h, i) => ({
@@ -260,7 +260,7 @@ export function normalizeBannerSlide(item = {}, index = 0) {
     id: item.id || `banner-${index}`,
     title: item.title || 'Yeni Banner',
     subtitle: item.subtitle || '',
-    image: item.image || ''
+    image: resolveMediaUrl(item.image || '')
   };
 }
 
@@ -280,7 +280,7 @@ export function normalizeTestimonial(item = {}, index = 0) {
     role: item.role || 'Üye',
     text: item.text || item.message || '',
     rating,
-    image: item.image || ''
+    image: resolveMediaUrl(item.image || '')
   };
 }
 
@@ -322,6 +322,18 @@ export function buildMapEmbedUrl(query) {
 export function buildMapSearchUrl(query) {
   if (!query) return '';
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function resolveMediaUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  if (value.startsWith('blob:') || value.startsWith('file:')) return '';
+  if (/^data:image\//i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('//')) return `https:${value}`;
+  if (value.startsWith('/')) return encodeURI(value);
+  if (value.startsWith('uploads/')) return encodeURI(`/${value}`);
+  return encodeURI(value);
 }
 
 export function isDirectMediaVideoUrl(url) {

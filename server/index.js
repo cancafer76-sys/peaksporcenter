@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import crypto from 'crypto';
+import sharp from 'sharp';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { PrismaClient } from '@prisma/client';
@@ -57,6 +58,33 @@ const settingsBackupPath = path.join(rootDir, 'data', 'settings-backup.json');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+function isRasterUpload(file) {
+  const mime = String(file.mimetype || '').toLowerCase();
+  if (mime === 'image/svg+xml') return false;
+  if (mime.startsWith('image/')) return true;
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  return ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif', '.avif', '.tiff', '.tif', '.bmp'].includes(ext);
+}
+
+async function normalizeUploadedImage(file) {
+  if (!isRasterUpload(file)) return file.filename;
+
+  const baseName = path.basename(file.filename, path.extname(file.filename));
+  const jpgName = `${baseName}.jpg`;
+  const jpgPath = path.join(uploadDir, jpgName);
+
+  await sharp(file.path, { failOn: 'none' })
+    .rotate()
+    .jpeg({ quality: 86, mozjpeg: true })
+    .toFile(jpgPath);
+
+  if (jpgPath !== file.path && fs.existsSync(file.path)) {
+    fs.unlinkSync(file.path);
+  }
+
+  return jpgName;
 }
 
 const port = Number(process.env.PORT) || 8080;
@@ -758,11 +786,21 @@ app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, 
   if (!req.file) {
     return res.status(400).json({ message: 'Dosya seçilmedi' });
   }
+
+  let filename = req.file.filename;
+  try {
+    if (isRasterUpload(req.file)) {
+      filename = await normalizeUploadedImage(req.file);
+    }
+  } catch (error) {
+    console.error('Image normalize failed:', error);
+  }
+
   res.json({
     id: crypto.randomUUID(),
     title: req.file.originalname,
-    url: `/uploads/${req.file.filename}`,
-    type: req.file.mimetype
+    url: `/uploads/${filename}`,
+    type: isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype
   });
 });
 

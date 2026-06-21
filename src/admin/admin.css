@@ -4,6 +4,7 @@
   z-index: 10000;
   background: #080a0d;
   color: #f5f7fa;
+  color-scheme: dark;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -544,8 +545,35 @@
   padding: 0 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  background: #11151b;
+  color: #f5f7fa;
+  color-scheme: dark;
+}
+
+.admin-overlay select,
+.admin-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-color: #11151b;
+}
+
+.admin-overlay select option,
+.admin-field select option,
+.admin-overlay select optgroup,
+.admin-field select optgroup {
+  background: #11151b;
+  color: #f5f7fa;
+}
+
+.admin-overlay select:focus,
+.admin-field select:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.45);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.16);
 }
 
 .admin-field textarea { min-height: 96px; padding-top: 10px; resize: vertical; }

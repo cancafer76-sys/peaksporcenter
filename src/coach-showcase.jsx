@@ -1,8 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, Calendar, Check, Instagram, Mail, X } from 'lucide-react';
 import { normalizeTrainer } from '../shared/media.js';
 import { navigateToPath } from './seo/nav.js';
 import './coach-showcase.css';
+
+function CoachImage({ src, alt, className = '' }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return <div className={`coach-showcase-placeholder ${className}`.trim()}>{alt?.charAt(0) || '?'}</div>;
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export function CoachCard({ coach, mini = false, onOpenDetails }) {
   const data = normalizeTrainer(coach);
@@ -10,11 +33,7 @@ export function CoachCard({ coach, mini = false, onOpenDetails }) {
   return (
     <article className={`coach-showcase-card ${mini ? 'coach-showcase-card-mini' : ''}`}>
       <div className="coach-showcase-media">
-        {data.image ? (
-          <img src={data.image} alt={data.name} loading="lazy" />
-        ) : (
-          <div className="coach-showcase-placeholder">{data.name.charAt(0)}</div>
-        )}
+        <CoachImage src={data.image} alt={data.name} />
       </div>
       <div className="coach-showcase-body">
         <strong>{data.name}</strong>
@@ -63,11 +82,7 @@ export function CoachDetailModal({ coach, contact = {}, onClose }) {
           <aside className="coach-detail-profile">
             <div className="coach-detail-profile-card">
               <div className="coach-detail-profile-media">
-                {coach.image ? (
-                  <img src={coach.image} alt={coach.name} />
-                ) : (
-                  <div className="coach-showcase-placeholder">{coach.name.charAt(0)}</div>
-                )}
+                <CoachImage src={coach.image} alt={coach.name} />
               </div>
               <strong>{coach.name}</strong>
               <span>{coach.specialty}</span>

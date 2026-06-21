@@ -12,13 +12,21 @@
   aspect-ratio: 4 / 5;
   background: #0a0a0a;
   overflow: hidden;
+  position: relative;
 }
 
-.coach-showcase-media img {
+.coach-showcase-media img,
+.coach-showcase-media .coach-showcase-placeholder {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.coach-showcase-media .coach-showcase-placeholder {
+  object-fit: unset;
 }
 
 .coach-showcase-placeholder {
@@ -174,13 +182,21 @@
   overflow: hidden;
   aspect-ratio: 4 / 5;
   background: #080808;
+  position: relative;
 }
 
-.coach-detail-profile-media img {
+.coach-detail-profile-media img,
+.coach-detail-profile-media .coach-showcase-placeholder {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.coach-detail-profile-media .coach-showcase-placeholder {
+  object-fit: unset;
 }
 
 .coach-detail-profile-card strong {
