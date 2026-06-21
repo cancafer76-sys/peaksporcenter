@@ -2071,6 +2071,7 @@ function GalleryPage({ state, setState }) {
   const categories = state.settings.galleryCategories || defaultGalleryCategories;
   const grouped = groupGalleryByCategory(gallery, categories);
   const [activeItem, setActiveItem] = useState(null);
+  const mobile = state.viewportWidth < 980;
 
   const openItem = item => {
     const data = normalizeGalleryItem(item);
@@ -2090,7 +2091,7 @@ function GalleryPage({ state, setState }) {
             items.length ? (
               <section key={category} className="gallery-section-block">
                 <h3 className="gallery-section-title">{category}</h3>
-                <div className="route-card-grid card-grid-4 card-grid-gallery">
+                <div className={mobile ? 'gallery-page-grid-mobile' : 'route-card-grid card-grid-4 card-grid-gallery'}>
                   {items.map(item => (
                     <GalleryCard
                       key={normalizeGalleryItem(item).id}
@@ -2441,20 +2442,19 @@ function MobileShell({ state, setState, onOpenCoach }) {
             subtitle="Tesis, antrenman ve premium atmosfer kareleri."
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/gallery')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-gallery-rail" isMobile mobileLoopMin={0} duration={54}>
+          <div className="gallery-home-grid-mobile">
             {allGallery.map(item => (
               <GalleryCard
                 key={normalizeGalleryItem(item).id}
                 item={item}
                 interactive
-                compact
                 onClick={() => {
                   trackSiteClick(`gallery-home:${normalizeGalleryItem(item).title}`);
                   setActiveGalleryItem(item);
                 }}
               />
             ))}
-          </AnimatedHomeRail>
+          </div>
         </section>
 
         <StatsGrid stats={stats} mobile />
