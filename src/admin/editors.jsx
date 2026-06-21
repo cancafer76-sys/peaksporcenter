@@ -534,24 +534,35 @@ export function GalleryEditor({ items, categories, onChange, onCategoriesChange 
                   {categoryItems.map(item => {
                     const thumb = item.type === 'video' ? item.image || getYoutubeThumbnail(item.videoUrl) : item.image;
                     return (
-                      <div key={item.id} className="admin-gallery-thumb-wrap">
-                        <button
-                          type="button"
-                          className={`admin-gallery-thumb ${activeId === item.id ? 'active' : ''}`}
-                          onClick={() => setActiveId(item.id)}
-                        >
+                      <div
+                        key={item.id}
+                        className={`admin-gallery-thumb-card ${activeId === item.id ? 'active' : ''}`}
+                        onClick={() => setActiveId(item.id)}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setActiveId(item.id);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="admin-gallery-thumb-media">
                           {thumb ? <img src={thumb} alt={item.title} /> : <span className="preview-empty">Medya yok</span>}
                           {item.type === 'video' ? <span className="admin-gallery-thumb-badge">▶</span> : null}
-                          <span className="admin-gallery-thumb-title">{item.title}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-gallery-thumb-remove"
-                          aria-label={`${item.title} sil`}
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                          <button
+                            type="button"
+                            className="admin-gallery-thumb-remove"
+                            aria-label={`${item.title} sil`}
+                            onClick={event => {
+                              event.stopPropagation();
+                              removeItem(item.id);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <span className="admin-gallery-thumb-title">{item.title}</span>
                       </div>
                     );
                   })}
