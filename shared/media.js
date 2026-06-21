@@ -1,3 +1,25 @@
+export function resolveMediaUrl(url) {
+  let value = String(url || '').trim().replace(/\\/g, '/');
+  if (!value) return '';
+  if (value.startsWith('blob:') || value.startsWith('file:')) return '';
+  if (/^data:image\//i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('//')) return `https:${value}`;
+  if (!value.startsWith('/') && value.startsWith('uploads/')) value = `/${value}`;
+  if (value.startsWith('/')) {
+    if (/\/uploads\/[^?#]+\.(heic|heif)(\?.*)?$/i.test(value)) {
+      value = value.replace(/\.(heic|heif)(\?.*)?$/i, '.jpg$2');
+    }
+    return encodeURI(value);
+  }
+  return encodeURI(value);
+}
+
+export function isDirectMediaVideoUrl(url) {
+  const value = String(url || '');
+  return value.startsWith('/uploads/') || /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(value);
+}
+
 export function parseVideoUrl(url) {
   const value = String(url || '').trim();
   if (!value) return null;
@@ -359,6 +381,21 @@ export function normalizeContact(config = {}, defaults = {}) {
   return { email, address, city, mapQuery };
 }
 
+export function normalizeFacilityArea(item = {}) {
+  return {
+    title: item.title || 'Alan',
+    description: item.description || '',
+    image: resolveMediaUrl(item.image || ''),
+    video: item.video || null,
+    tag: item.tag || 'Görsel'
+  };
+}
+
+export function normalizeFacilityAreas(items) {
+  const list = Array.isArray(items) && items.length ? items : [];
+  return list.map(item => normalizeFacilityArea(item));
+}
+
 export function buildMapEmbedUrl(query) {
   if (!query) return '';
   return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=tr&z=16&output=embed`;
@@ -367,23 +404,6 @@ export function buildMapEmbedUrl(query) {
 export function buildMapSearchUrl(query) {
   if (!query) return '';
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
-
-export function resolveMediaUrl(url) {
-  const value = String(url || '').trim();
-  if (!value) return '';
-  if (value.startsWith('blob:') || value.startsWith('file:')) return '';
-  if (/^data:image\//i.test(value)) return value;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith('//')) return `https:${value}`;
-  if (value.startsWith('/')) return encodeURI(value);
-  if (value.startsWith('uploads/')) return encodeURI(`/${value}`);
-  return encodeURI(value);
-}
-
-export function isDirectMediaVideoUrl(url) {
-  const value = String(url || '');
-  return value.startsWith('/uploads/') || /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(value);
 }
 
 export function getGalleryVideoSource(url) {

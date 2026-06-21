@@ -1,31 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ArrowRight, Calendar, Check, Instagram, Mail, X } from 'lucide-react';
 import { normalizeTrainer } from '../shared/media.js';
 import { navigateToPath } from './seo/nav.js';
+import { MediaImage } from './MediaImage.jsx';
 import './coach-showcase.css';
-
-function CoachImage({ src, alt, className = '' }) {
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setFailed(false);
-  }, [src]);
-
-  if (!src || failed) {
-    return <div className={`coach-showcase-placeholder ${className}`.trim()}>{alt?.charAt(0) || '?'}</div>;
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      loading="lazy"
-      decoding="async"
-      onError={() => setFailed(true)}
-    />
-  );
-}
 
 export function CoachCard({ coach, mini = false, onOpenDetails }) {
   const data = normalizeTrainer(coach);
@@ -33,7 +11,11 @@ export function CoachCard({ coach, mini = false, onOpenDetails }) {
   return (
     <article className={`coach-showcase-card ${mini ? 'coach-showcase-card-mini' : ''}`}>
       <div className="coach-showcase-media">
-        <CoachImage src={data.image} alt={data.name} />
+        <MediaImage
+          src={data.image}
+          alt={data.name}
+          fallbackClassName="coach-showcase-placeholder"
+        />
       </div>
       <div className="coach-showcase-body">
         <strong>{data.name}</strong>
@@ -48,7 +30,7 @@ export function CoachCard({ coach, mini = false, onOpenDetails }) {
 }
 
 export function CoachDetailModal({ coach, contact = {}, onClose }) {
-  useEffect(() => {
+  React.useEffect(() => {
     const onKeyDown = event => {
       if (event.key === 'Escape') onClose?.();
     };
@@ -82,7 +64,11 @@ export function CoachDetailModal({ coach, contact = {}, onClose }) {
           <aside className="coach-detail-profile">
             <div className="coach-detail-profile-card">
               <div className="coach-detail-profile-media">
-                <CoachImage src={coach.image} alt={coach.name} />
+                <MediaImage
+                  src={coach.image}
+                  alt={coach.name}
+                  fallbackClassName="coach-showcase-placeholder"
+                />
               </div>
               <strong>{coach.name}</strong>
               <span>{coach.specialty}</span>

@@ -13,6 +13,7 @@ import {
 } from './defaults.js';
 import {
   normalizeAbout,
+  normalizeFacilityAreas,
   normalizeGalleryItem,
   normalizePackage,
   normalizeService,
@@ -64,10 +65,11 @@ export function normalizeSettings(payload) {
         ? source.testimonials
         : defaultTestimonials
     ),
-    facilityAreas:
+    facilityAreas: normalizeFacilityAreas(
       Array.isArray(source.facilityAreas) && source.facilityAreas.length
         ? source.facilityAreas
-        : defaultFacilityAreas,
+        : defaultFacilityAreas
+    ),
     announcements:
       Array.isArray(source.announcements) && source.announcements.length
         ? source.announcements

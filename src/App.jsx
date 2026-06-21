@@ -13,7 +13,7 @@ import {
   defaultTestimonials,
   defaultTrainers
 } from '../shared/defaults.js';
-import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeContact, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
+import { featuredOrAll, buildMapEmbedUrl, buildMapSearchUrl, getGalleryVideoSource, getTestimonialStarTypes, getYoutubeEmbedUrl, getYoutubeThumbnail, getVisibleStats, groupGalleryByCategory, normalizeAbout, normalizeAnnouncement, normalizeAnnouncements, normalizeBannerSlides, normalizeContact, normalizeFacilityAreas, normalizeGalleryItem, normalizeHomeCards, normalizeOnlineCounter, normalizePackage, normalizeService, normalizeStats, normalizeTestimonial, normalizeTestimonials, normalizeTrainer, normalizeTrainers, packageCardVars, serviceCardVars } from '../shared/media.js';
 import { fallbackSettings, normalizeSettings } from '../shared/settings.js';
 import { applySiteTheme } from '../shared/theme.js';
 import { applySiteSeo } from '../shared/seo.js';
@@ -61,6 +61,7 @@ import {
 import './mobile.css';
 import AdminDashboard from './admin/AdminDashboard.jsx';
 import { CoachCard, CoachDetailModal } from './coach-showcase.jsx';
+import { MediaImage } from './MediaImage.jsx';
 
 const drawerNav = [
   { id: 'home', label: 'Ana Sayfa', icon: Home, route: '/' },
@@ -314,7 +315,7 @@ function ServiceCardButton({ service, selected = false, compact = false, mini = 
       style={serviceCardVars(data)}
       onClick={onClick}
     >
-      <img src={data.image} alt={data.title} style={{ objectFit: data.imageFit || 'cover' }} />
+      <MediaImage src={data.image} alt={data.title} style={{ objectFit: data.imageFit || 'cover' }} />
       <div className="card-overlay" />
       <div className="service-card-body">
         <Dumbbell size={mini ? 15 : 16} />
@@ -337,7 +338,11 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
       className={`gallery-card ${interactive ? 'gallery-card-interactive' : ''} ${compact ? 'gallery-card-home' : ''}`}
       onClick={onClick}
     >
-      {thumb ? <img src={thumb} alt={data.title} loading="lazy" /> : <div className="gallery-card-placeholder" />}
+      {thumb ? (
+        <MediaImage src={thumb} alt={data.title} fallback={<div className="gallery-card-placeholder" />} />
+      ) : (
+        <div className="gallery-card-placeholder" />
+      )}
       <div className="card-overlay" />
       {interactive ? <span className="gallery-card-orbit" aria-hidden="true" /> : null}
       {data.type === 'video' ? <span className="gallery-video-badge"><Play size={compact ? 12 : 14} /></span> : null}
@@ -378,7 +383,7 @@ function TestimonialCard({ item, compact = false, expandable = false }) {
       ) : null}
       <div className="testimonial-author">
         {item.image ? (
-          <img src={item.image} alt={item.name} className="testimonial-photo" loading="lazy" />
+          <MediaImage src={item.image} alt={item.name} className="testimonial-photo" />
         ) : (
           <span className="testimonial-avatar">{item.name.charAt(0)}</span>
         )}
@@ -767,7 +772,7 @@ function MediaLightbox({ item, onClose }) {
             )}
           </div>
         ) : (
-          <img src={data.image} alt={data.title} className="media-lightbox-image" />
+          <MediaImage src={data.image} alt={data.title} className="media-lightbox-image" loading="eager" />
         )}
         <div className="media-lightbox-caption">
           <span>{data.category}</span>
@@ -1361,7 +1366,11 @@ function AdminEntryButton({ compact = false, onOpenAdmin }) {
 function HeroCarousel({ slides, mobile = false }) {
   const heroSlides = slides.length
     ? slides
-    : [{ title: defaultContent.hero.title, subtitle: defaultContent.hero.subtitle, image: defaultContent.hero.image }];
+    : [{
+        title: defaultContent.hero.title,
+        subtitle: defaultContent.hero.subtitle,
+        image: defaultContent.hero.image
+      }];
   const [activeIndex, setActiveIndex] = useState(0);
   const slideCount = heroSlides.length;
 
@@ -1392,7 +1401,7 @@ function HeroCarousel({ slides, mobile = false }) {
         >
           {heroSlides.map((slide, index) => (
             <article key={`${slide.title}-${index}`} className="hero-carousel-slide">
-              <img src={slide.image} alt={slide.title} />
+              <MediaImage src={slide.image} alt={slide.title} loading={index === 0 ? 'eager' : 'lazy'} />
               <div className={`hero-overlay ${mobile ? 'hero-overlay-mobile' : ''}`} />
               <div className={`hero-carousel-copy ${mobile ? 'hero-carousel-copy-mobile' : ''}`}>
                 <span className="hero-banner-kicker">PEAKSPORTS</span>
@@ -1519,7 +1528,7 @@ function AboutPage({ state, setState }) {
         <>
           {about.heroImage ? (
             <div className="about-hero">
-              <img src={about.heroImage} alt={about.title} loading="lazy" />
+              <MediaImage src={about.heroImage} alt={about.title} />
               <div className="about-hero-overlay" />
             </div>
           ) : null}
@@ -1708,7 +1717,7 @@ function MembershipModal({ open, onClose, whatsappNumber }) {
 }
 
 function ExplorePage({ state, setState }) {
-  const facilities = state.settings.facilityAreas || defaultFacilityAreas;
+  const facilities = normalizeFacilityAreas(state.settings.facilityAreas || defaultFacilityAreas);
   const [activeVideo, setActiveVideo] = useState(null);
 
   return (
@@ -1729,7 +1738,7 @@ function ExplorePage({ state, setState }) {
             {facilities.map(area => (
               <article key={area.title} className="explore-card">
                 <div className="explore-media">
-                  <img src={area.image} alt={area.title} loading="lazy" />
+                  <MediaImage src={area.image} alt={area.title} />
                   <div className="card-overlay" />
                   <span className="explore-tag">{area.tag}</span>
                   {area.video ? (
@@ -1993,9 +2002,15 @@ function DesktopShell({ state, setState, onOpenCoach }) {
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
-  const heroSlides = bannerSlides.length
-    ? bannerSlides
-    : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const heroSlides = normalizeBannerSlides(
+    bannerSlides.length
+      ? bannerSlides
+      : [{
+          title: content.hero?.title || defaultContent.hero.title,
+          subtitle: content.hero?.subtitle || defaultContent.hero.subtitle,
+          image: content.hero?.image || defaultContent.hero.image
+        }]
+  );
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
@@ -2187,9 +2202,15 @@ function MobileShell({ state, setState, onOpenCoach }) {
   const testimonials = state.settings.testimonials || defaultTestimonials;
   const onlineCounter = content.onlineCounter || defaultContent.onlineCounter;
   const bannerSlides = content.bannerSlides || defaultContent.bannerSlides || [];
-  const heroSlides = bannerSlides.length
-    ? bannerSlides
-    : [{ title: content.hero?.title || defaultContent.hero.title, subtitle: content.hero?.subtitle || defaultContent.hero.subtitle, image: content.hero?.image || defaultContent.hero.image }];
+  const heroSlides = normalizeBannerSlides(
+    bannerSlides.length
+      ? bannerSlides
+      : [{
+          title: content.hero?.title || defaultContent.hero.title,
+          subtitle: content.hero?.subtitle || defaultContent.hero.subtitle,
+          image: content.hero?.image || defaultContent.hero.image
+        }]
+  );
   const selectedService = state.selectedService || services[0];
   const selectedPackage = state.selectedPackage || packages[0];
 

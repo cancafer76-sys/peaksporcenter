@@ -96,7 +96,36 @@ app.use(compression());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use('/uploads', express.static(uploadDir));
+
+app.use('/uploads', (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+  const rawName = path.basename(decodeURIComponent(req.path || ''));
+  if (!rawName || rawName.includes('..')) return next();
+
+  const filePath = path.join(uploadDir, rawName);
+  if (fs.existsSync(filePath)) {
+    if (/\.jpe?g$/i.test(rawName)) res.type('image/jpeg');
+    else if (/\.png$/i.test(rawName)) res.type('image/png');
+    else if (/\.webp$/i.test(rawName)) res.type('image/webp');
+    else if (/\.gif$/i.test(rawName)) res.type('image/gif');
+    return next();
+  }
+
+  const legacyMatch = rawName.match(/^(.+)\.(heic|heif|png|webp|avif)$/i);
+  if (legacyMatch) {
+    const jpgPath = path.join(uploadDir, `${legacyMatch[1]}.jpg`);
+    if (fs.existsSync(jpgPath)) {
+      return res.type('image/jpeg').sendFile(jpgPath);
+    }
+  }
+
+  next();
+}, express.static(uploadDir, {
+  setHeaders(res, filePath) {
+    if (/\.jpe?g$/i.test(filePath)) res.setHeader('Content-Type', 'image/jpeg');
+  }
+}));
 
 const authCookieOptions = {
   httpOnly: true,
