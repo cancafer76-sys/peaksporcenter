@@ -338,10 +338,21 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
   );
 }
 
-function CoachCard({ coach, compact = false, mini = false }) {
+function CoachCard({ coach, compact = false, mini = false, page = false, showReadMore = false }) {
   const data = normalizeTrainer(coach);
+  const experience = data.experience?.trim() || '';
+
   return (
-    <article className={`coach-card ${compact ? 'coach-card-compact' : ''} ${mini ? 'coach-card-mini' : ''}`}>
+    <article
+      className={[
+        'coach-card',
+        compact ? 'coach-card-compact' : '',
+        mini ? 'coach-card-mini' : '',
+        page ? 'coach-card-page' : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="coach-card-media">
         {data.image ? (
           <img src={data.image} alt={data.name} loading="lazy" />
@@ -352,7 +363,18 @@ function CoachCard({ coach, compact = false, mini = false }) {
       <div className="coach-card-body">
         <strong>{data.name}</strong>
         <span className="coach-card-specialty">{data.specialty}</span>
-        <p className={mini ? 'coach-card-mini-text' : undefined}>{data.experience}</p>
+        {experience ? (
+          <p className={mini ? 'coach-card-mini-text' : 'coach-card-description'}>{experience}</p>
+        ) : null}
+        {showReadMore && experience ? (
+          <button
+            type="button"
+            className="coach-card-readmore text-button"
+            onClick={() => navigateToPath('/hocalarimiz')}
+          >
+            Devamını Oku
+          </button>
+        ) : null}
       </div>
     </article>
   );
@@ -1533,9 +1555,9 @@ function TrainersPage({ state, setState }) {
       title="HOCALARIMIZ"
       subtitle="Uzman eğitmen kadromuzla tanışın."
       content={
-        <div className="route-card-grid card-grid-4 coach-grid">
+        <div className="route-card-grid coach-grid">
           {trainers.map(coach => (
-            <CoachCard key={normalizeTrainer(coach).id} coach={coach} />
+            <CoachCard key={normalizeTrainer(coach).id} coach={coach} page />
           ))}
         </div>
       }
@@ -2089,7 +2111,7 @@ function DesktopShell({ state, setState }) {
           />
           <AnimatedHomeRail className="home-coaches-rail" loop duration={50}>
             {allCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini showReadMore />
             ))}
           </AnimatedHomeRail>
         </section>
@@ -2264,7 +2286,7 @@ function MobileShell({ state, setState }) {
           />
           <AnimatedHomeRail className="home-coaches-rail" loop duration={50}>
             {allCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini showReadMore />
             ))}
           </AnimatedHomeRail>
         </section>

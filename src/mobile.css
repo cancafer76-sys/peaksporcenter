@@ -1746,39 +1746,58 @@ img { display: block; width: 100%; }
 
 .home-scroll-rail .coach-card-mini,
 .home-rail-track .coach-card-mini {
-  flex: 0 0 min(138px, 40vw);
-  min-width: min(138px, 40vw);
-  max-width: 138px;
+  flex: 0 0 min(320px, 88vw);
+  min-width: min(320px, 88vw);
+  max-width: 360px;
   border-radius: 16px;
+  flex-direction: row;
+  align-items: stretch;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-media {
+  flex: 0 0 108px;
+  width: 108px;
+  min-height: 108px;
+  max-height: none;
   aspect-ratio: 1;
-  max-height: 108px;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-body {
-  padding: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
   gap: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-body strong {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-specialty {
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .home-scroll-rail .coach-card-mini .coach-card-mini-text {
   margin: 0;
-  font-size: 9px;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.68);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.coach-card-readmore {
+  margin-top: 2px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  align-self: flex-start;
 }
 
 .home-scroll-rail .gallery-card,
@@ -4324,8 +4343,41 @@ img { display: block; width: 100%; }
 
 .coach-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.coach-card-page {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.coach-card-page .coach-card-media {
+  flex: 0 0 168px;
+  width: 168px;
+  aspect-ratio: 4 / 5;
+  max-height: none;
+}
+
+.coach-card-page .coach-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.coach-card-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .coach-card {
@@ -4627,7 +4679,21 @@ img { display: block; width: 100%; }
 
   .home-scroll-rail .coach-card-mini,
 .home-rail-track .coach-card-mini {
-    flex-basis: min(128px, 38vw);
-    min-width: min(128px, 38vw);
+    flex-basis: min(300px, 90vw);
+    min-width: min(300px, 90vw);
+  }
+
+  .coach-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-card-page .coach-card-media {
+    flex-basis: 120px;
+    width: 120px;
+  }
+
+  .coach-card-description {
+    -webkit-line-clamp: 4;
+    font-size: 12px;
   }
 }
