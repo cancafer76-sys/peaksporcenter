@@ -33,6 +33,8 @@ import { canManageStaffUsers, isAdminRole, isStaffRole } from '../shared/admin-p
 import {
   SITE_BACKUP_EXTENSION,
   SITE_BACKUP_KEYS,
+  MAX_STORED_SITE_BACKUPS,
+  collectUploadFilenamesFromValue,
   createSiteBackupEnvelope,
   parseSiteBackupPayload,
   pickSiteBackupData
@@ -85,7 +87,6 @@ const settingsBackupPath = persistencePaths.settingsBackupPath;
 const siteBackupsDir = persistencePaths.siteBackupsDir;
 const staffUsersBackupPath = persistencePaths.staffUsersBackupPath;
 const uploadManifestPath = persistencePaths.uploadManifestPath;
-const MAX_AUTO_SITE_BACKUPS = 30;
 let autoSiteBackupTimer = null;
 let autoSiteBackupInFlight = false;
 let lastAutoSiteBackupAt = 0;
@@ -280,7 +281,7 @@ const jwtSecret = process.env.JWT_SECRET || 'peakspor-secret';
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: true, credentials: true }));
 app.use(compression());
-app.use(express.json({ limit: '20mb' }));
+app.use(express.json({ limit: '120mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -528,7 +529,8 @@ function readSiteBackupFileMeta(filename) {
       label: parsed.label || '',
       kind: parsed.kind || (safeName.startsWith('auto-') ? 'auto' : 'manual'),
       size: stats.size,
-      sections: Object.keys(pickSiteBackupData(parsed.data || parsed)).length
+      sections: Object.keys(pickSiteBackupData(parsed.data || parsed)).length,
+      mediaFiles: Object.keys(parsed.files || {}).length
     };
   } catch {
     return null;
@@ -545,10 +547,10 @@ function listStoredSiteBackups() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-function pruneAutoSiteBackups() {
-  const autoBackups = listStoredSiteBackups().filter(item => item.kind === 'auto');
-  if (autoBackups.length <= MAX_AUTO_SITE_BACKUPS) return;
-  autoBackups.slice(MAX_AUTO_SITE_BACKUPS).forEach(item => {
+function pruneStoredSiteBackups() {
+  const backups = listStoredSiteBackups();
+  if (backups.length <= MAX_STORED_SITE_BACKUPS) return;
+  backups.slice(MAX_STORED_SITE_BACKUPS).forEach(item => {
     try {
       fs.unlinkSync(path.join(siteBackupsDir, item.filename));
     } catch {
@@ -557,15 +559,81 @@ function pruneAutoSiteBackups() {
   });
 }
 
-async function createStoredSiteBackup(kind = 'manual', settingsMap = null, label = '') {
+function deleteStoredSiteBackup(filename) {
+  const safeName = sanitizeBackupFilename(filename);
+  if (!safeName) return false;
+  const filePath = path.join(siteBackupsDir, safeName);
+  if (!fs.existsSync(filePath)) return false;
+  fs.unlinkSync(filePath);
+  return true;
+}
+
+function guessUploadMime(filename = '') {
+  const lower = String(filename).toLowerCase();
+  if (/\.jpe?g$/i.test(lower)) return 'image/jpeg';
+  if (/\.png$/i.test(lower)) return 'image/png';
+  if (/\.webp$/i.test(lower)) return 'image/webp';
+  if (/\.gif$/i.test(lower)) return 'image/gif';
+  if (/\.mp4$/i.test(lower)) return 'video/mp4';
+  if (/\.webm$/i.test(lower)) return 'video/webm';
+  return 'application/octet-stream';
+}
+
+function collectAllBackupFilenames(settings = {}) {
+  const found = collectUploadFilenamesFromValue(settings, new Set());
+  const manifest = readUploadManifest();
+  Object.keys(manifest.files || {}).forEach(name => found.add(name));
+  if (fs.existsSync(uploadDir)) {
+    for (const name of fs.readdirSync(uploadDir)) {
+      const filePath = path.join(uploadDir, name);
+      if (fs.statSync(filePath).isFile()) found.add(name);
+    }
+  }
+  return [...found];
+}
+
+function readUploadFilesForBackup(filenames = []) {
+  const files = {};
+  const maxFileSize = 20 * 1024 * 1024;
+  for (const name of filenames) {
+    const safeName = path.basename(String(name));
+    if (!safeName || safeName.includes('..')) continue;
+    const filePath = path.join(uploadDir, safeName);
+    if (!fs.existsSync(filePath)) continue;
+    const stat = fs.statSync(filePath);
+    if (!stat.isFile() || stat.size > maxFileSize) continue;
+    files[safeName] = {
+      mime: guessUploadMime(safeName),
+      size: stat.size,
+      data: fs.readFileSync(filePath).toString('base64')
+    };
+  }
+  return files;
+}
+
+function restoreBackupFiles(files = {}) {
+  if (!files || typeof files !== 'object') return 0;
+  let restored = 0;
+  for (const [name, entry] of Object.entries(files)) {
+    const safeName = path.basename(String(name));
+    if (!safeName || safeName.includes('..') || !entry?.data) continue;
+    const filePath = path.join(uploadDir, safeName);
+    fs.writeFileSync(filePath, Buffer.from(entry.data, 'base64'));
+    registerUploadedFile(safeName, { restored: true, mime: entry.mime || guessUploadMime(safeName) });
+    restored += 1;
+  }
+  return restored;
+}
+
+async function createStoredSiteBackup(kind = 'manual', label = '') {
   ensureSiteBackupsDir();
-  const settings = settingsMap || (await buildFullBackupSettings());
+  const payload = await buildFullBackupPayload();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const prefix = kind === 'auto' ? 'auto' : 'manual';
   const filename = `${prefix}-${stamp}${SITE_BACKUP_EXTENSION}`;
-  const envelope = createSiteBackupEnvelope(settings, { kind, label });
+  const envelope = createSiteBackupEnvelope(payload.settings, { kind, label }, payload.files);
   fs.writeFileSync(path.join(siteBackupsDir, filename), JSON.stringify(envelope, null, 2));
-  if (kind === 'auto') pruneAutoSiteBackups();
+  pruneStoredSiteBackups();
   return readSiteBackupFileMeta(filename);
 }
 
@@ -578,7 +646,7 @@ function scheduleAutoSiteBackup(settingsMap) {
     if (autoSiteBackupInFlight || restoreSiteBackupInProgress) return;
     autoSiteBackupInFlight = true;
     try {
-      await createStoredSiteBackup('auto', await buildFullBackupSettings());
+      await createStoredSiteBackup('auto');
       lastAutoSiteBackupAt = Date.now();
     } catch (error) {
       console.warn('Auto site backup failed:', error.message);
@@ -594,9 +662,17 @@ async function buildFullBackupSettings() {
   return settings;
 }
 
-async function restoreSiteBackupData(data) {
+async function buildFullBackupPayload() {
+  const settings = await buildFullBackupSettings();
+  const filenames = collectAllBackupFilenames(settings);
+  const files = readUploadFilesForBackup(filenames);
+  return { settings, files };
+}
+
+async function restoreSiteBackupData(data, files = {}) {
   restoreSiteBackupInProgress = true;
   try {
+    restoreBackupFiles(files);
     const merged = await readAllSettingsMap().catch(() => readSettingsBackup());
     const staffUsers = data.staffUsers;
     for (const key of SITE_BACKUP_KEYS) {
@@ -1078,8 +1154,8 @@ app.get('/api/admin/site-backups', staffRequired, async (_, res) => {
 
 app.get('/api/admin/site-backups/export', staffRequired, async (_, res) => {
   try {
-    const settings = await buildFullBackupSettings();
-    const envelope = createSiteBackupEnvelope(settings, { kind: 'export', label: 'Dışa aktarım' });
+    const payload = await buildFullBackupPayload();
+    const envelope = createSiteBackupEnvelope(payload.settings, { kind: 'export', label: 'Tam yedek' }, payload.files);
     res.json(envelope);
   } catch (error) {
     console.error('Site backup export failed:', error);
@@ -1090,12 +1166,22 @@ app.get('/api/admin/site-backups/export', staffRequired, async (_, res) => {
 app.post('/api/admin/site-backups', staffRequired, async (req, res) => {
   try {
     const label = String(req.body?.label || '').trim();
-    const settings = await buildFullBackupSettings();
-    const backup = await createStoredSiteBackup('manual', settings, label);
+    const backup = await createStoredSiteBackup('manual', label);
     res.json({ ok: true, backup, backups: listStoredSiteBackups() });
   } catch (error) {
     console.error('Site backup save failed:', error);
     res.status(500).json({ message: 'Yedek kaydedilemedi' });
+  }
+});
+
+app.delete('/api/admin/site-backups/:filename', staffRequired, async (req, res) => {
+  try {
+    const removed = deleteStoredSiteBackup(req.params.filename);
+    if (!removed) return res.status(404).json({ message: 'Yedek bulunamadı' });
+    res.json({ ok: true, backups: listStoredSiteBackups() });
+  } catch (error) {
+    console.error('Site backup delete failed:', error);
+    res.status(500).json({ message: 'Yedek silinemedi' });
   }
 });
 
@@ -1118,6 +1204,7 @@ app.post('/api/admin/site-backups/restore', staffRequired, async (req, res) => {
   try {
     const { payload, filename } = req.body || {};
     let data = null;
+    let files = {};
 
     if (filename) {
       const safeName = sanitizeBackupFilename(filename);
@@ -1126,14 +1213,16 @@ app.post('/api/admin/site-backups/restore', staffRequired, async (req, res) => {
       if (!fs.existsSync(filePath)) return res.status(404).json({ message: 'Yedek bulunamadı' });
       const parsed = parseSiteBackupPayload(JSON.parse(fs.readFileSync(filePath, 'utf8')));
       data = parsed.data;
+      files = parsed.files || {};
     } else if (payload) {
       const parsed = parseSiteBackupPayload(payload);
       data = parsed.data;
+      files = parsed.files || {};
     } else {
       return res.status(400).json({ message: 'Yedek verisi gönderilmedi' });
     }
 
-    const settings = await restoreSiteBackupData(data);
+    const settings = await restoreSiteBackupData(data, files);
     res.json({ ok: true, settings, backups: listStoredSiteBackups() });
   } catch (error) {
     console.error('Site backup restore failed:', error);

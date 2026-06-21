@@ -27,6 +27,7 @@ import {
 import { defaultContent, defaultGalleryCategories, defaultAbout, defaultBannerSlides } from '../../shared/defaults.js';
 import {
   SITE_BACKUP_EXTENSION,
+  MAX_STORED_SITE_BACKUPS,
   buildSiteBackupFilename,
   createSiteBackupEnvelope,
   parseSiteBackupPayload,
@@ -1511,13 +1512,14 @@ export function BackupEditor({ onRestored, onMessage }) {
     try {
       const text = await file.text();
       const parsed = parseSiteBackupPayload(text);
-      const summary = summarizeSiteBackup(parsed.data);
+      const summary = summarizeSiteBackup(parsed.data, parsed.files);
       const ok = window.confirm(
-        `${file.name} dosyası yüklensin mi?\n\nBölüm: ${summary.sections}\nGaleri: ${summary.galleryItems}\nHizmet: ${summary.services}\nPaket: ${summary.packages}\nHoca: ${summary.trainers}\nYetkili: ${summary.staffUsers}\n\nMevcut site içeriğinin üzerine yazılır.`
+        `${file.name} dosyası yüklensin mi?\n\nBölüm: ${summary.sections}\nGörsel/Dosya: ${summary.mediaFiles}\nGaleri: ${summary.galleryItems}\nHizmet: ${summary.services}\nPaket: ${summary.packages}\nDuyuru: ${summary.announcements}\nHoca: ${summary.trainers}\nYetkili: ${summary.staffUsers}\n\nMevcut site içeriğinin üzerine yazılır.`
       );
       if (!ok) return;
 
-      const result = await api.restoreSiteBackup({ payload: parsed.envelope || parsed.data });
+      const payload = parsed.envelope || { format: 'peakspor-site-backup', data: parsed.data, files: parsed.files || {} };
+      const result = await api.restoreSiteBackup({ payload });
       setBackups(result.backups || []);
       await onRestored?.();
       onMessage?.('Yedek başarıyla yüklendi.');
@@ -1568,17 +1570,35 @@ export function BackupEditor({ onRestored, onMessage }) {
     }
   };
 
+  const handleDeleteStored = async item => {
+    const ok = window.confirm(`${item.filename} yedeği silinsin mi?`);
+    if (!ok) return;
+
+    setPendingAction(`delete-${item.id}`);
+    setLoading(true);
+    try {
+      const result = await api.deleteSiteBackup(item.filename);
+      setBackups(result.backups || []);
+      onMessage?.('Yedek silindi.');
+    } catch (error) {
+      onMessage?.(error.message || 'Yedek silinemedi');
+    } finally {
+      setLoading(false);
+      setPendingAction('');
+    }
+  };
+
   return (
     <>
       <h2 className="admin-page-title">Yedekleme</h2>
       <p className="admin-page-sub">
-        Tüm yazılar, görseller, sayfa içerikleri, yüklenen dosyalar ve yetkili kullanıcılar `{SITE_BACKUP_EXTENSION}` uzantılı yedekte saklanır. Railway push sonrası veriler kalıcı diskten geri yüklenir.
+        Tam yedek; tüm sayfalar, yazılar, duyurular, kartlar, galeri, yüklenen görseller ve yetkili kullanıcıları `{SITE_BACKUP_EXTENSION}` dosyasında saklar. Sunucuda en son {MAX_STORED_SITE_BACKUPS} yedek tutulur.
       </p>
 
       <div className="admin-form-card">
         <h4>Yedekleme İşlemleri</h4>
         <p className="admin-hint">
-          Yüklenen dosyalar ve site içeriği sunucuda kalıcı olarak tutulur. `.peakspor`, `.json` ve uyumlu yedek dosyalarını bilgisayarınızdan yükleyebilirsiniz.
+          Yedek Al veya İndir ile görseller dahil tam site yedeği oluşur. Bilgisayardan Yükle ile geri yükleyebilirsiniz.
         </p>
         <label className="admin-field">
           Yedek Notu (isteğe bağlı)
@@ -1609,7 +1629,7 @@ export function BackupEditor({ onRestored, onMessage }) {
 
       <div className="admin-form-card">
         <div className="admin-gallery-category-head">
-          <h4>Otomatik Yedekler</h4>
+          <h4>Sunucu Yedekleri (son {MAX_STORED_SITE_BACKUPS})</h4>
           <button className="admin-mini-btn" type="button" onClick={() => refreshBackups()} disabled={loading}>
             Yenile
           </button>
@@ -1622,7 +1642,7 @@ export function BackupEditor({ onRestored, onMessage }) {
                   <strong>{item.label || item.filename}</strong>
                   <span>{formatBackupDate(item.createdAt)}</span>
                   <span className="admin-backup-meta">
-                    {item.kind === 'auto' ? 'Otomatik' : 'Manuel'} · {item.sections} bölüm · {(item.size / 1024).toFixed(1)} KB
+                    {item.kind === 'auto' ? 'Otomatik' : 'Manuel'} · {item.sections} bölüm · {item.mediaFiles || 0} dosya · {(item.size / 1024).toFixed(1)} KB
                   </span>
                 </div>
                 <div className="admin-backup-item-actions">
@@ -1643,12 +1663,21 @@ export function BackupEditor({ onRestored, onMessage }) {
                     <RotateCcw size={14} />
                     {pendingAction === `restore-${item.id}` ? '...' : 'Geri Yükle'}
                   </button>
+                  <button
+                    className="admin-mini-btn admin-mini-btn-danger"
+                    type="button"
+                    onClick={() => handleDeleteStored(item)}
+                    disabled={loading}
+                  >
+                    <Trash2 size={14} />
+                    {pendingAction === `delete-${item.id}` ? '...' : 'Sil'}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="admin-hint">Henüz sunucu yedeği yok. Kaydet butonuna basın veya içerik kaydedince otomatik yedekler burada görünür.</p>
+          <p className="admin-hint">Henüz sunucu yedeği yok. Yedek Al butonuna basın; en fazla {MAX_STORED_SITE_BACKUPS} yedek tutulur, eskiler otomatik silinir.</p>
         )}
       </div>
     </>

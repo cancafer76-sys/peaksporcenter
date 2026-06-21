@@ -100,6 +100,8 @@ export const api = {
     request('/api/admin/site-backups', { method: 'POST', body: JSON.stringify({ label: label || '' }) }),
   restoreSiteBackup: payload =>
     request('/api/admin/site-backups/restore', { method: 'POST', body: JSON.stringify(payload) }),
+  deleteSiteBackup: filename =>
+    request(`/api/admin/site-backups/${encodeURIComponent(filename)}`, { method: 'DELETE' }),
   downloadSiteBackup: async filename => {
     const token = readToken();
     const response = await fetch(`${API_BASE}/api/admin/site-backups/${encodeURIComponent(filename)}/download`, {

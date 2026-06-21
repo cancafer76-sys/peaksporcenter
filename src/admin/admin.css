@@ -2015,6 +2015,11 @@
   flex-shrink: 0;
 }
 
+.admin-mini-btn-danger {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
 @media (max-width: 720px) {
   .admin-backup-item {
     flex-direction: column;
