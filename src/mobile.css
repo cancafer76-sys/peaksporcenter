@@ -1652,6 +1652,14 @@ img { display: block; width: 100%; }
   to { transform: translateX(-50%); }
 }
 
+.home-rail-track.is-static {
+  animation: none;
+}
+
+.home-rail-viewport.is-static {
+  overflow: visible;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-rail-track.is-loop {
     animation: none;
