@@ -247,19 +247,36 @@ function AppTopBand({ header, announcements, onlineCounter }) {
   );
 }
 
-function PackageCard({ item, selected = false, compact = false, featureLimit, showCta = true, onSelect, onCtaClick }) {
+function PackageCard({ item, selected = false, compact = false, preview = false, featureLimit, showCta = true, onSelect, onOpenDetails, onCtaClick }) {
   const pkg = normalizePackage(item);
-  const limit = featureLimit ?? (compact ? 5 : pkg.features.length);
-  const visibleFeatures = compact ? pkg.features.slice(0, limit) : pkg.features;
+  const limit = featureLimit ?? (preview ? 2 : compact ? 5 : pkg.features.length);
+  const visibleFeatures = preview || compact ? pkg.features.slice(0, limit) : pkg.features;
+  const openDetails = () => onOpenDetails?.(pkg);
+
+  const handleCardClick = event => {
+    if (preview && onOpenDetails) {
+      openDetails();
+      return;
+    }
+    onSelect?.(event);
+  };
 
   return (
     <article
-      className={`package-card package-card-luxury ${compact ? 'package-card-mobile' : ''} ${selected ? 'selected' : ''}`}
+      className={[
+        'package-card',
+        'package-card-luxury',
+        compact ? 'package-card-mobile' : '',
+        preview ? 'package-card-preview' : '',
+        selected ? 'selected' : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={packageCardVars(pkg)}
-      onClick={onSelect}
-      onKeyDown={onSelect ? event => { if (event.key === 'Enter') onSelect(event); } : undefined}
-      role={onSelect ? 'button' : undefined}
-      tabIndex={onSelect ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={!preview && onSelect ? event => { if (event.key === 'Enter') onSelect(event); } : undefined}
+      role={!preview && onSelect ? 'button' : undefined}
+      tabIndex={!preview && onSelect ? 0 : undefined}
     >
       {pkg.discountLabel ? <span className="package-badge">{pkg.discountLabel}</span> : null}
 
@@ -276,21 +293,36 @@ function PackageCard({ item, selected = false, compact = false, featureLimit, sh
         </div>
       </div>
 
-      <ul className="package-feature-list">
-        {visibleFeatures.map((feature, index) => (
-          <li
-            key={`${feature.text}-${index}`}
-            className={feature.included ? 'is-included' : 'is-excluded'}
-          >
-            <span className="package-feature-icon" aria-hidden="true">
-              {feature.included ? '✓' : '✗'}
-            </span>
-            <span className="package-feature-text">{feature.text}</span>
-          </li>
-        ))}
-      </ul>
+      {visibleFeatures.length ? (
+        <ul className="package-feature-list">
+          {visibleFeatures.map((feature, index) => (
+            <li
+              key={`${feature.text}-${index}`}
+              className={feature.included ? 'is-included' : 'is-excluded'}
+            >
+              <span className="package-feature-icon" aria-hidden="true">
+                {feature.included ? '✓' : '✗'}
+              </span>
+              <span className="package-feature-text">{feature.text}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
-      {showCta ? (
+      {preview && onOpenDetails ? (
+        <button
+          type="button"
+          className="package-readmore text-button"
+          onClick={event => {
+            event.stopPropagation();
+            openDetails();
+          }}
+        >
+          Devamını Gör
+        </button>
+      ) : null}
+
+      {showCta && !preview ? (
         <button
           className="package-cta package-cta-luxury"
           type="button"
@@ -303,6 +335,78 @@ function PackageCard({ item, selected = false, compact = false, featureLimit, sh
         </button>
       ) : null}
     </article>
+  );
+}
+
+function PackageDetailModal({ pkg, onClose, onCtaClick }) {
+  useEffect(() => {
+    const onKeyDown = event => {
+      if (event.key === 'Escape') onClose?.();
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [onClose]);
+
+  if (!pkg) return null;
+
+  const data = normalizePackage(pkg);
+
+  return (
+    <div className="package-detail-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="package-detail-modal package-card-luxury"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${data.title} paket detayı`}
+        style={packageCardVars(data)}
+        onClick={event => event.stopPropagation()}
+      >
+        <button type="button" className="package-detail-close" aria-label="Kapat" onClick={onClose}>
+          <X size={18} />
+        </button>
+
+        {data.discountLabel ? <span className="package-badge">{data.discountLabel}</span> : null}
+
+        <div className="package-card-head">
+          <h2 className="package-card-title">{data.title}</h2>
+          {data.subtitle ? <p className="package-card-subtitle">{data.subtitle}</p> : null}
+        </div>
+
+        <div className="package-card-price-block">
+          {data.originalPrice ? <s className="package-old-price">₺{formatPrice(data.originalPrice)}</s> : null}
+          <div className="package-price">
+            <span className="package-price-value">₺{formatPrice(data.price)}</span>
+            <small className="package-price-period">{data.period}</small>
+          </div>
+        </div>
+
+        <ul className="package-feature-list package-feature-list-full">
+          {data.features.map((feature, index) => (
+            <li
+              key={`${feature.text}-${index}`}
+              className={feature.included ? 'is-included' : 'is-excluded'}
+            >
+              <span className="package-feature-icon" aria-hidden="true">
+                {feature.included ? '✓' : '✗'}
+              </span>
+              <span className="package-feature-text">{feature.text}</span>
+            </li>
+          ))}
+        </ul>
+
+        <button
+          className="package-cta package-cta-luxury"
+          type="button"
+          onClick={() => onCtaClick?.(data)}
+        >
+          {data.cta}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1609,30 +1713,43 @@ function PackagesPage({ state, setState }) {
   const content = state.settings.content || defaultContent;
   const packages = state.settings.packages || defaultPackages;
   const selectedPackage = state.selectedPackage || packages[0];
+  const mobile = state.viewportWidth < 980;
+  const [detailPackage, setDetailPackage] = useState(null);
 
   return (
-    <RouteChrome
-      state={state}
-      setState={setState}
-      title="PAKETLER"
-      subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
-      content={
-        <>
-          <div className="route-card-grid card-grid-4">
+    <>
+      <RouteChrome
+        state={state}
+        setState={setState}
+        title="PAKETLER"
+        subtitle="Temiz görünüm, net fiyatlar, kolay seçim."
+        content={
+          <div className={mobile ? 'package-grid-mobile route-card-grid' : 'route-card-grid card-grid-4'}>
             {packages.map(item => (
               <PackageCard
                 key={item.title}
                 item={item}
-                selected={selectedPackage?.title === item.title}
-                onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
+                preview={mobile}
+                featureLimit={mobile ? 2 : undefined}
+                showCta={!mobile}
+                selected={!mobile && selectedPackage?.title === item.title}
+                onSelect={!mobile ? () => setState(prev => ({ ...prev, selectedPackage: item })) : undefined}
+                onOpenDetails={mobile ? () => setDetailPackage(item) : undefined}
                 onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
               />
             ))}
           </div>
-        </>
-      }
-      backTo="/"
-    />
+        }
+        backTo="/"
+      />
+      {detailPackage ? (
+        <PackageDetailModal
+          pkg={detailPackage}
+          onClose={() => setDetailPackage(null)}
+          onCtaClick={pkg => openPackageWhatsApp(content, pkg)}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -2189,6 +2306,7 @@ function MobileShell({ state, setState, onOpenCoach }) {
   const pathname = usePathname();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
+  const [detailPackage, setDetailPackage] = useState(null);
   const content = state.settings.content || defaultContent;
   const stats = normalizeStats(content.stats || defaultContent.stats);
   const homeCards = normalizeHomeCards(content.homeCards);
@@ -2212,7 +2330,6 @@ function MobileShell({ state, setState, onOpenCoach }) {
         }]
   );
   const selectedService = state.selectedService || services[0];
-  const selectedPackage = state.selectedPackage || packages[0];
 
   return (
     <div className={`app-shell mobile-shell ${state.darkMode ? 'dark' : 'light'}`}>
@@ -2282,20 +2399,19 @@ function MobileShell({ state, setState, onOpenCoach }) {
             title="PAKETLER"
             action={<button className="text-button" type="button" onClick={() => navigateToPath('/packages')}>Tümü <ChevronRight size={16} /></button>}
           />
-          <AnimatedHomeRail className="home-packages-rail" isMobile mobileLoopMin={1} duration={46}>
+          <div className="packages-home-grid-mobile">
             {homePackages.map(item => (
               <PackageCard
                 key={item.title}
                 item={item}
                 compact
-                featureLimit={3}
-                selected={selectedPackage?.title === item.title}
-                onSelect={() => setState(prev => ({ ...prev, selectedPackage: item }))}
-                onCtaClick={(_, pkg) => openPackageWhatsApp(content, pkg)}
+                preview
+                featureLimit={2}
+                showCta={false}
+                onOpenDetails={() => setDetailPackage(item)}
               />
             ))}
-          </AnimatedHomeRail>
-          <SelectedPackageCard pkg={selectedPackage} config={homeCards.selectedPackage} compact />
+          </div>
         </section>
 
         <section className="section-block" id="trainers">
@@ -2383,6 +2499,14 @@ function MobileShell({ state, setState, onOpenCoach }) {
         onClose={() => setJoinModalOpen(false)}
         whatsappNumber={content.whatsapp?.number}
       />
+
+      {detailPackage ? (
+        <PackageDetailModal
+          pkg={detailPackage}
+          onClose={() => setDetailPackage(null)}
+          onCtaClick={pkg => openPackageWhatsApp(content, pkg)}
+        />
+      ) : null}
 
       {state.adminOpen ? (
         <AdminDashboard
