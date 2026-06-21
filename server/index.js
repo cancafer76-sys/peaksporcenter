@@ -79,7 +79,12 @@ app.get('/api/health', (_, res) => {
     ok: true,
     service: 'peakspor',
     dbReady,
-    env: process.env.NODE_ENV || 'development'
+    env: process.env.NODE_ENV || 'development',
+    dataRoot: persistencePaths.dataRoot,
+    uploadDir,
+    uploadFiles: countUploadDirFiles(),
+    uploadWritable: uploadDirWritable,
+    volumeMount: process.env.RAILWAY_VOLUME_MOUNT_PATH || null
   });
 });
 const persistencePaths = createPersistencePaths(rootDir);
@@ -89,10 +94,11 @@ const settingsBackupPath = persistencePaths.settingsBackupPath;
 const siteBackupsDir = persistencePaths.siteBackupsDir;
 const staffUsersBackupPath = persistencePaths.staffUsersBackupPath;
 const uploadManifestPath = persistencePaths.uploadManifestPath;
-let restoreSiteBackupInProgress = false;
+let uploadDirWritable = false;
 let autoSiteBackupTimer = null;
 let autoSiteBackupInFlight = false;
 const AUTO_SITE_BACKUP_DEBOUNCE_MS = 8000;
+const MAX_STORED_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -140,6 +146,180 @@ function removeUploadedFile(filename) {
     writeJsonFile(uploadManifestPath, manifest);
   }
   return true;
+}
+
+function guessStoredUploadMime(filename = '', fallback = '') {
+  const lower = String(filename).toLowerCase();
+  if (/\.jpe?g$/i.test(lower)) return 'image/jpeg';
+  if (/\.png$/i.test(lower)) return 'image/png';
+  if (/\.webp$/i.test(lower)) return 'image/webp';
+  if (/\.gif$/i.test(lower)) return 'image/gif';
+  if (/\.mp4$/i.test(lower)) return 'video/mp4';
+  if (/\.webm$/i.test(lower)) return 'video/webm';
+  return fallback || 'application/octet-stream';
+}
+
+function countUploadDirFiles() {
+  if (!fs.existsSync(uploadDir)) return 0;
+  return fs.readdirSync(uploadDir).filter(name => {
+    try {
+      return fs.statSync(path.join(uploadDir, name)).isFile();
+    } catch {
+      return false;
+    }
+  }).length;
+}
+
+function verifyUploadDirWritable() {
+  try {
+    const probePath = path.join(uploadDir, '.write-probe');
+    fs.writeFileSync(probePath, 'ok');
+    fs.unlinkSync(probePath);
+    return true;
+  } catch (error) {
+    console.warn(`Upload dir not writable (${uploadDir}):`, error.message);
+    return false;
+  }
+}
+
+async function mirrorUploadToDatabase(filename, mime = '') {
+  const safeName = path.basename(String(filename || ''));
+  if (!safeName || safeName.includes('..')) return false;
+  const filePath = path.join(uploadDir, safeName);
+  if (!fs.existsSync(filePath)) return false;
+
+  const stat = fs.statSync(filePath);
+  if (!stat.isFile() || stat.size > MAX_STORED_UPLOAD_BYTES) {
+    console.warn(`Upload mirror skipped (${safeName}): ${stat.size} bytes`);
+    return false;
+  }
+
+  const data = fs.readFileSync(filePath);
+  const resolvedMime = mime || guessStoredUploadMime(safeName);
+  await prisma.storedUpload.upsert({
+    where: { filename: safeName },
+    create: {
+      filename: safeName,
+      mime: resolvedMime,
+      size: data.length,
+      data
+    },
+    update: {
+      mime: resolvedMime,
+      size: data.length,
+      data
+    }
+  });
+  return true;
+}
+
+async function removeStoredUploadMirror(filename) {
+  if (!dbReady) return;
+  const safeName = path.basename(String(filename || ''));
+  if (!safeName || safeName.includes('..')) return;
+  try {
+    await prisma.storedUpload.delete({ where: { filename: safeName } });
+  } catch {
+    // ignore missing rows
+  }
+}
+
+async function syncStoredUploadsToDisk() {
+  const rows = await prisma.storedUpload.findMany({ select: { filename: true, data: true } });
+  let restored = 0;
+  for (const row of rows) {
+    const safeName = path.basename(String(row.filename || ''));
+    if (!safeName || safeName.includes('..')) continue;
+    const filePath = path.join(uploadDir, safeName);
+    if (fs.existsSync(filePath)) continue;
+    fs.writeFileSync(filePath, Buffer.from(row.data));
+    restored += 1;
+  }
+  return restored;
+}
+
+async function backfillStoredUploadsFromDisk() {
+  if (!fs.existsSync(uploadDir)) return 0;
+  let mirrored = 0;
+  for (const name of fs.readdirSync(uploadDir)) {
+    const safeName = path.basename(String(name));
+    if (!safeName || safeName.startsWith('.')) continue;
+    const filePath = path.join(uploadDir, safeName);
+    if (!fs.statSync(filePath).isFile()) continue;
+    const exists = await prisma.storedUpload.findUnique({ where: { filename: safeName } });
+    if (exists) continue;
+    if (await mirrorUploadToDatabase(safeName)) mirrored += 1;
+  }
+  return mirrored;
+}
+
+async function restoreMissingUploadsFromLatestBackup() {
+  if (!fs.existsSync(siteBackupsDir)) return 0;
+  const backups = fs
+    .readdirSync(siteBackupsDir)
+    .filter(name => /\.(peakspor|json)$/i.test(name))
+    .map(name => {
+      const filePath = path.join(siteBackupsDir, name);
+      return { name, mtime: fs.statSync(filePath).mtimeMs };
+    })
+    .sort((a, b) => b.mtime - a.mtime);
+  if (!backups.length) return 0;
+
+  let restored = 0;
+  for (const backup of backups) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(siteBackupsDir, backup.name), 'utf8'));
+      const files = parsed.files || {};
+      for (const [name, entry] of Object.entries(files)) {
+        const safeName = path.basename(String(name));
+        if (!safeName || safeName.includes('..') || !entry?.data) continue;
+        const filePath = path.join(uploadDir, safeName);
+        const buffer = Buffer.from(entry.data, 'base64');
+        if (buffer.length > MAX_STORED_UPLOAD_BYTES) continue;
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, buffer);
+          restored += 1;
+        }
+        const existing = await prisma.storedUpload.findUnique({ where: { filename: safeName } });
+        if (!existing) {
+          await prisma.storedUpload.create({
+            data: {
+              filename: safeName,
+              mime: entry.mime || guessStoredUploadMime(safeName),
+              size: buffer.length,
+              data: buffer
+            }
+          });
+        }
+      }
+      if (restored) break;
+    } catch {
+      // try next backup
+    }
+  }
+  return restored;
+}
+
+async function syncUploadPersistenceOnBoot() {
+  migrateLegacyUploads();
+  const writable = verifyUploadDirWritable();
+  uploadDirWritable = writable;
+  let restoredFromDb = 0;
+  let mirroredFromDisk = 0;
+  let restoredFromBackup = 0;
+
+  try {
+    restoredFromDb = await syncStoredUploadsToDisk();
+    mirroredFromDisk = await backfillStoredUploadsFromDisk();
+    restoredFromBackup = await restoreMissingUploadsFromLatestBackup();
+  } catch (error) {
+    console.warn('Upload persistence sync failed:', error.message);
+  }
+
+  const fileCount = countUploadDirFiles();
+  console.log(
+    `Upload store: dir=${uploadDir}, writable=${writable}, files=${fileCount}, restoredDb=${restoredFromDb}, mirrored=${mirroredFromDisk}, restoredBackup=${restoredFromBackup}`
+  );
 }
 
 async function readStaffUsersForBackup() {
@@ -219,8 +399,6 @@ async function restoreStaffUsersFromBackup(users = []) {
 }
 
 async function syncPersistentStoreOnBoot() {
-  migrateLegacyUploads();
-
   const fileSettings = readSettingsBackup();
   let dbSettings = {};
   try {
@@ -286,7 +464,7 @@ app.use(express.json({ limit: '120mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use('/uploads', (req, res, next) => {
+app.use('/uploads', async (req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 
   const rawName = path.basename(decodeURIComponent(req.path || ''));
@@ -305,7 +483,22 @@ app.use('/uploads', (req, res, next) => {
   if (legacyMatch) {
     const jpgPath = path.join(uploadDir, `${legacyMatch[1]}.jpg`);
     if (fs.existsSync(jpgPath)) {
+      if (req.method === 'HEAD') return res.status(200).end();
       return res.type('image/jpeg').sendFile(jpgPath);
+    }
+  }
+
+  if (dbReady) {
+    try {
+      const stored = await prisma.storedUpload.findUnique({ where: { filename: rawName } });
+      if (stored?.data) {
+        res.type(stored.mime || guessStoredUploadMime(rawName));
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        if (req.method === 'HEAD') return res.status(200).end();
+        return res.send(Buffer.from(stored.data));
+      }
+    } catch (error) {
+      console.warn(`Stored upload read failed (${rawName}):`, error.message);
     }
   }
 
@@ -605,34 +798,68 @@ function collectAllBackupFilenames(settings = {}) {
   return [...found];
 }
 
-function readUploadFilesForBackup(filenames = []) {
+async function readUploadFilesForBackup(filenames = []) {
   const files = {};
   const maxFileSize = 20 * 1024 * 1024;
   for (const name of filenames) {
     const safeName = path.basename(String(name));
     if (!safeName || safeName.includes('..')) continue;
     const filePath = path.join(uploadDir, safeName);
-    if (!fs.existsSync(filePath)) continue;
-    const stat = fs.statSync(filePath);
-    if (!stat.isFile() || stat.size > maxFileSize) continue;
-    files[safeName] = {
-      mime: guessUploadMime(safeName),
-      size: stat.size,
-      data: fs.readFileSync(filePath).toString('base64')
-    };
+    if (fs.existsSync(filePath)) {
+      const stat = fs.statSync(filePath);
+      if (!stat.isFile() || stat.size > maxFileSize) continue;
+      files[safeName] = {
+        mime: guessUploadMime(safeName),
+        size: stat.size,
+        data: fs.readFileSync(filePath).toString('base64')
+      };
+      continue;
+    }
+    try {
+      const stored = await prisma.storedUpload.findUnique({ where: { filename: safeName } });
+      if (!stored?.data || stored.size > maxFileSize) continue;
+      files[safeName] = {
+        mime: stored.mime || guessUploadMime(safeName),
+        size: stored.size,
+        data: Buffer.from(stored.data).toString('base64')
+      };
+    } catch {
+      // ignore missing rows
+    }
   }
   return files;
 }
 
-function restoreBackupFiles(files = {}) {
+async function restoreBackupFiles(files = {}) {
   if (!files || typeof files !== 'object') return 0;
   let restored = 0;
   for (const [name, entry] of Object.entries(files)) {
     const safeName = path.basename(String(name));
     if (!safeName || safeName.includes('..') || !entry?.data) continue;
     const filePath = path.join(uploadDir, safeName);
-    fs.writeFileSync(filePath, Buffer.from(entry.data, 'base64'));
+    const buffer = Buffer.from(entry.data, 'base64');
+    fs.writeFileSync(filePath, buffer);
     registerUploadedFile(safeName, { restored: true, mime: entry.mime || guessUploadMime(safeName) });
+    try {
+      if (buffer.length <= MAX_STORED_UPLOAD_BYTES) {
+        await prisma.storedUpload.upsert({
+          where: { filename: safeName },
+          create: {
+            filename: safeName,
+            mime: entry.mime || guessStoredUploadMime(safeName),
+            size: buffer.length,
+            data: buffer
+          },
+          update: {
+            mime: entry.mime || guessStoredUploadMime(safeName),
+            size: buffer.length,
+            data: buffer
+          }
+        });
+      }
+    } catch (error) {
+      console.warn(`Backup upload mirror failed (${safeName}):`, error.message);
+    }
     restored += 1;
   }
   return restored;
@@ -677,14 +904,14 @@ async function buildFullBackupSettings() {
 async function buildFullBackupPayload() {
   const settings = await buildFullBackupSettings();
   const filenames = collectAllBackupFilenames(settings);
-  const files = readUploadFilesForBackup(filenames);
+  const files = await readUploadFilesForBackup(filenames);
   return { settings, files };
 }
 
 async function restoreSiteBackupData(data, files = {}) {
   restoreSiteBackupInProgress = true;
   try {
-    restoreBackupFiles(files);
+    await restoreBackupFiles(files);
     const merged = await readAllSettingsMap().catch(() => readSettingsBackup());
     const staffUsers = data.staffUsers;
     for (const key of SITE_BACKUP_KEYS) {
@@ -1327,6 +1554,12 @@ app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, 
     type: isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype
   });
 
+  try {
+    await mirrorUploadToDatabase(filename, isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype);
+  } catch (error) {
+    console.warn('Upload DB mirror failed:', error.message);
+  }
+
   if (!restoreSiteBackupInProgress) scheduleAutoSiteBackup();
 
   res.json({
@@ -1340,6 +1573,7 @@ app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, 
 app.delete('/api/admin/uploads/:filename', staffRequired, async (req, res) => {
   try {
     const removed = removeUploadedFile(req.params.filename);
+    await removeStoredUploadMirror(req.params.filename);
     if (!removed) return res.status(400).json({ message: 'Dosya silinemedi' });
     res.json({ ok: true });
   } catch (error) {
@@ -1631,6 +1865,7 @@ async function bootstrapDatabase() {
     await ensureSeedData();
     await syncPersistentStoreOnBoot();
     dbReady = true;
+    await syncUploadPersistenceOnBoot();
     console.log('Database seeded successfully');
   } catch (error) {
     console.error('Database seed failed:', error.message || error);
@@ -1640,6 +1875,7 @@ async function bootstrapDatabase() {
       await ensureSeedData();
       await syncPersistentStoreOnBoot();
       dbReady = true;
+      await syncUploadPersistenceOnBoot();
       console.log('Database seeded successfully after schema retry');
     } catch (retryError) {
       console.error('Database seed retry failed:', retryError.message || retryError);
