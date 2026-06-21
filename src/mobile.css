@@ -4661,6 +4661,32 @@ img { display: block; width: 100%; }
   scroll-snap-align: start;
 }
 
+.home-gallery-rail .home-rail-track {
+  gap: 8px;
+}
+
+.home-gallery-rail .home-rail-track .gallery-card-home {
+  flex: 0 0 calc((100vw - 48px) / 4);
+  min-width: calc((100vw - 48px) / 4);
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+}
+
+.home-gallery-rail .gallery-card-clean .gallery-video-badge {
+  width: 28px;
+  height: 28px;
+  left: 6px;
+  top: 6px;
+}
+
+@media (min-width: 980px) {
+  .home-gallery-rail .home-rail-track .gallery-card-home {
+    flex: 0 0 calc((100% - 24px) / 4);
+    min-width: calc((100% - 24px) / 4);
+    max-width: 240px;
+  }
+}
+
 .gallery-card-clean .gallery-card-body,
 .gallery-card-clean .card-overlay,
 .gallery-card-clean .gallery-card-orbit {
