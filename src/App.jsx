@@ -442,11 +442,19 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
       className={`gallery-card ${interactive ? 'gallery-card-interactive' : ''} ${compact ? 'gallery-card-home' : ''}`}
       onClick={onClick}
     >
-      {thumb ? (
-        <MediaImage src={thumb} alt={data.title} fallback={<div className="gallery-card-placeholder" />} />
-      ) : (
-        <div className="gallery-card-placeholder" />
-      )}
+      <div className="gallery-card-media" aria-hidden={!thumb}>
+        {thumb ? (
+          <MediaImage
+            src={thumb}
+            alt={data.title}
+            className="gallery-card-image"
+            loading="eager"
+            fallbackClassName="gallery-card-placeholder"
+          />
+        ) : (
+          <div className="gallery-card-placeholder" />
+        )}
+      </div>
       <div className="card-overlay" />
       {interactive ? <span className="gallery-card-orbit" aria-hidden="true" /> : null}
       {data.type === 'video' ? <span className="gallery-video-badge"><Play size={compact ? 12 : 14} /></span> : null}

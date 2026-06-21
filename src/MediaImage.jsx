@@ -35,6 +35,7 @@ export function MediaImage({
       style={style}
       loading={loading}
       decoding="async"
+      draggable={false}
       onError={() => setFailed(true)}
     />
   );

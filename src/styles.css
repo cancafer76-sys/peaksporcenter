@@ -545,12 +545,15 @@ body.theme-light .top-header { background: rgba(255, 255, 255, 0.88); }
 .trainer-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .trainer-card, .gallery-card {
+  position: relative;
   overflow: hidden;
+  aspect-ratio: 3 / 4;
+  min-height: 180px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: rgba(255,255,255,0.03);
 }
-.trainer-card img, .gallery-card img { width: 100%; height: 220px; object-fit: cover; }
+.trainer-card img, .gallery-card img { width: 100%; height: 100%; object-fit: cover; }
 .trainer-body, .gallery-overlay { padding: 14px; }
 .trainer-body span, .gallery-overlay span { color: var(--muted); font-size: 12px; }
 
