@@ -60,6 +60,7 @@ import {
 } from 'lucide-react';
 import './mobile.css';
 import AdminDashboard from './admin/AdminDashboard.jsx';
+import { CoachCard, CoachDetailModal } from './coach-showcase.jsx';
 
 const drawerNav = [
   { id: 'home', label: 'Ana Sayfa', icon: Home, route: '/' },
@@ -335,68 +336,6 @@ function GalleryCard({ item, category, interactive = false, compact = false, onC
         <strong>{data.title}</strong>
       </div>
     </Tag>
-  );
-}
-
-function CoachCard({ coach, compact = false, mini = false, page = false, showReadMore = false }) {
-  const [expanded, setExpanded] = useState(false);
-  const data = normalizeTrainer(coach);
-  const experience = data.experience?.trim() || '';
-
-  return (
-    <article
-      className={[
-        'coach-card',
-        compact ? 'coach-card-compact' : '',
-        mini ? 'coach-card-mini' : '',
-        mini && expanded ? 'coach-card-mini-expanded' : '',
-        page ? 'coach-card-page' : ''
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <div className="coach-card-media">
-        {data.image ? (
-          <img src={data.image} alt={data.name} loading="lazy" />
-        ) : (
-          <div className="coach-card-placeholder">{data.name.charAt(0)}</div>
-        )}
-      </div>
-      <div className="coach-card-body">
-        <strong>{data.name}</strong>
-        <span className="coach-card-specialty">{data.specialty}</span>
-        {experience ? (
-          <p
-            className={[
-              mini ? 'coach-card-mini-text' : 'coach-card-description',
-              mini && expanded ? 'coach-card-mini-text-expanded' : ''
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            {experience}
-          </p>
-        ) : null}
-        {showReadMore && experience && !expanded ? (
-          <button
-            type="button"
-            className="coach-card-readmore text-button"
-            onClick={() => setExpanded(true)}
-          >
-            Devamını Oku
-          </button>
-        ) : null}
-        {showReadMore && expanded ? (
-          <button
-            type="button"
-            className="coach-card-readmore text-button"
-            onClick={() => setExpanded(false)}
-          >
-            Daha Az
-          </button>
-        ) : null}
-      </div>
-    </article>
   );
 }
 
@@ -1566,7 +1505,7 @@ function AboutPage({ state, setState }) {
   );
 }
 
-function TrainersPage({ state, setState }) {
+function TrainersPage({ state, setState, onOpenCoach }) {
   const trainers = normalizeTrainers(state.settings.trainers || defaultTrainers);
   return (
     <RouteChrome
@@ -1575,9 +1514,9 @@ function TrainersPage({ state, setState }) {
       title="HOCALARIMIZ"
       subtitle="Uzman eğitmen kadromuzla tanışın."
       content={
-        <div className="route-card-grid coach-grid">
+        <div className="coach-showcase-grid">
           {trainers.map(coach => (
-            <CoachCard key={normalizeTrainer(coach).id} coach={coach} page />
+            <CoachCard key={normalizeTrainer(coach).id} coach={coach} onOpenDetails={onOpenCoach} />
           ))}
         </div>
       }
@@ -1999,7 +1938,7 @@ function GalleryPage({ state, setState }) {
   );
 }
 
-function DesktopShell({ state, setState }) {
+function DesktopShell({ state, setState, onOpenCoach }) {
   const pathname = usePathname();
   const content = state.settings.content || defaultContent;
   const stats = normalizeStats(content.stats || defaultContent.stats);
@@ -2131,7 +2070,7 @@ function DesktopShell({ state, setState }) {
           />
           <AnimatedHomeRail className="home-coaches-rail" loop duration={50}>
             {allCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini showReadMore />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini onOpenDetails={onOpenCoach} />
             ))}
           </AnimatedHomeRail>
         </section>
@@ -2191,7 +2130,7 @@ function DesktopShell({ state, setState }) {
   );
 }
 
-function MobileShell({ state, setState }) {
+function MobileShell({ state, setState, onOpenCoach }) {
   const pathname = usePathname();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [activeGalleryItem, setActiveGalleryItem] = useState(null);
@@ -2306,7 +2245,7 @@ function MobileShell({ state, setState }) {
           />
           <AnimatedHomeRail className="home-coaches-rail" loop duration={50}>
             {allCoaches.map(coach => (
-              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini showReadMore />
+              <CoachCard key={normalizeTrainer(coach).id} coach={coach} mini onOpenDetails={onOpenCoach} />
             ))}
           </AnimatedHomeRail>
         </section>
@@ -2423,9 +2362,11 @@ function useSectionPath(pathname) {
 
 export default function App() {
   const [state, setState] = useAppData();
+  const [selectedCoach, setSelectedCoach] = useState(null);
   const isMobile = useMemo(() => state.viewportWidth < 980, [state.viewportWidth]);
   const pathname = usePathname();
   const sectionPath = useSectionPath(pathname);
+  const contact = state.settings.content?.contact || defaultContent.contact;
 
   useAnalytics(pathname);
   useGoogleAnalytics(pathname);
@@ -2519,12 +2460,30 @@ export default function App() {
   }
 
   if (sectionPath.isTrainers) {
-    return <TrainersPage state={state} setState={setState} />;
+    return (
+      <>
+        <TrainersPage state={state} setState={setState} onOpenCoach={setSelectedCoach} />
+        {selectedCoach ? (
+          <CoachDetailModal coach={selectedCoach} contact={contact} onClose={() => setSelectedCoach(null)} />
+        ) : null}
+      </>
+    );
   }
 
   if (sectionPath.isExplore) {
     return <ExplorePage state={state} setState={setState} />;
   }
 
-  return isMobile ? <MobileShell state={state} setState={setState} /> : <DesktopShell state={state} setState={setState} />;
+  return (
+    <>
+      {isMobile ? (
+        <MobileShell state={state} setState={setState} onOpenCoach={setSelectedCoach} />
+      ) : (
+        <DesktopShell state={state} setState={setState} onOpenCoach={setSelectedCoach} />
+      )}
+      {selectedCoach ? (
+        <CoachDetailModal coach={selectedCoach} contact={contact} onClose={() => setSelectedCoach(null)} />
+      ) : null}
+    </>
+  );
 }

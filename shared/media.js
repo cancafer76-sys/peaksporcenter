@@ -198,13 +198,38 @@ export function featuredOrAll(items, limit = 6) {
 
 export function normalizeTrainer(item = {}, index = 0) {
   const specialty = item.specialty || item.role || 'Fitness';
+  let expertise = [];
+  if (Array.isArray(item.expertise)) {
+    expertise = item.expertise.filter(Boolean);
+  } else if (typeof item.expertise === 'string' && item.expertise.trim()) {
+    expertise = item.expertise.split(',').map(entry => entry.trim()).filter(Boolean);
+  } else if (Array.isArray(item.expertiseAreas)) {
+    expertise = item.expertiseAreas.filter(Boolean);
+  }
+
+  if (!expertise.length) {
+    const pool = [
+      specialty,
+      'Personal Training',
+      'Kilo Verme',
+      'Yağ Yakımı',
+      'Kas Gelişimi',
+      'Fonksiyonel Antrenman',
+      'Performans Artırımı'
+    ];
+    expertise = [...new Set(pool.map(entry => entry.trim()).filter(Boolean))].slice(0, 6);
+  }
+
   return {
     id: item.id || `coach-${index}`,
     name: item.name || 'Yeni Hoca',
     specialty,
-    experience: item.experience || item.description || '',
+    experience: item.experience || item.description || item.about || '',
     image: item.image || '',
-    featured: item.featured !== false
+    featured: item.featured !== false,
+    instagram: item.instagram || '',
+    email: item.email || '',
+    expertise
   };
 }
 
