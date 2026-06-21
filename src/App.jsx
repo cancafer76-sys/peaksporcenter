@@ -1698,7 +1698,7 @@ function TrainersPage({ state, setState, onOpenCoach }) {
       title="HOCALARIMIZ"
       subtitle="Uzman eğitmen kadromuzla tanışın."
       content={
-        <div className="coach-showcase-grid">
+        <div className="coach-showcase-grid coach-showcase-page-grid">
           {trainers.map(coach => (
             <CoachCard key={normalizeTrainer(coach).id} coach={coach} onOpenDetails={onOpenCoach} />
           ))}
