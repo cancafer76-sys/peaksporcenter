@@ -87,10 +87,6 @@ const settingsBackupPath = persistencePaths.settingsBackupPath;
 const siteBackupsDir = persistencePaths.siteBackupsDir;
 const staffUsersBackupPath = persistencePaths.staffUsersBackupPath;
 const uploadManifestPath = persistencePaths.uploadManifestPath;
-let autoSiteBackupTimer = null;
-let autoSiteBackupInFlight = false;
-let lastAutoSiteBackupAt = 0;
-const AUTO_SITE_BACKUP_MIN_MS = 5 * 60 * 1000;
 let restoreSiteBackupInProgress = false;
 
 if (!fs.existsSync(uploadDir)) {
@@ -625,35 +621,15 @@ function restoreBackupFiles(files = {}) {
   return restored;
 }
 
-async function createStoredSiteBackup(kind = 'manual', label = '') {
+async function createStoredSiteBackup(label = '') {
   ensureSiteBackupsDir();
   const payload = await buildFullBackupPayload();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const prefix = kind === 'auto' ? 'auto' : 'manual';
-  const filename = `${prefix}-${stamp}${SITE_BACKUP_EXTENSION}`;
-  const envelope = createSiteBackupEnvelope(payload.settings, { kind, label }, payload.files);
+  const filename = `manual-${stamp}${SITE_BACKUP_EXTENSION}`;
+  const envelope = createSiteBackupEnvelope(payload.settings, { kind: 'manual', label }, payload.files);
   fs.writeFileSync(path.join(siteBackupsDir, filename), JSON.stringify(envelope, null, 2));
   pruneStoredSiteBackups();
   return readSiteBackupFileMeta(filename);
-}
-
-function scheduleAutoSiteBackup(settingsMap) {
-  if (restoreSiteBackupInProgress) return;
-  const now = Date.now();
-  if (now - lastAutoSiteBackupAt < AUTO_SITE_BACKUP_MIN_MS) return;
-  if (autoSiteBackupTimer) clearTimeout(autoSiteBackupTimer);
-  autoSiteBackupTimer = setTimeout(async () => {
-    if (autoSiteBackupInFlight || restoreSiteBackupInProgress) return;
-    autoSiteBackupInFlight = true;
-    try {
-      await createStoredSiteBackup('auto');
-      lastAutoSiteBackupAt = Date.now();
-    } catch (error) {
-      console.warn('Auto site backup failed:', error.message);
-    } finally {
-      autoSiteBackupInFlight = false;
-    }
-  }, 4000);
 }
 
 async function buildFullBackupSettings() {
@@ -712,7 +688,6 @@ async function persistSettingValue(key, value) {
   }
   backup[key] = value;
   writeSettingsBackup(backup);
-  if (!restoreSiteBackupInProgress) scheduleAutoSiteBackup(backup);
   return setting;
 }
 
@@ -1166,7 +1141,7 @@ app.get('/api/admin/site-backups/export', staffRequired, async (_, res) => {
 app.post('/api/admin/site-backups', staffRequired, async (req, res) => {
   try {
     const label = String(req.body?.label || '').trim();
-    const backup = await createStoredSiteBackup('manual', label);
+    const backup = await createStoredSiteBackup(label);
     res.json({ ok: true, backup, backups: listStoredSiteBackups() });
   } catch (error) {
     console.error('Site backup save failed:', error);
@@ -1309,13 +1284,6 @@ app.post('/api/admin/upload', staffRequired, upload.single('file'), async (req, 
     title: req.file.originalname,
     type: isRasterUpload(req.file) ? 'image/jpeg' : req.file.mimetype
   });
-
-  try {
-    const settings = await readAllSettingsMap().catch(() => readSettingsBackup());
-    scheduleAutoSiteBackup(settings);
-  } catch {
-    // ignore backup scheduling errors
-  }
 
   res.json({
     id: crypto.randomUUID(),

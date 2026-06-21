@@ -1598,7 +1598,7 @@ export function BackupEditor({ onRestored, onMessage }) {
       <div className="admin-form-card">
         <h4>Yedekleme İşlemleri</h4>
         <p className="admin-hint">
-          Yedek Al veya İndir ile görseller dahil tam site yedeği oluşur. Bilgisayardan Yükle ile geri yükleyebilirsiniz.
+          Yedek yalnızca Yedek Al butonuna basınca alınır. İndir ile bilgisayara kaydedebilir, Bilgisayardan Yükle ile geri yükleyebilirsiniz.
         </p>
         <label className="admin-field">
           Yedek Notu (isteğe bağlı)
@@ -1642,7 +1642,7 @@ export function BackupEditor({ onRestored, onMessage }) {
                   <strong>{item.label || item.filename}</strong>
                   <span>{formatBackupDate(item.createdAt)}</span>
                   <span className="admin-backup-meta">
-                    {item.kind === 'auto' ? 'Otomatik' : 'Manuel'} · {item.sections} bölüm · {item.mediaFiles || 0} dosya · {(item.size / 1024).toFixed(1)} KB
+                    {item.sections} bölüm · {item.mediaFiles || 0} dosya · {(item.size / 1024).toFixed(1)} KB
                   </span>
                 </div>
                 <div className="admin-backup-item-actions">
@@ -1677,7 +1677,7 @@ export function BackupEditor({ onRestored, onMessage }) {
             ))}
           </div>
         ) : (
-          <p className="admin-hint">Henüz sunucu yedeği yok. Yedek Al butonuna basın; en fazla {MAX_STORED_SITE_BACKUPS} yedek tutulur, eskiler otomatik silinir.</p>
+          <p className="admin-hint">Henüz sunucu yedeği yok. Yedek Al butonuna basın; en fazla {MAX_STORED_SITE_BACKUPS} yedek tutulur, fazlası silinir.</p>
         )}
       </div>
     </>
